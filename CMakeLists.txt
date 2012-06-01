@@ -64,11 +64,13 @@ ENDIF(NOT serial_FOUND)
 
 if(serial_FOUND)
   include_directories(${serial_INCLUDE_DIRS})
-  list(APPEND UBLOX_LINK_LIBS ${serial_LIBRARIES} pthread rt)
+  #list(APPEND UBLOX_LINK_LIBS ${serial_LIBRARIES} pthread rt)
+  list(APPEND UBLOX_LINK_LIBS serial pthread rt)
 else(serial_FOUND)
   message(FATAL_ERROR "Serial library was not found.")
 endif(serial_FOUND)
 
+message(${UBLOX_LINK_LIBS})
 
 # Find string_utils, if it hasn't already been found
 #IF(NOT string_utils_FOUND)
@@ -95,7 +97,7 @@ IF(UBLOX_BUILD_EXAMPLES)
     # Compile the ublox Test program
     add_executable(ublox_example examples/ublox_example.cpp)
     # Link the Test program to the ublox library
-    target_link_libraries(ublox_example ublox)
+    target_link_libraries(ublox_example ublox ${UBLOX_LINK_LIBS})
 ENDIF(UBLOX_BUILD_EXAMPLES)
 
 ## Build tests

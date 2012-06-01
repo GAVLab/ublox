@@ -77,6 +77,93 @@ Ublox::Ublox() {
     parse_timestamp_=0;
 }
 
+Ublox::~Ublox() {
+    Disconnect();
+}
+
+bool Ublox::Connect(std::string port, int baudrate) {
+    //serial_port_ = new serial::Serial(port,baudrate,serial::Timeout::simpleTimeout(1000));
+    serial::Timeout my_timeout(1000,50,0,50,0);
+    serial_port_ = new serial::Serial(port,baudrate,my_timeout);
+
+    if (!serial_port_->isOpen()){
+        std::stringstream output;
+        output << "Serial port: " << port << " failed to open." << std::endl;
+        log_error_(output.str());
+        delete serial_port_;
+        serial_port_ = NULL;
+        return false;
+    } else {
+        std::stringstream output;
+        output << "Serial port: " << port << " opened successfully." << std::endl;
+        log_info_(output.str());
+    }
+
+
+    // stop any incoming data and flush buffers
+    serial_port_->write("UNLOGALL\r\n");
+    // wait for data to stop cominig in
+    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    // clear serial port buffers
+    serial_port_->flush();
+
+    // look for GPS by sending ping and waiting for response
+    if (!Ping()){
+        std::stringstream output;
+        output << "Ublox GPS not found on port: " << port << std::endl;
+        log_error_(output.str());
+        delete serial_port_;
+        serial_port_ = NULL;
+        return false;
+    }
+
+    // start reading
+    StartReading();
+    return true;
+
+}
+
+bool Ublox::Ping(int num_attempts) {
+    while ((num_attempts--)>0) {
+        log_info_("Searching for Ublox receiver...");
+
+    }
+}
+
+void Ublox::Disconnect() {
+    StopReading();
+    serial_port_->close();
+    delete serial_port_;
+    serial_port_=NULL;
+}
+
+void Ublox::StartReading() {
+    // create thread to read from sensor
+    reading_status_=true;
+    read_thread_ptr_ = boost::shared_ptr<boost::thread >
+        (new boost::thread(boost::bind(&Ublox::ReadSerialPort, this)));
+}
+
+void Ublox::StopReading() {
+    reading_status_=false;
+}
+
+void Ublox::ReadSerialPort() {
+    unsigned char buffer[MAX_NOUT_SIZE];
+    size_t len;
+
+    // continuously read data from serial port
+    while (reading_status_) {
+        // read data
+        len = serial_port_->read(buffer, MAX_NOUT_SIZE);
+        // timestamp the read
+        read_timestamp_ = time_handler_();
+        // add data to the buffer to be parsed
+        BufferIncomingData(buffer, len);
+    }
+
+}
+
 
 bool Ublox::RequestLogOnChanged(string logID) {
 
@@ -120,141 +207,25 @@ bool Ublox::RequestLogOnChanged(string logID) {
 
 }
 
-bool Ublox::RequestLogOnTime(string logID, string period) {
+bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate) {
 	
-    //MOOSTrace("inside requestlog on time\n");
-    //MOOSTrace(logID);
-	
-	if(logID == "RXMRAW"){
-	
-		char check[2];
-		unsigned int length = 9;
-		unsigned int totLength = 11;
-		char data[11];
+    CfgMsg message;
+    message.header.sync1=0xB5;
+    message.header.sync2=0x62;
+    message.header.message_class=0x06;
+    message.header.message_id=0x01;
+    message.header.payload_length=3;
 
-		// Header
-		data[0] = 0xB5;
-		data[1] = 0x62;
-		// ID
-		data[2] = 0x06;
-		data[3] = 0x01;
-		// Length
-		data[4] = 3;
-		data[5] = 0;
-		// Message Class
-		data[6] = 0x02;
-		// Message ID
-		data[7] = 0x10;
-		// Rate
-		data[8] = 0x01;
+    message.message_class=class_id;
+    message.message_id=msg_id;
+    message.rate=rate;
 
-		calculateCheckSum(data,length,check);
+    char checksum[2];
+    char* msg_ptr = (char*)&message;
+    calculateCheckSum(msg_ptr+2,7,checksum);
 
-		// Check Sum
-		data[9] = check[0];
-		data[10] = check[1];
-		
-		//for (unsigned int i=0; i<11; i++)
-		//{
-		//	cout << hex << (int)data[i] << dec << endl;
-		//
-		//}
-		
-		//return true;
-
-        return false;
-        //return (SendString(data,totLength)==totLength);
-	
-	}
-	else if(logID == "NAVSOL"){
-	
-		cout << "logID == NAVSOL" << endl;
-	
-		char check[2];
-		unsigned int length = 9;
-		unsigned int totLength = 11;
-		char data[11];
-
-		// Header
-		data[0] = 0xB5;
-		data[1] = 0x62;
-		// ID
-		data[2] = 0x06;
-		data[3] = 0x01;
-		// Length
-		data[4] = 3;
-		data[5] = 0;
-		// Message Class
-		data[6] = 0x01;
-		// Message ID
-		data[7] = 0x06;
-		// Rate
-		data[8] = 0x01;
-
-		calculateCheckSum(data,length,check);
-
-		// Check Sum
-		data[9] = check[0];
-		data[10] = check[1];
-		
-		//for (unsigned int i=0; i<11; i++)
-		//{
-		//	cout << hex << (int)data[i] << dec << endl;
-		//
-		//}
-
-        //return (SendString(data,totLength)==totLength);
-        return false;
-	
-	}
-	else if(logID == "NAVVELNED"){
-	
-		//cout << "logID == NAVSOL" << endl;
-	
-		char check[2];
-		unsigned int length = 9;
-		unsigned int totLength = 11;
-		char data[11];
-
-		// Header
-		data[0] = 0xB5;
-		data[1] = 0x62;
-		// ID
-		data[2] = 0x06;
-		data[3] = 0x01;
-		// Length
-		data[4] = 3;
-		data[5] = 0;
-		// Message Class
-		data[6] = 0x01;
-		// Message ID
-		data[7] = 0x12;
-		// Rate
-		data[8] = 0x01;
-
-		calculateCheckSum(data,length,check);
-
-		// Check Sum
-		data[9] = check[0];
-		data[10] = check[1];
-		
-		//for (unsigned int i=0; i<11; i++)
-		//{
-		//	cout << hex << (int)data[i] << dec << endl;
-		//
-		//}
-
-        //return (SendString(data,totLength)==totLength);
-        return false;
-	
-	}
-	else{
-
-		return false;
-
-	}
-	return true;
-	
+    serial_port_->write((unsigned char*)&message, sizeof(message));
+    return true;
 }
 
 

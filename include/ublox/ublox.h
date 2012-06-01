@@ -101,7 +101,7 @@ private:
 	 */
 	void ReadSerialPort();
 
-    bool RequestLogOnTime(std::string log, std::string period); //!< request the given log from the receiver at the given rate
+    bool ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate);
     bool RequestLogOnChanged(std::string log); //!< request the given log from the receiver at the given rate
 	bool WaitForAck(int timeout); //!< waits for an ack from receiver (timeout in seconds)
 

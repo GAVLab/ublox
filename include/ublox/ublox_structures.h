@@ -70,7 +70,7 @@ struct NavSol{
 PACK(
 struct NavPosLLH{
     UbloxHeader header;		//!< Ublox header
-	uint32_t iTOW;			//!< GPS millisecond time of week
+    uint32_t iTOW;			//!< GPS millisecond time of week
 	int32_t longitude_scaled; //!< longitude in degrees. Scaling 1e-7
 	int32_t latitude_scaled; //!< latitude in degrees. Scaling 1e-7
 	int32_t height;			 //!< height above ellipsoid [mm]
@@ -100,6 +100,31 @@ struct NavVelNed{
 	uint32_t heading_accuracy; //!< course/heading accuracy estimate [deg]. Scaling 1e-5
 	uint16_t checksum;
 });
+
+
+
+
+
+ ///////////////////////////////////////////////////////////
+ // Configuration Messages
+ ///////////////////////////////////////////////////////////
+ struct CfgMsg {
+    UbloxHeader header;		//!< Ublox header
+    uint8_t message_class;
+    uint8_t message_id;
+    uint8_t rate;
+    uint16_t checksum;
+ };
+
+
+
+
+
+
+
+
+
+
 
 struct gpsephemb_data {
     unsigned long prn; //PRN number
@@ -191,8 +216,6 @@ enum Message_ID
 	MON_VER = 2564,
 
 };
-
-#pragma pack (pop) 
 
 //typedef enum BINARY_LOG_TYPE BINARY_LOG_TYPE;
 
