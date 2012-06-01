@@ -101,8 +101,8 @@ private:
 	 */
 	void ReadSerialPort();
 
-	bool RequestLogOnTime(string log, string period); //!< request the given log from the receiver at the given rate
-	bool RequestLogOnChanged(string log); //!< request the given log from the receiver at the given rate	
+    bool RequestLogOnTime(std::string log, std::string period); //!< request the given log from the receiver at the given rate
+    bool RequestLogOnChanged(std::string log); //!< request the given log from the receiver at the given rate
 	bool WaitForAck(int timeout); //!< waits for an ack from receiver (timeout in seconds)
 
 	void BufferIncomingData(unsigned char* msg, unsigned int length);
@@ -110,8 +110,16 @@ private:
 	void ParseLog(unsigned char* log, unsigned int logID);
 	void Parse_rxm_eph();
 
+    //////////////////////////////////////////////////////
+    // Serial port reading members
+    //////////////////////////////////////////////////////
+	//! Serial port object for communicating with sensor
+	serial::Serial *serial_port_;
+	//! shared pointer to Boost thread for listening for data from novatel
+	boost::shared_ptr<boost::thread> read_thread_ptr_;
+	bool reading_status_;  //!< True if the read thread is running, false otherwise.
 
-  //////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////
     // Diagnostic Callbacks
     //////////////////////////////////////////////////////
     HandleAcknowledgementCallback handle_acknowledgement_;

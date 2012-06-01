@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 using namespace std;
-using namespace novatel;
+using namespace ublox;
 
 /////////////////////////////////////////////////////
 // includes for default time callback
@@ -51,7 +51,7 @@ inline void DefaultErrorMsgCallback(const std::string &msg) {
     std::cout << "Ublox Error: " << msg << std::endl;
 }
 
-void DefaultNavPosLlhCallback(Position best_position, double time_stamp){
+inline void DefaultNavPosLlhCallback(NavPosLLH nav_position, double time_stamp){
     std:: cout << "NAV-POSLLH: \n" << std::endl; /*GPS Week: " << best_position.header.gps_week <<
                   "  GPS milliseconds: " << best_position.header.gps_millisecs << std::endl <<
                   "  Latitude: " << best_position.latitude << std::endl <<
@@ -77,13 +77,8 @@ Ublox::Ublox() {
     parse_timestamp_=0;
 }
 
-ublox::~ublox()
-{
-	
-}
 
-
-bool ublox::RequestLogOnChanged(string logID) {
+bool Ublox::RequestLogOnChanged(string logID) {
 
 	cout << "RequestLogOnChanged " << endl;
 
@@ -112,7 +107,8 @@ bool ublox::RequestLogOnChanged(string logID) {
 		data[6] = check[0];
 		data[7] = check[1];
 
-		return (SendString(data,totLength)==totLength);				
+        return false;
+        //return (SendString(data,totLength)==totLength);
 	
 	}
 	else{
@@ -124,10 +120,10 @@ bool ublox::RequestLogOnChanged(string logID) {
 
 }
 
-bool ublox::RequestLogOnTime(string logID, string period) {
+bool Ublox::RequestLogOnTime(string logID, string period) {
 	
-	MOOSTrace("inside requestlog on time\n");
-	MOOSTrace(logID);
+    //MOOSTrace("inside requestlog on time\n");
+    //MOOSTrace(logID);
 	
 	if(logID == "RXMRAW"){
 	
@@ -166,7 +162,8 @@ bool ublox::RequestLogOnTime(string logID, string period) {
 		
 		//return true;
 
-		return (SendString(data,totLength)==totLength);				
+        return false;
+        //return (SendString(data,totLength)==totLength);
 	
 	}
 	else if(logID == "NAVSOL"){
@@ -206,8 +203,8 @@ bool ublox::RequestLogOnTime(string logID, string period) {
 		//
 		//}
 
-		return (SendString(data,totLength)==totLength);
-		//return true;				
+        //return (SendString(data,totLength)==totLength);
+        return false;
 	
 	}
 	else if(logID == "NAVVELNED"){
@@ -247,8 +244,8 @@ bool ublox::RequestLogOnTime(string logID, string period) {
 		//
 		//}
 
-		return (SendString(data,totLength)==totLength);
-		//return true;				
+        //return (SendString(data,totLength)==totLength);
+        return false;
 	
 	}
 	else{
@@ -261,7 +258,7 @@ bool ublox::RequestLogOnTime(string logID, string period) {
 }
 
 
-void ublox::BufferIncomingData(unsigned char *msg, unsigned int length)
+void Ublox::BufferIncomingData(unsigned char *msg, unsigned int length)
 {
 	//MOOSTrace("Inside BufferIncomingData\n");
 	//cout << length << endl;
@@ -270,105 +267,105 @@ void ublox::BufferIncomingData(unsigned char *msg, unsigned int length)
 	for (unsigned int i=0; i<length; i++)
 	{
 		//cout << i << ": " << hex << (int)msg[i] << dec << endl;
-		// make sure bufIndex is not larger than buffer
-		if (bufIndex>=MAX_NOUT_SIZE)
+        // make sure buffer_index_ is not larger than buffer
+        if (buffer_index_>=MAX_NOUT_SIZE)
 		{
-			bufIndex=0;
-			MOOSTrace("ublox: Overflowed receive buffer. Reset");
+            buffer_index_=0;
+            //MOOSTrace("ublox: Overflowed receive buffer. Reset");
 		}
 
-		//cout << "bufIndex = " << bufIndex << endl;
-		//if (bufIndex > 200)
+        //cout << "buffer_index_ = " << buffer_index_ << endl;
+        //if (buffer_index_ > 200)
 		//{
 		//	exit(-1);
 		//}
-		if (bufIndex==0)
+        if (buffer_index_==0)
 		{	// looking for beginning of message
 			if (msg[i]==0xB5)
 			{	// beginning of msg found - add to buffer
 				//cout << "got first bit" << endl;				
-				dataBuf[bufIndex++]=msg[i];
-				bytesRemaining=0;
+                data_buffer_[buffer_index_++]=msg[i];
+                bytes_remaining_=0;
 			}	// end if (msg[i]
-		} // end if (bufIndex==0)
-		else if (bufIndex==1)
+        } // end if (buffer_index_==0)
+        else if (buffer_index_==1)
 		{	// verify 2nd character of header
 			if (msg[i]==0x62)
 			{	// 2nd byte ok - add to buffer
 				//cout << " got second synch bit" << endl;
-				dataBuf[bufIndex++]=msg[i];
+                data_buffer_[buffer_index_++]=msg[i];
 			}
 			else
 			{
 				// start looking for new message again
-				bufIndex=0;
-				bytesRemaining=0;
+                buffer_index_=0;
+                bytes_remaining_=0;
 				readingACK=false;
 			} // end if (msg[i]==0x62)
-		}	// end else if (bufIndex==1)
-		else if (bufIndex==2)
+        }	// end else if (buffer_index_==1)
+        else if (buffer_index_==2)
 		{	//look for ack
 			if (msg[i]==0x05)
 			{
 				//cout << "got ACK " << endl;
-				bufIndex = 0;
-				bytesRemaining=0;
+                buffer_index_ = 0;
+                bytes_remaining_=0;
 				readingACK = false;
 			}
 			else
 			{
-				dataBuf[bufIndex++]=msg[i];
+                data_buffer_[buffer_index_++]=msg[i];
 				readingACK = false;
 			}
 		}
-		else if (bufIndex==3)
+        else if (buffer_index_==3)
 		{	
 			
 			// msg[i] and msg[i-1] define message ID
-			dataBuf[bufIndex++]=msg[i];
+            data_buffer_[buffer_index_++]=msg[i];
 			// length of header is in byte 4
 			
-			//printHex(reinterpret_cast < char * > (dataBuf),4);
+            //printHex(reinterpret_cast < char * > (data_buffer_),4);
 			
 			
-			msgID=((dataBuf[bufIndex-2])<<8)+dataBuf[bufIndex-1];
+            msgID=((data_buffer_[buffer_index_-2])<<8)+data_buffer_[buffer_index_-1];
 			//cout << "msgID = " << msgID << endl;
 		}
-		else if (bufIndex==5)
+        else if (buffer_index_==5)
 		{	
 			// add byte to buffer
-			dataBuf[bufIndex++]=msg[i];
+            data_buffer_[buffer_index_++]=msg[i];
 			// length of message (payload + 2 byte check sum)
-			bytesRemaining = ((dataBuf[bufIndex-1])<<8)+dataBuf[bufIndex-2]+2;
+            bytes_remaining_ = ((data_buffer_[buffer_index_-1])<<8)+data_buffer_[buffer_index_-2]+2;
 			
-			//cout << "bytesRemaining = " << bytesRemaining << endl;
+            //cout << "bytes_remaining_ = " << bytes_remaining_ << endl;
 			
 			///cout << msgID << endl;
 		}
-		else if (bufIndex==6)
+        else if (buffer_index_==6)
 		{	// set number of bytes
-			dataBuf[bufIndex++]=msg[i];
-			bytesRemaining--;
+            data_buffer_[buffer_index_++]=msg[i];
+            bytes_remaining_--;
 		}
-		else if (bytesRemaining==1)
+        else if (bytes_remaining_==1)
 		{	// add last byte and parse
-			dataBuf[bufIndex++]=msg[i];
+            data_buffer_[buffer_index_++]=msg[i];
 			//cout << " msgID = " << msgID << endl;
-			ParseLog(dataBuf+4,msgID);
+            ParseLog(data_buffer_+4,msgID);
 			// reset counters
-			bufIndex=0;
-			bytesRemaining=0;
+            buffer_index_=0;
+            bytes_remaining_=0;
 			//cout << "Message Done." << endl;
-		}  // end else if (bytesRemaining==1)
+        }  // end else if (bytes_remaining_==1)
 		else
 		{	// add data to buffer
-			dataBuf[bufIndex++]=msg[i];
-			bytesRemaining--;
+            data_buffer_[buffer_index_++]=msg[i];
+            bytes_remaining_--;
 		}
 	}	// end for
 }
 
-bool ublox::WaitForAck(int timeout) {
+bool Ublox::WaitForAck(int timeout) {
 	// waits timeout # of seconds for an acknowledgement from the receiver
 	// returns true if one is received, false for a timeout
 	if (ackReceived)
@@ -376,7 +373,7 @@ bool ublox::WaitForAck(int timeout) {
 	else {
 		for (int ii=0; ii<timeout; ii++){
 			// sleep for 1 second
-			MOOSPause(1000);
+            //MOOSPause(1000);
 			// check again
 			if (ackReceived)
 				return true;
@@ -385,33 +382,31 @@ bool ublox::WaitForAck(int timeout) {
 	}
 }
 
-void ublox::ParseLog(unsigned char *log, unsigned int logID)
+void Ublox::ParseLog(unsigned char *log, unsigned int logID)
 {
 
 	int length;
-	//cout << "ParseLog Started" << endl;
-	//cout << "logID = " << logID << endl;
-	//double publishTime;
+
 	switch (logID)
 	{
 
-		case navSolID:
+        case NAV_SOL:
 
-			memcpy(&curNavSolData, log+2, sizeof(curNavSolData));
+            //memcpy(&curNavSolData, log+2, sizeof(curNavSolData));
 			//PublishNavSolToDB(curNavSolData);
 			break;
-		case ephID:
+        case RXM_EPH:
 
 			
 			length = ((log[1])<<8) + log[0];
 			if (length == 0x68)
 			{
 							
-				ubx.rxm_eph = (struct s_rxm_eph*) log;
+                //ubx.rxm_eph = (struct s_rxm_eph*) log;
 			//	cout << "ubx length " << ubx.rxm_eph->len << endl;
 			//	cout << "ubx prn " << ubx.rxm_eph->svprn << endl;
-				Parse_rxm_eph();
-				curGpsEphem.prn=ubx.rxm_eph->svprn;
+                //Parse_rxm_eph();
+                //curGpsEphem.prn=ubx.rxm_eph->svprn;
 			//	PublishGpsEphemToDB(curGpsEphem,MOOSTime());
 				
 			}
@@ -425,25 +420,25 @@ void ublox::ParseLog(unsigned char *log, unsigned int logID)
 			//int numSv = log[8];
 			//cout << "numSv from log =  " << numSv << endl;
 			//cout << "length of Range message = " << length << endl;
-			memcpy(&curRawData, log+2, length);
+            //memcpy(&curRawData, log+2, length);
 			//PublishRangeToDB(curRawData);
 			break;	
-		case navVelNedID:
+        case NAV_VELNED:
 
 			//cout << "sizeoff NavSol Struct + " << sizeof(curNavSolData) << endl;
 			//int length;
 			//length = ((log[1])<<8)+log[0];
 			//cout << "length of Nav message = " << length << endl;
-			memcpy(&curNavVelNed, log+2, sizeof(curNavVelNed));
+            //memcpy(&curNavVelNed, log+2, sizeof(curNavVelNed));
 			//PublishNavVelNedToDB(curNavVelNed);
 			//cout << "Something Good NAVSOL" << endl;
 			break;
 
 	}
 }
-b
 
-void ublox::calculateCheckSum(char* in, unsigned int length, char* out)
+
+void Ublox::calculateCheckSum(char* in, unsigned int length, char* out)
 {
 
 	unsigned int a = 0;
@@ -463,9 +458,10 @@ void ublox::calculateCheckSum(char* in, unsigned int length, char* out)
 
 }
 
-void ublox::Parse_rxm_eph()
-{
 
+void Ublox::Parse_rxm_eph()
+{
+/*
 	union {
 		unsigned short s;
 		unsigned char c[2];
@@ -628,7 +624,7 @@ void ublox::Parse_rxm_eph()
 	 union_unsigned_short.c[0] = ubx.rxm_eph->SF[1].W[7].bit[1];
 	 union_unsigned_short.c[1] = ubx.rxm_eph->SF[1].W[7].bit[2];
 	 curGpsEphem.toe = ((double) union_unsigned_short.s) * pow(2.0,4);
-	
+    */
 }
 
 
