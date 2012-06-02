@@ -156,7 +156,7 @@ private:
 	unsigned short msgID;
 	struct s_ubx ubx;
 	
-	void calculateCheckSum(char* in, unsigned int length, char* out);
+    void calculateCheckSum(unsigned char* in, unsigned int length, unsigned char* out);
 
 };
 }

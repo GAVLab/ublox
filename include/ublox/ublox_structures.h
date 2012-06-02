@@ -105,20 +105,35 @@ struct NavVelNed{
 
 
 
- ///////////////////////////////////////////////////////////
- // Configuration Messages
- ///////////////////////////////////////////////////////////
- struct CfgMsg {
+///////////////////////////////////////////////////////////
+// Configuration Messages
+///////////////////////////////////////////////////////////
+/*!
+ * CFM-MSG Message Structure
+ * This message requests a message at a given rate.
+ * ID: 0x06  0x01 Length=3 bytes
+ */
+struct CfgMsg {
     UbloxHeader header;		//!< Ublox header
-    uint8_t message_class;
-    uint8_t message_id;
-    uint8_t rate;
-    uint16_t checksum;
- };
+    uint8_t message_class;  //!< class of message to request
+    uint8_t message_id;     //!< id of message to request
+    uint8_t rate;           //!< rate message will be sent
+    uint16_t checksum;      //!< Checksum
+};
 
-
-
-
+/*!
+ * CFM-CFG Message Structure
+ * This message clears, saves, or loads novalitle memory.
+ * Set masks to 0x061F to clear, save, or load all values.
+ * ID: 0x06  0x09 Length=12 bytes
+ */
+struct CfgCfg {
+    UbloxHeader header;		//!< Ublox header
+    uint32_t clear_mask;  //!< clear mask
+    uint32_t save_mask;     //!< save mask
+    uint32_t load_mask;           //!< load mask
+    uint16_t checksum;      //!< Checksum
+};
 
 
 

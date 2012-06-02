@@ -126,8 +126,57 @@ bool Ublox::Connect(std::string port, int baudrate) {
 bool Ublox::Ping(int num_attempts) {
     while ((num_attempts--)>0) {
         log_info_("Searching for Ublox receiver...");
+        // request version information
+        unsigned char poll_request[8];
+        poll_request[0]=0xB5;
+        poll_request[1]=0x62;
+        poll_request[2]=0x0A;
+        poll_request[3]=0x04;
+        poll_request[4]=0x00;
+        poll_request[5]=0x00;
+        calculateCheckSum(poll_request+2, 4, poll_request+6);
+
+        serial_port_->write(poll_request, 8);
+
+        // wait for response
+        boost::this_thread::sleep(boost::posix_time::milliseconds(250));
+
+        unsigned char result[5000];
+        size_t bytes_read;
+        bytes_read=serial_port_->read(result, 5000);
+
+        uint16_t length;
+        // search through result for version message
+        for (int ii=0; ii<(bytes_read-8); ii++) {
+            if (result[ii]==0xB5) {
+                if (result[ii+1]!=0x62)
+                    continue;
+                if (result[ii+2]!=0x0A)
+                    continue;
+                if (result[ii+3]!=0x04)
+                    continue;
+                length=(result[ii+4])+(result[ii+5]<<8);
+                if (length<70) {
+                    log_warning_("Incomplete version message received");
+                    return false;
+                }
+
+                string sw_version;
+                string hw_version;
+                string rom_version;
+                sw_version.append((char*)(result+6));
+                hw_version.append((char*)(result+36));
+                rom_version.append((char*)(result+46));
+                log_info_("Ublox receiver found.");
+                log_info_("Software Version: " + sw_version);
+                log_info_("Hardware Version: " + hw_version);
+                log_info_("ROM Version: " + rom_version);
+                return true;
+            }
+        }
 
     }
+    return false;
 }
 
 void Ublox::Disconnect() {
@@ -173,11 +222,11 @@ bool Ublox::RequestLogOnChanged(string logID) {
 	
 		cout << "constructing Ephem Request message" << endl;
 	
-		char check[2];
+        unsigned char check[2];
 		unsigned int length = 6;
 		unsigned int totLength = 8;
 	
-		char data[8];
+        unsigned char data[8];
 		// Header
 		data[0] = 0xB5;
 		data[1] = 0x62;
@@ -220,11 +269,11 @@ bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate)
     message.message_id=msg_id;
     message.rate=rate;
 
-    char checksum[2];
-    char* msg_ptr = (char*)&message;
+    unsigned char checksum[2];
+    unsigned char* msg_ptr = (unsigned char*)&message;
     calculateCheckSum(msg_ptr+2,7,checksum);
 
-    serial_port_->write((unsigned char*)&message, sizeof(message));
+    serial_port_->write(msg_ptr, sizeof(message));
     return true;
 }
 
@@ -409,7 +458,7 @@ void Ublox::ParseLog(unsigned char *log, unsigned int logID)
 }
 
 
-void Ublox::calculateCheckSum(char* in, unsigned int length, char* out)
+void Ublox::calculateCheckSum(unsigned char* in, unsigned int length, unsigned char* out)
 {
 
 	unsigned int a = 0;
