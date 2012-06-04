@@ -16,7 +16,7 @@ using namespace std;
 int main(int argc, char **argv)
 {
     if(argc < 3) {
-        std::cerr << "Usage: novatel_example <serial port address> <baud rate>" << std::endl;
+        std::cerr << "Usage: ublox_example <serial port address> <baud rate>" << std::endl;
         return 0;
     }
     std::string port(argv[1]);

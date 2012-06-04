@@ -72,6 +72,13 @@ public:
          this->time_handler_ = time_handler;
      }
 
+     void SaveConfiguration();
+     void ResetToColdStart();
+     void ResetToWarmStart();
+     void ResetToHotStart();
+
+     void SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output);
+
 private:
 
 	/*!

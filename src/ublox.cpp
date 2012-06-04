@@ -88,22 +88,30 @@ bool Ublox::Connect(std::string port, int baudrate) {
 
     if (!serial_port_->isOpen()){
         std::stringstream output;
-        output << "Serial port: " << port << " failed to open." << std::endl;
+        output << "Serial port: " << port << " failed to open.";
         log_error_(output.str());
         delete serial_port_;
         serial_port_ = NULL;
         return false;
     } else {
         std::stringstream output;
-        output << "Serial port: " << port << " opened successfully." << std::endl;
+        output << "Serial port: " << port << " opened successfully.";
         log_info_(output.str());
     }
 
+    std::cout << "Flushing port" << std::endl;
+    serial_port_->flush();
 
     // stop any incoming data and flush buffers
-    serial_port_->write("UNLOGALL\r\n");
+    // stop any incoming nmea data
+    //SetPortConfiguration(true,true,false,false);
     // wait for data to stop cominig in
     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    unsigned char result[5000];
+    size_t bytes_read;
+    bytes_read=serial_port_->read(result, 5000);
+    std::cout << result << std::endl;
+    std::cout << "flushing port" << std::endl;
     // clear serial port buffers
     serial_port_->flush();
 
@@ -136,18 +144,25 @@ bool Ublox::Ping(int num_attempts) {
         poll_request[5]=0x00;
         calculateCheckSum(poll_request+2, 4, poll_request+6);
 
-        serial_port_->write(poll_request, 8);
+        //serial_port_->write(poll_request, 8);
 
         // wait for response
-        boost::this_thread::sleep(boost::posix_time::milliseconds(250));
+        boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 
         unsigned char result[5000];
         size_t bytes_read;
         bytes_read=serial_port_->read(result, 5000);
 
+        std::cout << "bytes read: " << bytes_read << std::endl;
+        std::cout << result << std::endl;
+
+        if (bytes_read<8)
+            continue;
+
         uint16_t length;
         // search through result for version message
         for (int ii=0; ii<(bytes_read-8); ii++) {
+            //std::cout << hex << (unsigned int)result[ii] << std::endl;
             if (result[ii]==0xB5) {
                 if (result[ii+1]!=0x62)
                     continue;
@@ -155,10 +170,13 @@ bool Ublox::Ping(int num_attempts) {
                     continue;
                 if (result[ii+3]!=0x04)
                     continue;
+                std::cout << "length1:" << hex << (unsigned int)result[ii+4] << std::endl;
+                std::cout << "length2:" << hex << (unsigned int)result[ii+5] << std::endl;
                 length=(result[ii+4])+(result[ii+5]<<8);
                 if (length<70) {
                     log_warning_("Incomplete version message received");
-                    return false;
+                    //return false;
+                    continue;
                 }
 
                 string sw_version;
@@ -269,13 +287,61 @@ bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate)
     message.message_id=msg_id;
     message.rate=rate;
 
-    unsigned char checksum[2];
     unsigned char* msg_ptr = (unsigned char*)&message;
-    calculateCheckSum(msg_ptr+2,7,checksum);
+    calculateCheckSum(msg_ptr+2,7,message.checksum);
 
     serial_port_->write(msg_ptr, sizeof(message));
     return true;
 }
+
+void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output)
+{
+    CfgPrt message;
+    std::cout << sizeof(message) << std::endl;
+    message.header.sync1=0xB5;
+    message.header.sync2=0x62;
+    message.header.message_class=0x06;
+    message.header.message_id=0x00;
+    message.header.payload_length=20;
+
+    message.port_id=3;
+    message.reserved=0;
+    message.reserved2=0;
+    message.reserved3=0;
+    message.reserved4=0;
+    message.reserved5=0;
+
+    message.tx_ready=0;
+
+    message.input_mask=0;
+    message.output_mask=0;
+
+    if (ubx_input)
+        message.input_mask=message.input_mask | 0x0001;   // set first bit
+    else
+        message.input_mask=message.input_mask & 0xFFFE;   // clear first bit
+
+    if (nmea_input)
+        message.input_mask=message.input_mask | 0x0002;   // set second bit
+    else
+        message.input_mask=message.input_mask & 0xFFFD;   // clear second bit
+
+    if (ubx_output)
+        message.output_mask=message.output_mask | 0x0001;   // set first bit
+    else
+        message.output_mask=message.output_mask & 0xFFFE;   // clear first bit
+
+    if (nmea_output)
+        message.output_mask=message.output_mask | 0x0002;   // set second bit
+    else
+        message.output_mask=message.output_mask & 0xFFFD;   // clear second bit
+
+    unsigned char* msg_ptr = (unsigned char*)&message;
+    calculateCheckSum(msg_ptr+2,27,message.checksum);
+
+    serial_port_->write(msg_ptr, sizeof(message));
+}
+
 
 
 void Ublox::BufferIncomingData(unsigned char *msg, unsigned int length)

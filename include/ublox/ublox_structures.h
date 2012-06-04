@@ -56,7 +56,7 @@ struct NavSol{
 	uint8_t reserved1;
 	uint8_t numSV;
 	uint32_t reserved2;
-	uint16_t checksum;
+    uint8_t checksum[2];
 });
 
 /*!
@@ -77,7 +77,7 @@ struct NavPosLLH{
 	int32_t height_mean_sea_level; //!< height above mean sea level [mm]
 	uint32_t horizontal_accuracy; //!< horizontal accuracy estimate [mm]
 	uint32_t vertical_accuracy;	//!< vertical accuracy estimate [mm]
-	uint16_t checksum;
+    uint8_t checksum[2];
 });
 
 /*!
@@ -98,11 +98,8 @@ struct NavVelNed{
 	int32_t heading_scaled; //!< heading [deg]. Scaling 1e-5
 	uint32_t speed_accuracy; //!< speed accuracy estimate [cm/s]
 	uint32_t heading_accuracy; //!< course/heading accuracy estimate [deg]. Scaling 1e-5
-	uint16_t checksum;
+    uint8_t checksum[2];
 });
-
-
-
 
 
 ///////////////////////////////////////////////////////////
@@ -118,7 +115,7 @@ struct CfgMsg {
     uint8_t message_class;  //!< class of message to request
     uint8_t message_id;     //!< id of message to request
     uint8_t rate;           //!< rate message will be sent
-    uint16_t checksum;      //!< Checksum
+    uint8_t checksum[2];
 };
 
 /*!
@@ -135,8 +132,101 @@ struct CfgCfg {
     uint16_t checksum;      //!< Checksum
 };
 
+/*!
+ * CFM-RST Message Structure
+ * This message allows a receiver to be reset.
+ * ID: 0x06  0x04 Length=4 bytes
+ */
+struct CfgRst {
+    UbloxHeader header;		//!< Ublox header
+    uint16_t nav_bbr_mask;  //!< Nav data to clear: 0x0000 = hot start, 0x0001 = warm start, 0xFFFF=cold start
+    uint8_t  reset_mode;     //!< Reset mode
+    uint8_t  reserved;       //!< reserved
+    uint8_t checksum[2];
+};
 
 
+/*!
+ * CFM-PRT Message Structure
+ * This message configures a USART or USB port.
+ * ID: 0x06  0x00 Length=20 bytes
+ */
+PACK(
+struct CfgPrt {
+    UbloxHeader header;		//!< Ublox header
+    uint8_t port_id; //!< port identifier (0 or 1 for USART or 3 for USB)
+    uint8_t reserved; //!< reserved
+    uint16_t tx_ready; //!< transmit ready status
+    uint32_t reserved2; //!< reserved
+    uint32_t reserved3; //!< reserved
+    uint16_t input_mask; //!< input protocol mask
+    uint16_t output_mask; //!< output protocol mask
+    uint16_t reserved4; //!< reserved
+    uint16_t reserved5; //!< reserved
+    uint8_t checksum[2];
+});
+
+/*!
+ * AID-INI Message Structure
+ * This message allows a receiver to be reset.
+ * ID: 0x0B  0x01 Length=48 bytes
+ */
+struct AidIni {
+    UbloxHeader header;		//!< Ublox header
+    int32_t ecefXorLat;  //!< ECEF x position or latitude [cm or deg*1e-7]
+    int32_t ecefYorLon;  //!< ECEF y position or longitude [cm or deg*1e-7]
+    int32_t ecefZorAlt;  //!< ECEF z position or altitude [cm]
+    uint32_t position_accuracy; //!< position accuracy - std dev [cm]
+    uint16_t time_configuration; //!< time configuration bit misk
+    uint16_t week_number; //!< actual week number
+    uint32_t time_of_week; //!< actual time of week [ms]
+    int32_t time_of_week_ns; //!< fractional part of time of week [ns]
+    uint32_t time_accuracy_ms; //!< time accuracy [ms]
+    uint32_t time_accuracy_ns; //!< time accuracy [ns]
+    int32_t clock_drift_or_freq; //!< clock drift or frequency [ns/s or Hz*1e-2]
+    uint32_t clock_drift_or_freq_accuracy; //!< clock drift or frequency accuracy [ns/s or ppb]
+    uint32_t flags; //!< bit field that determines contents of other fields
+    uint8_t checksum[2];
+};
+
+/*!
+ * AID-EPH Message Structure
+ * This message allows a receiver to be reset.
+ * ID: 0x0B  0x31 Length=8 or 104 bytes
+ */
+struct AidEph {
+    UbloxHeader header;		//!< Ublox header
+    uint16_t nav_bbr_mask;  //!< Nav data to clear: 0x0000 = hot start, 0x0001 = warm start, 0xFFFF=cold start
+    uint8_t  reset_mode;     //!< Reset mode
+    uint8_t  reserved;       //!< reserved
+    uint8_t checksum[2];
+};
+
+/*!
+ * AID-ALM Message Structure
+ * This message allows a receiver to be reset.
+ * ID: 0x06  0x04 Length=4 bytes
+ */
+struct AidAlm {
+    UbloxHeader header;		//!< Ublox header
+    uint16_t nav_bbr_mask;  //!< Nav data to clear: 0x0000 = hot start, 0x0001 = warm start, 0xFFFF=cold start
+    uint8_t  reset_mode;     //!< Reset mode
+    uint8_t  reserved;       //!< reserved
+    uint8_t checksum[2];
+};
+
+/*!
+ * AID-HUI Message Structure
+ * This message allows a receiver to be reset.
+ * ID: 0x06  0x04 Length=4 bytes
+ */
+struct AidHui {
+    UbloxHeader header;		//!< Ublox header
+    uint16_t nav_bbr_mask;  //!< Nav data to clear: 0x0000 = hot start, 0x0001 = warm start, 0xFFFF=cold start
+    uint8_t  reset_mode;     //!< Reset mode
+    uint8_t  reserved;       //!< reserved
+    uint8_t checksum[2];
+};
 
 
 
