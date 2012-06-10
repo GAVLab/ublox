@@ -24,7 +24,7 @@ clean:
 test:
 	@mkdir -p build
 	@mkdir -p bin
-	cd build && cmake $(CMAKE_FLAGS) -DNOVATEL_BUILD_TESTS=1 -DNOVATEL_BUILD_EXAMPLES=1 ..
+	cd build && cmake $(CMAKE_FLAGS) -DUBLOX_BUILD_TESTS=1 -DUBLOX_BUILD_EXAMPLES=1 ..
 ifneq ($(MAKE),)
 	cd build && $(MAKE)
 else

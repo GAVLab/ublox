@@ -43,19 +43,18 @@ include_directories(${PROJECT_SOURCE_DIR}/include /usr/include/c++/4.6)
 set(UBLOX_SRCS src/ublox.cpp)
 # Add default header files
 set(UBLOX_HEADERS include/ublox/ublox.h 
-                    include/ublox/ublox_structures.h)
+                  include/ublox/ublox_structures.h)
 
 # Find Boost, if it hasn't already been found
-IF(NOT Boost_FOUND OR NOT Boost_SYSTEM_FOUND OR NOT Boost_FILESYSTEM_FOUND OR NOT Boost_THREAD_FOUND)
-    find_package(Boost COMPONENTS system filesystem thread REQUIRED)
-ENDIF(NOT Boost_FOUND OR NOT Boost_SYSTEM_FOUND OR NOT Boost_FILESYSTEM_FOUND OR NOT Boost_THREAD_FOUND)
+IF(NOT Boost_FOUND OR NOT Boost_SYSTEM_FOUND OR NOT Boost_THREAD_FOUND)
+    find_package(Boost COMPONENTS system thread REQUIRED)
+ENDIF(NOT Boost_FOUND OR NOT Boost_SYSTEM_FOUND OR NOT Boost_THREAD_FOUND)
 
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 
 set(UBLOX_LINK_LIBS ${Boost_SYSTEM_LIBRARY}
-                      ${Boost_FILESYSTEM_LIBRARY}
-                      ${Boost_THREAD_LIBRARY})
+                    ${Boost_THREAD_LIBRARY})
 
 # Find serial, if it hasn't already been found
 IF(NOT serial_FOUND)
@@ -64,8 +63,7 @@ ENDIF(NOT serial_FOUND)
 
 if(serial_FOUND)
   include_directories(${serial_INCLUDE_DIRS})
-  #list(APPEND UBLOX_LINK_LIBS ${serial_LIBRARIES} pthread rt)
-  list(APPEND UBLOX_LINK_LIBS serial pthread rt)
+  list(APPEND UBLOX_LINK_LIBS ${serial_LIBRARIES})
 else(serial_FOUND)
   message(FATAL_ERROR "Serial library was not found.")
 endif(serial_FOUND)
@@ -110,12 +108,12 @@ IF(UBLOX_BUILD_TESTS)
     include_directories(${GTEST_INCLUDE_DIRS})
 
     # Compile the atrv Test program
-    add_executable(ublox_tests tests/ublox_tests.cpp)
+    # add_executable(ublox_tests tests/ublox_tests.cpp)
     # Link the Test program to the atrv library
-    target_link_libraries(ublox_tests ${GTEST_BOTH_LIBRARIES}
-                          ublox)
+    # target_link_libraries(ublox_tests ${GTEST_BOTH_LIBRARIES}
+                          # ublox)
 
-    add_test(AllTestsIntest_ublox ublox_tests)
+    # add_test(AllTestsIntest_ublox ublox_tests)
 ENDIF(UBLOX_BUILD_TESTS)
 
 ## Setup install and uninstall
