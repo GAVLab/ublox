@@ -78,6 +78,9 @@ public:
      void ResetToHotStart();
 
      void SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output);
+     bool ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate);
+     bool PollMessage(uint8_t class_id, uint8_t msg_id);
+
 
 private:
 
@@ -108,13 +111,13 @@ private:
 	 */
 	void ReadSerialPort();
 
-    bool ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate);
+    //bool PollMessage2(uint8_t class_id, uint8_t msg_id);
     bool RequestLogOnChanged(std::string log); //!< request the given log from the receiver at the given rate
 	bool WaitForAck(int timeout); //!< waits for an ack from receiver (timeout in seconds)
 
-	void BufferIncomingData(unsigned char* msg, unsigned int length);
+    void BufferIncomingData(uint8_t* msg, size_t length);
 	//! Function to parse logs into a usable structure
-	void ParseLog(unsigned char* log, unsigned int logID);
+    void ParseLog(uint8_t* log, size_t logID);
 	void Parse_rxm_eph();
 
     //////////////////////////////////////////////////////
@@ -163,7 +166,7 @@ private:
 	unsigned short msgID;
 	struct s_ubx ubx;
 	
-    void calculateCheckSum(unsigned char* in, unsigned int length, unsigned char* out);
+    void calculateCheckSum(uint8_t* in, size_t length, uint8_t* out);
 
 };
 }

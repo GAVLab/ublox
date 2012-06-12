@@ -67,7 +67,7 @@ struct NavSol{
  * message CFG-DAT.
  * ID: 0x01  0x02  Length=28 bytes
  */
-PACK(
+//PACK(
 struct NavPosLLH{
     UbloxHeader header;		//!< Ublox header
     uint32_t iTOW;			//!< GPS millisecond time of week
@@ -78,7 +78,7 @@ struct NavPosLLH{
 	uint32_t horizontal_accuracy; //!< horizontal accuracy estimate [mm]
 	uint32_t vertical_accuracy;	//!< vertical accuracy estimate [mm]
     uint8_t checksum[2];
-});
+}__attribute__((packed));//);
 
 /*!
  * NAV-VELNED Message Structure
@@ -110,11 +110,23 @@ struct NavVelNed{
  * This message requests a message at a given rate.
  * ID: 0x06  0x01 Length=3 bytes
  */
-struct CfgMsg {
+struct CfgMsgRate {
     UbloxHeader header;		//!< Ublox header
     uint8_t message_class;  //!< class of message to request
     uint8_t message_id;     //!< id of message to request
     uint8_t rate;           //!< rate message will be sent
+    uint8_t checksum[2];
+};
+
+/*!
+ * CFM-MSG Message Structure
+ * This message requests a message once.
+ * ID: 0x06  0x01 Length=2 bytes
+ */
+struct CfgMsg {
+    UbloxHeader header;		//!< Ublox header
+    uint8_t message_class;  //!< class of message to request
+    uint8_t message_id;     //!< id of message to request
     uint8_t checksum[2];
 };
 

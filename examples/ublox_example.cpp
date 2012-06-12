@@ -35,7 +35,11 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    //while(1);
+    // configure receiver
+    // request NAVPOSLLH message
+    my_gps.ConfigureMessageRate(0x01, 0x02, 1);
+
+    while(1);
 
     my_gps.Disconnect();
 

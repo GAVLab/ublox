@@ -52,11 +52,11 @@ inline void DefaultErrorMsgCallback(const std::string &msg) {
 }
 
 inline void DefaultNavPosLlhCallback(NavPosLLH nav_position, double time_stamp){
-    std:: cout << "NAV-POSLLH: \n" << std::endl; /*GPS Week: " << best_position.header.gps_week <<
-                  "  GPS milliseconds: " << best_position.header.gps_millisecs << std::endl <<
-                  "  Latitude: " << best_position.latitude << std::endl <<
-                  "  Longitude: " << best_position.longitude << std::endl <<
-                  "  Height: " << best_position.height << std::endl << std::endl;*/
+    std:: cout << "NAV-POSLLH: \n" <<
+                  "  GPS milliseconds: " << nav_position.iTOW << std::endl <<
+                  "  Latitude: " << nav_position.latitude_scaled << std::endl <<
+                  "  Longitude: " << nav_position.longitude_scaled << std::endl <<
+                  "  Height: " << nav_position.height << std::endl << std::endl;
 }
 
 Ublox::Ublox() {
@@ -64,9 +64,9 @@ Ublox::Ublox() {
 	reading_status_=false;
 	time_handler_ = DefaultGetTime;
     handle_acknowledgement_=DefaultAcknowledgementHandler;
-   	NavPosLLHCallback nav_pos_llh_callback_;
-	NavSolCallback nav_sol_callback_;
-	NavVelNedCallback nav_vel_ned_callback;
+    nav_pos_llh_callback_=DefaultNavPosLlhCallback;
+    //nav_sol_callback_;
+    //nav_vel_ned_callback;
     log_debug_=DefaultDebugMsgCallback;
     log_info_=DefaultInfoMsgCallback;
     log_warning_=DefaultWarningMsgCallback;
@@ -83,7 +83,7 @@ Ublox::~Ublox() {
 
 bool Ublox::Connect(std::string port, int baudrate) {
     //serial_port_ = new serial::Serial(port,baudrate,serial::Timeout::simpleTimeout(1000));
-    serial::Timeout my_timeout(1000,50,0,50,0);
+    serial::Timeout my_timeout(100,1000,0,1000,0);
     serial_port_ = new serial::Serial(port,baudrate,my_timeout);
 
     if (!serial_port_->isOpen()){
@@ -99,21 +99,30 @@ bool Ublox::Connect(std::string port, int baudrate) {
         log_info_(output.str());
     }
 
-    std::cout << "Flushing port" << std::endl;
+    //std::cout << "Flushing port" << std::endl;
     serial_port_->flush();
 
     // stop any incoming data and flush buffers
     // stop any incoming nmea data
     //SetPortConfiguration(true,true,false,false);
     // wait for data to stop cominig in
-    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-    unsigned char result[5000];
-    size_t bytes_read;
-    bytes_read=serial_port_->read(result, 5000);
-    std::cout << result << std::endl;
-    std::cout << "flushing port" << std::endl;
+   // boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+   // unsigned char result[5000];
+   // size_t bytes_read;
+   // bytes_read=serial_port_->read(result, 5000);
+//    std::cout << result << std::endl;
+//    std::cout << "flushing port" << std::endl;
+//    // clear serial port buffers
+//    serial_port_->flush();
+
+    // turn off NMEA messages
+   // ConfigureMessageRate(0x0F, 0x00, 0);
+  //  boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+   // bytes_read=serial_port_->read(result, 5000);
+   // std::cout << result << std::endl;
+   // std::cout << "flushing port" << std::endl;
     // clear serial port buffers
-    serial_port_->flush();
+    //serial_port_->flush();
 
     // look for GPS by sending ping and waiting for response
     if (!Ping()){
@@ -135,26 +144,17 @@ bool Ublox::Ping(int num_attempts) {
     while ((num_attempts--)>0) {
         log_info_("Searching for Ublox receiver...");
         // request version information
-        unsigned char poll_request[8];
-        poll_request[0]=0xB5;
-        poll_request[1]=0x62;
-        poll_request[2]=0x0A;
-        poll_request[3]=0x04;
-        poll_request[4]=0x00;
-        poll_request[5]=0x00;
-        calculateCheckSum(poll_request+2, 4, poll_request+6);
 
-        //serial_port_->write(poll_request, 8);
-
-        // wait for response
+        // ask for version
+        PollMessage(0x0A,0x04);
         boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 
         unsigned char result[5000];
         size_t bytes_read;
         bytes_read=serial_port_->read(result, 5000);
 
-        std::cout << "bytes read: " << bytes_read << std::endl;
-        std::cout << result << std::endl;
+        //std::cout << "bytes read: " << (int)bytes_read << std::endl;
+        //std::cout << dec << result << std::endl;
 
         if (bytes_read<8)
             continue;
@@ -170,12 +170,12 @@ bool Ublox::Ping(int num_attempts) {
                     continue;
                 if (result[ii+3]!=0x04)
                     continue;
-                std::cout << "length1:" << hex << (unsigned int)result[ii+4] << std::endl;
-                std::cout << "length2:" << hex << (unsigned int)result[ii+5] << std::endl;
+                //std::cout << "length1:" << hex << (unsigned int)result[ii+4] << std::endl;
+                //std::cout << "length2:" << hex << (unsigned int)result[ii+5] << std::endl;
                 length=(result[ii+4])+(result[ii+5]<<8);
-                if (length<70) {
+                if (length<40) {
                     log_warning_("Incomplete version message received");
-                    //return false;
+                //    //return false;
                     continue;
                 }
 
@@ -184,11 +184,11 @@ bool Ublox::Ping(int num_attempts) {
                 string rom_version;
                 sw_version.append((char*)(result+6));
                 hw_version.append((char*)(result+36));
-                rom_version.append((char*)(result+46));
+                //rom_version.append((char*)(result+46));
                 log_info_("Ublox receiver found.");
                 log_info_("Software Version: " + sw_version);
                 log_info_("Hardware Version: " + hw_version);
-                log_info_("ROM Version: " + rom_version);
+                //log_info_("ROM Version: " + rom_version);
                 return true;
             }
         }
@@ -216,7 +216,7 @@ void Ublox::StopReading() {
 }
 
 void Ublox::ReadSerialPort() {
-    unsigned char buffer[MAX_NOUT_SIZE];
+    uint8_t buffer[MAX_NOUT_SIZE];
     size_t len;
 
     // continuously read data from serial port
@@ -274,9 +274,50 @@ bool Ublox::RequestLogOnChanged(string logID) {
 
 }
 
+//bool Ublox::PollMessage(uint8_t class_id, uint8_t msg_id){
+
+//    CfgMsg message;
+//    message.header.sync1=0xB5;
+//    message.header.sync2=0x62;
+//    message.header.message_class=0x06;
+//    message.header.message_id=0x01;
+//    message.header.payload_length=2;
+
+//    message.message_class=class_id;
+//    message.message_id=msg_id;
+
+//    unsigned char* msg_ptr = (unsigned char*)&message;
+//    calculateCheckSum(msg_ptr+2,6,message.checksum);
+
+//    size_t bytes_written=serial_port_->write(msg_ptr, sizeof(message));
+//    return bytes_written==sizeof(message);
+//}
+
+bool Ublox::PollMessage(uint8_t class_id, uint8_t msg_id){
+
+    uint8_t message[8];
+
+    message[0]=0xB5;    // sync 1
+    message[1]=0x62;    // sync 2
+    message[2]=class_id;
+    message[3]=msg_id;
+    message[4]=0;   // length 1
+    message[5]=0;   // length 2
+    message[6]=0;   // checksum 1
+    message[7]=0;   // checksum 2
+
+    uint8_t* msg_ptr = (uint8_t*)&message;
+    calculateCheckSum(msg_ptr+2,4,msg_ptr+6);
+
+    //printHex((char*)msg_ptr, 8);
+
+    size_t bytes_written=serial_port_->write(message, 8);
+    return bytes_written==8;
+}
+
 bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate) {
 	
-    CfgMsg message;
+    CfgMsgRate message;
     message.header.sync1=0xB5;
     message.header.sync2=0x62;
     message.header.message_class=0x06;
@@ -286,6 +327,8 @@ bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate)
     message.message_class=class_id;
     message.message_id=msg_id;
     message.rate=rate;
+
+    //std::cout << "CfgMsg size: " << sizeof(message) << std::endl;
 
     unsigned char* msg_ptr = (unsigned char*)&message;
     calculateCheckSum(msg_ptr+2,7,message.checksum);
@@ -344,15 +387,18 @@ void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_inpu
 
 
 
-void Ublox::BufferIncomingData(unsigned char *msg, unsigned int length)
+void Ublox::BufferIncomingData(uint8_t *msg, size_t length)
 {
 	//MOOSTrace("Inside BufferIncomingData\n");
-	//cout << length << endl;
+    //cout << length << endl;
     //cout << 0 << ": " << dec << (int)msg[0] << endl;
 	// add incoming data to buffer
+
+    printHex(reinterpret_cast<char*>(msg),length);
+
 	for (unsigned int i=0; i<length; i++)
 	{
-		//cout << i << ": " << hex << (int)msg[i] << dec << endl;
+        //cout << i << ": " << hex << (int)msg[i] << dec << endl;
         // make sure buffer_index_ is not larger than buffer
         if (buffer_index_>=MAX_NOUT_SIZE)
 		{
@@ -422,7 +468,7 @@ void Ublox::BufferIncomingData(unsigned char *msg, unsigned int length)
 			// add byte to buffer
             data_buffer_[buffer_index_++]=msg[i];
 			// length of message (payload + 2 byte check sum)
-            bytes_remaining_ = ((data_buffer_[buffer_index_-1])<<8)+data_buffer_[buffer_index_-2]+2;
+            bytes_remaining_ = ((data_buffer_[buffer_index_-1])<<8)+data_buffer_[buffer_index_-2]+1;
 			
             //cout << "bytes_remaining_ = " << bytes_remaining_ << endl;
 			
@@ -436,8 +482,8 @@ void Ublox::BufferIncomingData(unsigned char *msg, unsigned int length)
         else if (bytes_remaining_==1)
 		{	// add last byte and parse
             data_buffer_[buffer_index_++]=msg[i];
-			//cout << " msgID = " << msgID << endl;
-            ParseLog(data_buffer_+4,msgID);
+            //cout << " msgID = " << msgID << endl;
+            ParseLog(data_buffer_,msgID);
 			// reset counters
             buffer_index_=0;
             bytes_remaining_=0;
@@ -468,19 +514,26 @@ bool Ublox::WaitForAck(int timeout) {
 	}
 }
 
-void Ublox::ParseLog(unsigned char *log, unsigned int logID)
+void Ublox::ParseLog(uint8_t *log, size_t logID)
 {
-
 	int length;
 
 	switch (logID)
 	{
 
-        case NAV_SOL:
+        case NAV_POSLLH:
+            NavPosLLH cur_nav_position;
+            std::cout << sizeof(cur_nav_position) << std::endl;
+            memcpy(&cur_nav_position, log, sizeof(cur_nav_position));
+            std::cout << "header: " << std::endl;
+            std::cout << hex << (int)cur_nav_position.header.message_class <<std::endl;
+            std::cout << hex << (int)cur_nav_position.header.message_id <<std::endl;
+            std::cout << dec << (int)cur_nav_position.header.payload_length <<std::endl;
+            std::cout << dec << cur_nav_position.iTOW << std::endl;
+            std::cout << dec << cur_nav_position.latitude_scaled << std::endl;
 
-            //memcpy(&curNavSolData, log+2, sizeof(curNavSolData));
-			//PublishNavSolToDB(curNavSolData);
-			break;
+            nav_pos_llh_callback_(cur_nav_position, read_timestamp_);
+            break;
         case RXM_EPH:
 
 			
@@ -524,13 +577,13 @@ void Ublox::ParseLog(unsigned char *log, unsigned int logID)
 }
 
 
-void Ublox::calculateCheckSum(unsigned char* in, unsigned int length, unsigned char* out)
+void Ublox::calculateCheckSum(uint8_t* in, size_t length, uint8_t* out)
 {
 
-	unsigned int a = 0;
-	unsigned int b = 0;
+    uint8_t a = 0;
+    uint8_t b = 0;
 		
-	for(unsigned int i=2; i<length; i++)
+    for(uint8_t i=0; i<length; i++)
 	{
 		
 		a = a + in[i];
