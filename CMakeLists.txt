@@ -44,7 +44,7 @@ else(BUILD_WITH_ROS)
 
   if(serial_FOUND)
     include_directories(${serial_INCLUDE_DIRS})
-    list(APPEND UBLOX_LINK_LIBS ${serial_LIBRARIES} rt)
+    list(APPEND UBLOX_LINK_LIBS ${serial_LIBRARIES})
   else(serial_FOUND)
     message(FATAL_ERROR "Serial library was not found.")
   endif(serial_FOUND)
