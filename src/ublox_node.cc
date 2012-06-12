@@ -1,49 +1,57 @@
+#include <string>
+
 #include "ros/ros.h"
+#include "sensor_msgs/NavSatFix.h"
 
-// ros::Publisher imu_pub;
-// string frame_id;
+#include "ublox/ublox.h"
 
-// void PublishImuData(const ImuData& data) {
-//     sensor_msgs::Imu msg;
-//     msg.header.stamp.fromSec(data.receive_time);
-//     msg.header.frame_id = frame_id;
-//     msg.angular_velocity.x = data.rollrate;
-//     msg.angular_velocity.y = data.pitchrate;
-//     msg.angular_velocity.z = data.yawrate;
-//     msg.linear_acceleration.x = data.ax;
-//     msg.linear_acceleration.y = data.ay;
-//     msg.linear_acceleration.z = data.az;
-//     imu_pub.publish(msg);
-// }
+using std::string;
 
-// double GetTime() {
-//     return ros::Time::now().toSec();
-// }
-
-int main(int argc, char **argv)
+class UbloxNode
 {
-  ros::init(argc, argv, "xbow440_node");
-  ros::NodeHandle node_handle("~");
+public:
+  UbloxNode() : nh_("~"), port_("")
+  {
+    this->getROSParameters();
+    this->configureROSCommunications();
+  }
+  ~UbloxNode() {
 
-  // imu_pub = node_handle.advertise<sensor_msgs::Imu>("imu/data", 1);
+  }
 
-  string port_name;
-  node_handle.param("port", port_name, string("/dev/ttyS0"));
-  int baudrate;
-  node_handle.param<int>("baudrate", baudrate, 57600);
-  node_handle.param<string>("frame_id", frame_id, string("imu_frame"));
+  void run() {
+    bool connect_result = false;
+    try {
+      connect_result = ublox_.Connect(port_, baudrate_);
+    } catch (const std::exception &e) {
+      ROS_ERROR_STREAM("Error connecting to the uBlox on port `"
+                       << port_ << "`: " << e.what());
+    }
+  }
 
-  // XBOW440 xbow;
-  // xbow.set_time_handler(GetTime);
-  // xbow.set_data_handler(PublishImuData);
-  // if (xbow.Connect(port_name, baudrate)) {
-    ros::spin();
-    // xbow.Disconnect();
-  // } else {
-    // ROS_ERROR("The xbow did not connect, "
-              // "using port %s at baudrate %i",
-              // port_name.c_str(), baudrate);
-  // }
+  void getROSParameters() {
+    nh_.param<std::string>("port", port_, "/dev/ttyACM0");
+    nh_.param<int>("baudrate", baudrate_, 115200);
+  }
+
+  void configureROSCommunications() {
+    navsatfix_pub_ = nh_.advertise<sensor_msgs::NavSatFix>("fix", 1000);
+  }
+
+private:
+  ros::NodeHandle nh_;
+  string port_;
+  int baudrate_;
+  ros::Publisher navsatfix_pub_;
+
+  ublox::Ublox ublox_;
+};
+
+int main (int argc, char **argv) {
+  ros::init(argc, argv, "ublox_node");
+
+  UbloxNode ublox_node;
+  ublox_node.run();
 
   return 0;
 }

@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/ublox</url>
   <depend package="roscpp"/>
   <depend package="serial"/>
+  <depend package="sensor_msgs"/>
 
 </package>
 
