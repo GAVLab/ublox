@@ -54,7 +54,24 @@ void serial_lib(char* port) {
 }
 
 void unix_lib(char* port) {
-    int fd_ = ::open ("/dev/ttyACM0", O_RDWR | O_NOCTTY | O_NONBLOCK);
+    int fd_ = ::open (port, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    if (fd_ == -1) {
+        printf("Error opening serial port.\n");
+        return;
+    }
+    struct termios options; // The options for the file descriptor
+
+    if (tcgetattr(fd_, &options) == -1) {
+        printf("Error getting serial port settings.\n");
+    }
+
+    ::cfsetispeed(&options, B9600);
+    ::cfsetospeed(&options, B9600);
+
+    options.c_cc[VMIN] = 36;
+    options.c_cc[VTIME] = 10;
+
+    ::tcsetattr (fd_, TCSANOW, &options);
 
     while (1) {
         uint8_t buffer[5000];
