@@ -14,10 +14,7 @@ typedef boost::function<double()> GetTimeCallback;
 typedef boost::function<void()> HandleAcknowledgementCallback;
 
 // Messaging callbacks
-typedef boost::function<void(const std::string&)> DebugMsgCallback;
-typedef boost::function<void(const std::string&)> InfoMsgCallback;
-typedef boost::function<void(const std::string&)> WarningMsgCallback;
-typedef boost::function<void(const std::string&)> ErrorMsgCallback;
+typedef boost::function<void(const std::string&)> LogMsgCallback;
 
 // GPS Data Callbacks
 typedef boost::function<void(NavPosLLH&, double&)> NavPosLLHCallback;
@@ -82,6 +79,20 @@ public:
      bool PollMessage(uint8_t class_id, uint8_t msg_id);
 
 
+    //////////////////////////////////////////////////////
+    // Diagnostic Callbacks
+    //////////////////////////////////////////////////////
+    LogMsgCallback log_debug_;
+    LogMsgCallback log_info_;
+    LogMsgCallback log_warning_;
+    LogMsgCallback log_error_;
+
+    //////////////////////////////////////////////////////
+    // Data Callbacks
+    //////////////////////////////////////////////////////
+    HandleAcknowledgementCallback handle_acknowledgement_;
+    GetTimeCallback time_handler_; //!< Function pointer to callback function for timestamping
+
 private:
 
 	/*!
@@ -128,17 +139,6 @@ private:
 	//! shared pointer to Boost thread for listening for data from novatel
 	boost::shared_ptr<boost::thread> read_thread_ptr_;
 	bool reading_status_;  //!< True if the read thread is running, false otherwise.
-
-	//////////////////////////////////////////////////////
-    // Diagnostic Callbacks
-    //////////////////////////////////////////////////////
-    HandleAcknowledgementCallback handle_acknowledgement_;
-    DebugMsgCallback log_debug_;
-    InfoMsgCallback log_info_;
-    WarningMsgCallback log_warning_;
-    ErrorMsgCallback log_error_;
-
-    GetTimeCallback time_handler_; //!< Function pointer to callback function for timestamping
 
 
     //////////////////////////////////////////////////////
