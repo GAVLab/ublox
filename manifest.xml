@@ -8,6 +8,7 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/ublox</url>
+  <depend package="roscpp"/>
   <depend package="serial"/>
 
 </package>
