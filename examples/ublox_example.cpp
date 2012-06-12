@@ -35,7 +35,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    //while(1);
+    while(1);
 
     my_gps.Disconnect();
 
