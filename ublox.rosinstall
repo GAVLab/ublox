@@ -1,0 +1,1 @@
+- git: {local-name: 'ublox', uri: 'https://github.com/GAVLab/ublox.git', version: 'master'}

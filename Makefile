@@ -1,4 +1,4 @@
-all: novatel
+all: ublox
 
 install:
 	cd build && make install
@@ -6,7 +6,7 @@ install:
 uninstall:
 	cd build && make uninstall
 
-novatel:
+ublox:
 	@mkdir -p build
 	-mkdir -p bin
 	cd build && cmake $(CMAKE_FLAGS) ..
