@@ -44,7 +44,7 @@ else(BUILD_WITH_ROS)
 
   if(serial_FOUND)
     include_directories(${serial_INCLUDE_DIRS})
-    list(APPEND UBLOX_LINK_LIBS ${serial_LIBRARIES})
+    list(APPEND UBLOX_LINK_LIBS ${serial_LIBRARIES} rt)
   else(serial_FOUND)
     message(FATAL_ERROR "Serial library was not found.")
   endif(serial_FOUND)
@@ -71,7 +71,11 @@ list(APPEND UBLOX_LINK_LIBS ${Boost_SYSTEM_LIBRARY}
 ## Build the ublox Library
 
 # Compile the Library
-add_library(ublox ${UBLOX_SRCS} ${UBLOX_HEADERS})
+if(BUILD_WITH_ROS)
+    rosbuild_add_library(ublox ${UBLOX_SRCS} ${UBLOX_HEADERS})
+else(BUILD_WITH_ROS)
+    add_library(ublox ${UBLOX_SRCS} ${UBLOX_HEADERS})
+endif(BUILD_WITH_ROS)
 target_link_libraries(ublox ${UBLOX_LINK_LIBS})
 
 ## Build the ROS wrapper
@@ -89,6 +93,8 @@ IF(UBLOX_BUILD_EXAMPLES)
     add_executable(ublox_example examples/ublox_example.cpp)
     # Link the Test program to the ublox library
     target_link_libraries(ublox_example ublox ${UBLOX_LINK_LIBS})
+    add_executable(simple examples/simple.cc)
+    target_link_libraries(simple ublox ${UBLOX_LINK_LIBS})
 ENDIF(UBLOX_BUILD_EXAMPLES)
 
 ## Build tests
