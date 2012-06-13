@@ -442,17 +442,16 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length)
 				//cout << "got ACK " << endl;
                 buffer_index_ = 0;
                 bytes_remaining_=0;
-				readingACK = false;
+				readingACK = false;							//? Why is readingACK = false in if & else statement? - CC
 			}
 			else
 			{
                 data_buffer_[buffer_index_++]=msg[i];
-				readingACK = false;
+				readingACK = false;							
 			}
 		}
         else if (buffer_index_==3)
 		{	
-			
 			// msg[i] and msg[i-1] define message ID
             data_buffer_[buffer_index_++]=msg[i];
 			// length of header is in byte 4
@@ -534,20 +533,22 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 
             nav_pos_llh_callback_(cur_nav_position, read_timestamp_);
             break;
-        case RXM_EPH:
-
+		// case AID_EPH:		// Same format as RXM_EPH
+		case RXM_EPH:			// uBlox datasheet says to use AID_EPH instead
+								// Get this one working first, then should just have to change logID value and object names to do with AID_EPH - CC
 			
 			length = ((log[1])<<8) + log[0];
 			if (length == 0x68)
 			{
-							
-                //ubx.rxm_eph = (struct s_rxm_eph*) log;
-			//	cout << "ubx length " << ubx.rxm_eph->len << endl;
-			//	cout << "ubx prn " << ubx.rxm_eph->svprn << endl;
-                //Parse_rxm_eph();
-                //curGpsEphem.prn=ubx.rxm_eph->svprn;
-			//	PublishGpsEphemToDB(curGpsEphem,MOOSTime());
-				
+                ubx.rxm_eph = (struct s_rxm_eph*) log;							//? What is this doing? Type casting? - CC
+				cout << "ubx length " << ubx.rxm_eph->len << endl;
+
+				cout << "ubx prn " << ubx.rxm_eph->svprn << endl;
+				gpsephemb_data curGpsEphem;										//? Check this - CC
+                Parse_rxm_eph();								
+                 curGpsEphem.prn=ubx.rxm_eph->svprn;
+
+				//PublishGpsEphemToDB(curGpsEphem,MOOSTime());
 			}
 			
 			break;
@@ -600,7 +601,7 @@ void Ublox::calculateCheckSum(uint8_t* in, size_t length, uint8_t* out)
 
 void Ublox::Parse_rxm_eph()
 {
-/*
+
 	union {
 		unsigned short s;
 		unsigned char c[2];
@@ -653,7 +654,7 @@ void Ublox::Parse_rxm_eph()
 	 }
 	 curGpsEphem.af0 = ((double) union_int.i) * pow(2.0,-31);
 	 
-	 //M_0
+	 //M_0 - Mean Anomoly Reference Time
 	 union_int.c[0] = ubx.rxm_eph->SF[1].W[2].bit[0];
 	 union_int.c[1] = ubx.rxm_eph->SF[1].W[2].bit[1];
 	 union_int.c[2] = ubx.rxm_eph->SF[1].W[2].bit[2];
@@ -665,28 +666,28 @@ void Ublox::Parse_rxm_eph()
 	 union_short.c[1] = ubx.rxm_eph->SF[1].W[1].bit[2];
 	 curGpsEphem.dN = ((double) union_short.s) * pow(2.0,-43) * PI;
 	 
-	 //ecc
+	 //ecc - Eccentricity
 	 union_unsigned_int.c[0] = ubx.rxm_eph->SF[1].W[4].bit[0];
 	 union_unsigned_int.c[1] = ubx.rxm_eph->SF[1].W[4].bit[1];
 	 union_unsigned_int.c[2] = ubx.rxm_eph->SF[1].W[4].bit[2];
 	 union_unsigned_int.c[3] = ubx.rxm_eph->SF[1].W[3].bit[0];
 	 curGpsEphem.ecc = ((double) union_unsigned_int.i) * pow(2.0,-33);
 	 
-	 //sqrtA
+	 //sqrtA - Square root of the semi-major axis
 	 union_unsigned_int.c[0] = ubx.rxm_eph->SF[1].W[6].bit[0];
 	 union_unsigned_int.c[1] = ubx.rxm_eph->SF[1].W[6].bit[1];
 	 union_unsigned_int.c[2] = ubx.rxm_eph->SF[1].W[6].bit[2];
 	 union_unsigned_int.c[3] = ubx.rxm_eph->SF[1].W[5].bit[0];
 	 curGpsEphem.majaxis = ((double) union_unsigned_int.i) * pow(2.0,-19);
 	 
-	 //OMEGA_0
+	 //OMEGA_0 - Longitude of Ascending Node of Orbit Plane at Weekly Epoch
 	 union_int.c[0] = ubx.rxm_eph->SF[2].W[1].bit[0];
 	 union_int.c[1] = ubx.rxm_eph->SF[2].W[1].bit[1];
 	 union_int.c[2] = ubx.rxm_eph->SF[2].W[1].bit[2];
 	 union_int.c[3] = ubx.rxm_eph->SF[2].W[0].bit[0];
 	 curGpsEphem.wo = ((double) union_int.i) * pow(2.0,-31) * PI;
 	 
-	 //i_0
+	 //i_0 - Inclination Angle
 	 union_int.c[0] = ubx.rxm_eph->SF[2].W[3].bit[0];
 	 union_int.c[1] = ubx.rxm_eph->SF[2].W[3].bit[1];
 	 union_int.c[2] = ubx.rxm_eph->SF[2].W[3].bit[2];
@@ -715,7 +716,7 @@ void Ublox::Parse_rxm_eph()
 	 }
 	 curGpsEphem.dwo = ((double) union_int.i) * pow(2.0,-43) * PI;
 	 
-	 //IDOT
+	 //IDOT - Rate of Inclination Angle
 	 union_short.c[0] = ubx.rxm_eph->SF[2].W[7].bit[0];
 	 union_short.c[1] = ubx.rxm_eph->SF[2].W[7].bit[1];
 	 union_short.s = union_short.s>>2;
@@ -763,7 +764,11 @@ void Ublox::Parse_rxm_eph()
 	 union_unsigned_short.c[0] = ubx.rxm_eph->SF[1].W[7].bit[1];
 	 union_unsigned_short.c[1] = ubx.rxm_eph->SF[1].W[7].bit[2];
 	 curGpsEphem.toe = ((double) union_unsigned_short.s) * pow(2.0,4);
-    */
+    
+	 // Additions by CC
+
+	 // URA Index - User Range Accuracy
+	 curGpsEphem.ura = ubx.rxm_eph->SF[0].W[0].bit[]
 }
 
 

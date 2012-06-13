@@ -244,44 +244,43 @@ struct AidHui {
 
 
 struct gpsephemb_data {
-    unsigned long prn; //PRN number
-    double tow; //time stamp of subframe 0 (s)
-    unsigned long health; //health status, defined in ICD-GPS-200
-    unsigned long iode1; //issue of ephemeris data 1
-    unsigned long iode2; //issue of ephemeris data 2
-    unsigned long week; //GPS week number
-    unsigned long zweek; //z count week number
-    double toe; //reference time for ephemeris (s)
-    double majaxis; //semi major axis (m)
-    double dN; //Mean motion difference (rad/s)
-    double anrtime; //mean anomoly reference time (rad)
-    double ecc; //eccentricity
-    double omega; //arguement of perigee (rad)
-    double cuc; //arugument of latitude - cos (rad)
-    double cus; //argument of latitude - sine (rad)
-    double crc; //orbit radius - cos (rad)
-    double crs; //orbit radius - sine (rad)
-    double cic; //inclination - cos (rad)
-    double cis; //inclination - sine (rad)
-    double ia; //inclination angle (rad)
-    double dia; //rate of inclination angle (rad/s)
-    double wo; //right ascension (rad)
-    double dwo; //rate of right ascension (rad/s)
-    unsigned long iodc; //issue of data clock
-    double toc; //SV clock correction term (s)
-    double tgd; //estimated group delay difference
-    double af0; //clock aiging parameter 0
-    double af1; //clock aiging parameter 1
-    double af2; //clock aiging parameter 2
-//    yes_no spoof; //anti spoofing on
-    double cmot; //corrected mean motion
-    double ura; //user range accuracy variance
+    unsigned long prn;			//PRN number
+    double tow;					//time stamp of subframe 0 (s)
+    unsigned long health;		//health status, defined in ICD-GPS-200
+    unsigned long iode1;		//issue of ephemeris data 1
+    unsigned long iode2;		//issue of ephemeris data 2
+    unsigned long week;			//GPS week number
+    unsigned long zweek;		//z count week number
+    double toe;					//reference time for ephemeris (s)
+    double majaxis;				//semi major axis (m)
+    double dN;					//Mean motion difference (rad/s)
+    double anrtime;				//mean anomoly reference time (rad)
+    double ecc;					//eccentricity
+    double omega;				//arguement of perigee (rad)
+    double cuc;					//arugument of latitude - cos (rad)
+    double cus;					//argument of latitude - sine (rad)
+    double crc;					//orbit radius - cos (rad)
+    double crs;					//orbit radius - sine (rad)
+    double cic;					//inclination - cos (rad)
+    double cis;					//inclination - sine (rad)
+    double ia;					//inclination angle (rad) 
+    double dia;					//rate of inclination angle (rad/s)
+    double wo;					//right ascension (rad)
+    double dwo;					//rate of right ascension (rad/s)
+    unsigned long iodc;			//issue of data clock
+    double toc;					//SV clock correction term (s)
+    double tgd;					//estimated group delay difference						//? .cpp file uses a char type for tgd, this ok??
+    double af0;					//clock aiging parameter 0										// also happens on af0 
+    double af1;					//clock aiging parameter 1
+    double af2;					//clock aiging parameter 2
+//    yes_no spoof;			//anti spoofing on
+    double cmot;				//corrected mean motion
+    unsigned int ura;			//user range accuracy variance (value 0-15)
 } ;
 
+// Nested Structures Containing Ephemeris (Subframes 1-3)
 struct s_ubx{
-
 	struct s_rxm_eph *rxm_eph;
-
 };
 
 struct s_rxm_eph_W{
@@ -293,14 +292,13 @@ struct s_rxm_eph_SF{
 };
 
 struct s_rxm_eph{
-	
 	unsigned short len;
 	unsigned long svprn;
 	unsigned long HOW;
 	struct s_rxm_eph_SF SF[3];
-	
-};
+//------------------------------------------------
 
+// 
 struct range_data {
 
 	double adr;
@@ -326,7 +324,8 @@ enum Message_ID
 {
 	
 	NAV_SOL = 262,
-	RXM_EPH = 561,
+	RXM_EPH = 561,				// (ID 0x02 0x31) Ephemerides
+	AID_EPH = 2865,				// (ID 0x0B 0x31) Ephemerides also
 	rangeID = 528,
 	NAV_VELNED = 274,
 	NAV_POSLLH = 258,
@@ -336,4 +335,12 @@ enum Message_ID
 
 //typedef enum BINARY_LOG_TYPE BINARY_LOG_TYPE;
 
+// Scale factors for ephemeris parameters (from ICD-GPS-200)
+/*
+struct eph_param_sf {
+
+
+
+};
+*/
 #endif
