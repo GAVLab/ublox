@@ -20,6 +20,8 @@ typedef boost::function<void(const std::string&)> LogMsgCallback;
 typedef boost::function<void(NavPosLLH&, double&)> NavPosLLHCallback;
 typedef boost::function<void(NavSol&, double&)> NavSolCallback;
 typedef boost::function<void(NavVelNed&, double&)> NavVelNedCallback;
+typedef boost::function<void(EphemSV&, double&)> AidEphCallback;
+typedef boost::function<void(AlmSV&, double&)> AidAlmCallback;
 
 class Ublox
 {
@@ -129,7 +131,8 @@ private:
     void BufferIncomingData(uint8_t* msg, size_t length);
 	//! Function to parse logs into a usable structure
     void ParseLog(uint8_t* log, size_t logID);
-	void Parse_rxm_eph();
+	//! Function to parse out useful ephemeris parameters
+	gpsephemb_data Parse_aid_eph(EphemSV ubx_eph);
 
     //////////////////////////////////////////////////////
     // Serial port reading members
@@ -147,6 +150,8 @@ private:
     NavPosLLHCallback nav_pos_llh_callback_;
 	NavSolCallback nav_sol_callback_;
 	NavVelNedCallback nav_vel_ned_callback;
+	AidEphCallback aid_eph_callback_;
+	AidAlmCallback aid_alm_callback_;
 
 	bool ackReceived;
 	bool readingACK;
@@ -164,7 +169,6 @@ private:
 	double parse_timestamp_;		//!< time stamp when last parse began
 	int hdrLength;
 	unsigned short msgID;
-	struct s_ubx ubx;
 	
     void calculateCheckSum(uint8_t* in, size_t length, uint8_t* out);
 

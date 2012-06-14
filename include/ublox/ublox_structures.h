@@ -1,4 +1,4 @@
-// Novatel OEM4 Data Structures
+// uBlox LEA-6T Data Structures
 #ifndef UBLOXSTRUCTURES_H
 #define UBLOXSTRUCTURES_H
 
@@ -240,11 +240,9 @@ struct AidHui {
     uint8_t checksum[2];
 };
 
-
-
-
-struct gpsephemb_data {
-    unsigned long prn;			//PRN number
+/*
+struct gpsephem_data {
+    uint32_t prn;				//PRN number
     double tow;					//time stamp of subframe 0 (s)
     unsigned long health;		//health status, defined in ICD-GPS-200
     unsigned long iode1;		//issue of ephemeris data 1
@@ -276,29 +274,46 @@ struct gpsephemb_data {
 //    yes_no spoof;			//anti spoofing on
     double cmot;				//corrected mean motion
     unsigned int ura;			//user range accuracy variance (value 0-15)
-} ;
+} ;*/
 
-// Nested Structures Containing Ephemeris (Subframes 1-3)
-struct s_ubx{
-	struct s_rxm_eph *rxm_eph;
-};
+/*!
+ * AID-EPH Message Structure
+ * This message contains ephemeris for a satellite.
+ * ID: 0x0B 0x31 Length = (16) or (112) bytes
+ */
+/*
+PACK(
+struct EphemW{
+	uint8_t byte[4];
+});
+PACK(*/
+struct EphemSF{
+	uint32_t W[8];				// Words 3-10 of Subframes
+	//EphemW W[8];				
+});	
 
-struct s_rxm_eph_W{
-	unsigned char bit[4];
-};
+PACK(
+struct EphemSV{					// Ephemeris for a Satellite
+	UbloxHeader header;			// Header
+	uint32_t svprn;				// Satellite Number
+	uint32_t HOW;				// Hand Over Word
+	EphemSF SF[3];				// Subframes
+});
 
-struct s_rxm_eph_SF{
-	struct s_rxm_eph_W W[8];
-};
+/*!
+ * AID-ALM Message Structure
+ * This message contains GPS almanac data for a satellite
+ * ID: 0x0B 0x30 Length = (16) or (48) bytes
+ */
+PACK(
+struct AlmSV{
+	UbloxHeader header;			// Header
+	uint32_t svprn;				// Satellite Number
+	uint32_t issue_week;		// Issue date of Almanac
+	uint32_t words[8];			// Words 3-10 of Almanac data for an SV 
+});
 
-struct s_rxm_eph{
-	unsigned short len;
-	unsigned long svprn;
-	unsigned long HOW;
-	struct s_rxm_eph_SF SF[3];
-//------------------------------------------------
 
-// 
 struct range_data {
 
 	double adr;
@@ -310,6 +325,7 @@ struct range_data {
     uint8_t lock; // loss lock indicator 
     
 } ;
+
 struct range_log {
     
     int32_t iTow;
@@ -324,8 +340,9 @@ enum Message_ID
 {
 	
 	NAV_SOL = 262,
-	RXM_EPH = 561,				// (ID 0x02 0x31) Ephemerides
-	AID_EPH = 2865,				// (ID 0x0B 0x31) Ephemerides also
+	//RXM_EPH = 561,				// (ID 0x02 0x31) Ephemerides
+	AID_EPH = 2865,					// (ID 0x0B 0x31) Ephemerides
+	AID_ALM = 2864,					// (ID 0x0B 0x30) Almanac
 	rangeID = 528,
 	NAV_VELNED = 274,
 	NAV_POSLLH = 258,

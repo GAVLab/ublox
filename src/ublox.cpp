@@ -236,7 +236,7 @@ bool Ublox::RequestLogOnChanged(string logID) {
 
 	cout << "RequestLogOnChanged " << endl;
 
-	if(logID == "RXMEPH"){
+	if(logID == "AIDEPH"){
 	
 		cout << "constructing Ephem Request message" << endl;
 	
@@ -249,7 +249,7 @@ bool Ublox::RequestLogOnChanged(string logID) {
 		data[0] = 0xB5;
 		data[1] = 0x62;
 		// Message ID
-		data[2] = 0x02;
+		data[2] = 0x0B;
 		data[3] = 0x31;
 		// Length
 		data[4] = 0;
@@ -533,30 +533,34 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 
             nav_pos_llh_callback_(cur_nav_position, read_timestamp_);
             break;
-		// case AID_EPH:		// Same format as RXM_EPH
-		case RXM_EPH:			// uBlox datasheet says to use AID_EPH instead
-								// Get this one working first, then should just have to change logID value and object names to do with AID_EPH - CC
-			
-			length = ((log[1])<<8) + log[0];
-			if (length == 0x68)
-			{
-                ubx.rxm_eph = (struct s_rxm_eph*) log;							//? What is this doing? Type casting? - CC
-				cout << "ubx length " << ubx.rxm_eph->len << endl;
+		
+		case AID_EPH:			
+            EphemSV cur_eph_sv;
+			std::cout << "Ephem size: " << sizeof(cur_eph_sv) << std::end1;		// (112 bytes)
+			memcpy(&cur_eph_sv, log, sizeof(cur_eph_sv));
+			aid_eph_callback_(cur_eph_sv, read_timestamp_);
 
+				/*ubx.rxm_eph = (struct s_rxm_eph*) log;
+				cout << "ubx length " << ubx.rxm_eph->UbloxHeader.payload_length << endl;
 				cout << "ubx prn " << ubx.rxm_eph->svprn << endl;
-				gpsephemb_data curGpsEphem;										//? Check this - CC
-                Parse_rxm_eph();								
-                 curGpsEphem.prn=ubx.rxm_eph->svprn;
+				gpsephem_data Ublox::Parse_aid_eph(cur_eph_sv);
+                 eph_data.prn=ubx.rxm_eph->svprn;
+				PublishGpsEphemToDB(eph_data,MOOSTime());*/
 
-				//PublishGpsEphemToDB(curGpsEphem,MOOSTime());
-			}
-			
 			break;
+
+		case AID_ALM:
+			AlmSV cur_alm_sv;
+			std::cout << "Alm size: " << sizeof(cur_alm_sv) << end1;			// 48 bytes
+			memcpy(&cur_alm_sv, log, sizeof(cur_alm_sv));
+			aid_alm_callback_(cur_alm_sv, read_timestamp_);
+
+			break;
+
 		case rangeID:
 			
 			//cout << "sizeoff range log Struct + " << sizeof(curRawData) << endl;
-			
-			length = ((log[1])<<8) + log[0];
+			//length = ((log[1])<<8) + log[0];
 			//int numSv = log[8];
 			//cout << "numSv from log =  " << numSv << endl;
 			//cout << "length of Range message = " << length << endl;
@@ -595,13 +599,11 @@ void Ublox::calculateCheckSum(uint8_t* in, size_t length, uint8_t* out)
 	out[0] = (a & 0xFF);
 	out[1] = (b & 0xFF);
 
-
 }
 
-
-void Ublox::Parse_rxm_eph()
+/*
+gpsephem_data Ublox::Parse_aid_eph(EphemSV ubx_eph);
 {
-
 	union {
 		unsigned short s;
 		unsigned char c[2];
@@ -618,28 +620,30 @@ void Ublox::Parse_rxm_eph()
 		int i;
 		unsigned char c[4];
 	} union_int;
-
-	//cout << "size of ubx " << sizeof(ubx) << endl;
 	
+	gpsephem_data eph_data;
+
+	//SVID
+	eph_data.prn = ubx_eph.svprn;
 	//T_GD
-	curGpsEphem.tgd = ((char) ubx.rxm_eph->SF[0].W[4].bit[0]) * pow(2.0,-31);
+	eph_data.tgd = ((char) ubx_eph->SF[0].W[4].bit[0]) * pow(2.0,-31);
 	//t_oc
-	union_unsigned_short.c[0] = ubx.rxm_eph->SF[0].W[5].bit[0];
-	union_unsigned_short.c[1] = ubx.rxm_eph->SF[0].W[5].bit[1];
-	curGpsEphem.toc = ((double) union_unsigned_short.s) * pow(2.0,4);
+	union_unsigned_short.c[0] = ubx_eph->SF[0].W[5].bit[0];
+	union_unsigned_short.c[1] = ubx_eph->SF[0].W[5].bit[1];
+	eph_data.toc = ((double) union_unsigned_short.s) * pow(2.0,4);
 	
 	//a_f2
-	curGpsEphem.af2 = ((char) ubx.rxm_eph->SF[0].W[6].bit[2]) * pow(2.0,-55);
+	eph_data.af2 = ((char) ubx_eph->SF[0].W[6].bit[2]) * pow(2.0,-55);
 	 
 	//a_f1
-	union_short.c[0] = ubx.rxm_eph->SF[0].W[6].bit[0];
-	union_short.c[1] = ubx.rxm_eph->SF[0].W[6].bit[1];
-	curGpsEphem.af1 = ((double) union_short.s) * pow(2.0,-43);
+	union_short.c[0] = ubx_eph->SF[0].W[6].bit[0];
+	union_short.c[1] = ubx_eph->SF[0].W[6].bit[1];
+	eph_data.af1 = ((double) union_short.s) * pow(2.0,-43);
 	 
 	 //a_f0
-	 union_int.c[0] = ubx.rxm_eph->SF[0].W[7].bit[0];
-	 union_int.c[1] = ubx.rxm_eph->SF[0].W[7].bit[1];
-	 union_int.c[2] = ubx.rxm_eph->SF[0].W[7].bit[2];
+	 union_int.c[0] = ubx_eph->SF[0].W[7].bit[0];
+	 union_int.c[1] = ubx_eph->SF[0].W[7].bit[1];
+	 union_int.c[2] = ubx_eph->SF[0].W[7].bit[2];
 	 union_int.i = union_int.i>>2;
 	
 	 if ((union_int.c[2]>>5)&0x01)
@@ -652,59 +656,59 @@ void Ublox::Parse_rxm_eph()
 	 union_int.c[2] = union_int.c[2] & 0x3F;
 	 union_int.c[3] = 0x00;
 	 }
-	 curGpsEphem.af0 = ((double) union_int.i) * pow(2.0,-31);
+	 eph_data.af0 = ((double) union_int.i) * pow(2.0,-31);
 	 
 	 //M_0 - Mean Anomoly Reference Time
-	 union_int.c[0] = ubx.rxm_eph->SF[1].W[2].bit[0];
-	 union_int.c[1] = ubx.rxm_eph->SF[1].W[2].bit[1];
-	 union_int.c[2] = ubx.rxm_eph->SF[1].W[2].bit[2];
-	 union_int.c[3] = ubx.rxm_eph->SF[1].W[1].bit[0];
-	 curGpsEphem.anrtime = ((double) union_int.i) * pow(2.0,-31) * PI;
+	 union_int.c[0] = ubx_eph->SF[1].W[2].bit[0];
+	 union_int.c[1] = ubx_eph->SF[1].W[2].bit[1];
+	 union_int.c[2] = ubx_eph->SF[1].W[2].bit[2];
+	 union_int.c[3] = ubx_eph->SF[1].W[1].bit[0];
+	 eph_data.anrtime = ((double) union_int.i) * pow(2.0,-31) * PI;
 	 
 	 //deltan
-	 union_short.c[0] = ubx.rxm_eph->SF[1].W[1].bit[1];
-	 union_short.c[1] = ubx.rxm_eph->SF[1].W[1].bit[2];
-	 curGpsEphem.dN = ((double) union_short.s) * pow(2.0,-43) * PI;
+	 union_short.c[0] = ubx_eph->SF[1].W[1].bit[1];
+	 union_short.c[1] = ubx_eph->SF[1].W[1].bit[2];
+	 eph_data.dN = ((double) union_short.s) * pow(2.0,-43) * PI;
 	 
 	 //ecc - Eccentricity
-	 union_unsigned_int.c[0] = ubx.rxm_eph->SF[1].W[4].bit[0];
-	 union_unsigned_int.c[1] = ubx.rxm_eph->SF[1].W[4].bit[1];
-	 union_unsigned_int.c[2] = ubx.rxm_eph->SF[1].W[4].bit[2];
-	 union_unsigned_int.c[3] = ubx.rxm_eph->SF[1].W[3].bit[0];
-	 curGpsEphem.ecc = ((double) union_unsigned_int.i) * pow(2.0,-33);
+	 union_unsigned_int.c[0] = ubx_eph->SF[1].W[4].bit[0];
+	 union_unsigned_int.c[1] = ubx_eph->SF[1].W[4].bit[1];
+	 union_unsigned_int.c[2] = ubx_eph->SF[1].W[4].bit[2];
+	 union_unsigned_int.c[3] = ubx_eph->SF[1].W[3].bit[0];
+	 eph_data.ecc = ((double) union_unsigned_int.i) * pow(2.0,-33);
 	 
 	 //sqrtA - Square root of the semi-major axis
-	 union_unsigned_int.c[0] = ubx.rxm_eph->SF[1].W[6].bit[0];
-	 union_unsigned_int.c[1] = ubx.rxm_eph->SF[1].W[6].bit[1];
-	 union_unsigned_int.c[2] = ubx.rxm_eph->SF[1].W[6].bit[2];
-	 union_unsigned_int.c[3] = ubx.rxm_eph->SF[1].W[5].bit[0];
-	 curGpsEphem.majaxis = ((double) union_unsigned_int.i) * pow(2.0,-19);
+	 union_unsigned_int.c[0] = ubx_eph->SF[1].W[6].bit[0];
+	 union_unsigned_int.c[1] = ubx_eph->SF[1].W[6].bit[1];
+	 union_unsigned_int.c[2] = ubx_eph->SF[1].W[6].bit[2];
+	 union_unsigned_int.c[3] = ubx_eph->SF[1].W[5].bit[0];
+	 eph_data.majaxis = ((double) union_unsigned_int.i) * pow(2.0,-19);
 	 
 	 //OMEGA_0 - Longitude of Ascending Node of Orbit Plane at Weekly Epoch
-	 union_int.c[0] = ubx.rxm_eph->SF[2].W[1].bit[0];
-	 union_int.c[1] = ubx.rxm_eph->SF[2].W[1].bit[1];
-	 union_int.c[2] = ubx.rxm_eph->SF[2].W[1].bit[2];
-	 union_int.c[3] = ubx.rxm_eph->SF[2].W[0].bit[0];
-	 curGpsEphem.wo = ((double) union_int.i) * pow(2.0,-31) * PI;
+	 union_int.c[0] = ubx_eph->SF[2].W[1].bit[0];
+	 union_int.c[1] = ubx_eph->SF[2].W[1].bit[1];
+	 union_int.c[2] = ubx_eph->SF[2].W[1].bit[2];
+	 union_int.c[3] = ubx_eph->SF[2].W[0].bit[0];
+	 eph_data.wo = ((double) union_int.i) * pow(2.0,-31) * PI;
 	 
 	 //i_0 - Inclination Angle
-	 union_int.c[0] = ubx.rxm_eph->SF[2].W[3].bit[0];
-	 union_int.c[1] = ubx.rxm_eph->SF[2].W[3].bit[1];
-	 union_int.c[2] = ubx.rxm_eph->SF[2].W[3].bit[2];
-	 union_int.c[3] = ubx.rxm_eph->SF[2].W[2].bit[0];
-	 curGpsEphem.ia = ((double) union_int.i) * pow(2.0,-31) * PI;
+	 union_int.c[0] = ubx_eph->SF[2].W[3].bit[0];
+	 union_int.c[1] = ubx_eph->SF[2].W[3].bit[1];
+	 union_int.c[2] = ubx_eph->SF[2].W[3].bit[2];
+	 union_int.c[3] = ubx_eph->SF[2].W[2].bit[0];
+	 eph_data.ia = ((double) union_int.i) * pow(2.0,-31) * PI;
 	 
 	 //omega
-	 union_int.c[0] = ubx.rxm_eph->SF[2].W[5].bit[0];
-	 union_int.c[1] = ubx.rxm_eph->SF[2].W[5].bit[1];
-	 union_int.c[2] = ubx.rxm_eph->SF[2].W[5].bit[2];
-	 union_int.c[3] = ubx.rxm_eph->SF[2].W[4].bit[0];
-	 curGpsEphem.omega = ((double) union_int.i) * pow(2.0,-31) * PI;
+	 union_int.c[0] = ubx_eph->SF[2].W[5].bit[0];
+	 union_int.c[1] = ubx_eph->SF[2].W[5].bit[1];
+	 union_int.c[2] = ubx_eph->SF[2].W[5].bit[2];
+	 union_int.c[3] = ubx_eph->SF[2].W[4].bit[0];
+	 eph_data.omega = ((double) union_int.i) * pow(2.0,-31) * PI;
 	 
 	 //OMEGADOT
-	 union_int.c[0] = ubx.rxm_eph->SF[2].W[6].bit[0];
-	 union_int.c[1] = ubx.rxm_eph->SF[2].W[6].bit[1];
-	 union_int.c[2] = ubx.rxm_eph->SF[2].W[6].bit[2];
+	 union_int.c[0] = ubx_eph->SF[2].W[6].bit[0];
+	 union_int.c[1] = ubx_eph->SF[2].W[6].bit[1];
+	 union_int.c[2] = ubx_eph->SF[2].W[6].bit[2];
 	 
 	 if ((union_int.c[2]>>7)&0x01)
 	 {
@@ -714,11 +718,11 @@ void Ublox::Parse_rxm_eph()
 	 {
 	 union_int.c[3] = 0x00;
 	 }
-	 curGpsEphem.dwo = ((double) union_int.i) * pow(2.0,-43) * PI;
+	 eph_data.dwo = ((double) union_int.i) * pow(2.0,-43) * PI;
 	 
 	 //IDOT - Rate of Inclination Angle
-	 union_short.c[0] = ubx.rxm_eph->SF[2].W[7].bit[0];
-	 union_short.c[1] = ubx.rxm_eph->SF[2].W[7].bit[1];
+	 union_short.c[0] = ubx_eph->SF[2].W[7].bit[0];
+	 union_short.c[1] = ubx_eph->SF[2].W[7].bit[1];
 	 union_short.s = union_short.s>>2;
 	 if ((union_short.c[1]>>5)&0x01)
 	 {
@@ -728,47 +732,47 @@ void Ublox::Parse_rxm_eph()
 	 {
 	 union_int.c[1] = union_short.c[1] & 0x3F;
 	 }
-	 curGpsEphem.dia = ((double) union_short.s) * pow(2.0,-43) * PI;
+	 eph_data.dia = ((double) union_short.s) * pow(2.0,-43) * PI;
 	 
 	 //C_uc
-	 union_short.c[0] = ubx.rxm_eph->SF[1].W[3].bit[1];
-	 union_short.c[1] = ubx.rxm_eph->SF[1].W[3].bit[2];
-	 curGpsEphem.cuc = ((double) union_short.s) * pow(2.0,-29);
+	 union_short.c[0] = ubx_eph->SF[1].W[3].bit[1];
+	 union_short.c[1] = ubx_eph->SF[1].W[3].bit[2];
+	 eph_data.cuc = ((double) union_short.s) * pow(2.0,-29);
 	 
 	 //C_us
-	 union_short.c[0] = ubx.rxm_eph->SF[1].W[5].bit[1];
-	 union_short.c[1] = ubx.rxm_eph->SF[1].W[5].bit[2];
-	 curGpsEphem.cus = ((double) union_short.s) * pow(2.0,-29);
+	 union_short.c[0] = ubx_eph->SF[1].W[5].bit[1];
+	 union_short.c[1] = ubx_eph->SF[1].W[5].bit[2];
+	 eph_data.cus = ((double) union_short.s) * pow(2.0,-29);
 	 
 	 //C_rc
-	 union_short.c[0] = ubx.rxm_eph->SF[2].W[4].bit[1];
-	 union_short.c[1] = ubx.rxm_eph->SF[2].W[4].bit[2];
-	 curGpsEphem.crc = ((double) union_short.s) * pow(2.0,-5);
+	 union_short.c[0] = ubx_eph->SF[2].W[4].bit[1];
+	 union_short.c[1] = ubx_eph->SF[2].W[4].bit[2];
+	 eph_data.crc = ((double) union_short.s) * pow(2.0,-5);
 	 
 	 //C_rs
-	 union_short.c[0] = ubx.rxm_eph->SF[1].W[0].bit[0];
-	 union_short.c[1] = ubx.rxm_eph->SF[1].W[0].bit[1];
-	 curGpsEphem.crs = ((double) union_short.s) * pow(2.0,-5);
+	 union_short.c[0] = ubx_eph->SF[1].W[0].bit[0];
+	 union_short.c[1] = ubx_eph->SF[1].W[0].bit[1];
+	 eph_data.crs = ((double) union_short.s) * pow(2.0,-5);
 	 
 	 //C_ic
-	 union_short.c[0] = ubx.rxm_eph->SF[2].W[0].bit[1];
-	 union_short.c[1] = ubx.rxm_eph->SF[2].W[0].bit[2];
-	 curGpsEphem.cic = ((double) union_short.s) * pow(2.0,-29);
+	 union_short.c[0] = ubx_eph->SF[2].W[0].bit[1];
+	 union_short.c[1] = ubx_eph->SF[2].W[0].bit[2];
+	 eph_data.cic = ((double) union_short.s) * pow(2.0,-29);
 	 
 	 //C_is
-	 union_short.c[0] = ubx.rxm_eph->SF[2].W[2].bit[1];
-	 union_short.c[1] = ubx.rxm_eph->SF[2].W[2].bit[2];
-	 curGpsEphem.cis = ((double) union_short.s) * pow(2.0,-29);
+	 union_short.c[0] = ubx_eph->SF[2].W[2].bit[1];
+	 union_short.c[1] = ubx_eph->SF[2].W[2].bit[2];
+	 eph_data.cis = ((double) union_short.s) * pow(2.0,-29);
 	 
 	 //t_oe
-	 union_unsigned_short.c[0] = ubx.rxm_eph->SF[1].W[7].bit[1];
-	 union_unsigned_short.c[1] = ubx.rxm_eph->SF[1].W[7].bit[2];
-	 curGpsEphem.toe = ((double) union_unsigned_short.s) * pow(2.0,4);
-    
-	 // Additions by CC
+	 union_unsigned_short.c[0] = ubx_eph->SF[1].W[7].bit[1];
+	 union_unsigned_short.c[1] = ubx_eph->SF[1].W[7].bit[2];
+	 eph_data.toe = ((double) union_unsigned_short.s) * pow(2.0,4);
 
 	 // URA Index - User Range Accuracy
-	 curGpsEphem.ura = ubx.rxm_eph->SF[0].W[0].bit[]
+	 eph_data.ura = ubx_eph->SF[0].W[0].bit[]
+
+	 return (eph_data);
 }
 
 
