@@ -22,6 +22,12 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 set(UBLOX_LINK_LIBS "")
 
+if (NOT DEFINED serial_FOUND)
+  SET (serial_FOUND FALSE CACHE BOOL "Has the serial library been found.")
+  SET (serial_INCLUDE_DIRS "C:\serial" CACHE PATH "Serial include directory.")
+  SET (serial_LIBRARIES CACHE FILEPATH "serial.lib")
+endif(NOT DEFINED serial_FOUND)
+
 if(BUILD_WITH_ROS)
   include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
   # Set the build type.  Options are:
@@ -40,7 +46,9 @@ if(BUILD_WITH_ROS)
 else(BUILD_WITH_ROS)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Built type for cmake")
   # Find serial, if it hasn't already been found
-  find_package(serial REQUIRED)
+  if(NOT serial_FOUND)
+     find_package(serial REQUIRED)
+  endif(NOT serial_FOUND)
 
   if(serial_FOUND)
     include_directories(${serial_INCLUDE_DIRS})
