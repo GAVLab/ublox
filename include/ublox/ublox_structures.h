@@ -286,7 +286,8 @@ PACK(
 struct EphemW{
 	uint8_t byte[4];
 });
-PACK(*/
+*/
+PACK(
 struct EphemSF{
 	uint32_t W[8];				// Words 3-10 of Subframes
 	//EphemW W[8];				
