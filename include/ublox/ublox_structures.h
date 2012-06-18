@@ -67,7 +67,7 @@ struct NavSol{
  * message CFG-DAT.
  * ID: 0x01  0x02  Length=28 bytes
  */
-//PACK(
+PACK(
 struct NavPosLLH{
     UbloxHeader header;		//!< Ublox header
     uint32_t iTOW;			//!< GPS millisecond time of week
@@ -78,7 +78,7 @@ struct NavPosLLH{
 	uint32_t horizontal_accuracy; //!< horizontal accuracy estimate [mm]
 	uint32_t vertical_accuracy;	//!< vertical accuracy estimate [mm]
     uint8_t checksum[2];
-}__attribute__((packed));//);
+});
 
 /*!
  * NAV-VELNED Message Structure
@@ -243,7 +243,7 @@ struct AidHui {
 /*
 struct gpsephem_data {
     uint32_t prn;				//PRN number
-    double tow;					//time stamp of subframe 0 (s)
+    uint8_t tow;					//time stamp of subframe 0 (s)
     unsigned long health;		//health status, defined in ICD-GPS-200
     unsigned long iode1;		//issue of ephemeris data 1
     unsigned long iode2;		//issue of ephemeris data 2
@@ -284,7 +284,7 @@ struct gpsephem_data {
 /*
 PACK(
 struct EphemW{
-	uint8_t byte[4];
+	uint8_t byte[3];				// Each Word contains 4 bytes (4th is ignored)
 });
 */
 PACK(

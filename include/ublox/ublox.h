@@ -132,7 +132,7 @@ private:
 	//! Function to parse logs into a usable structure
     void ParseLog(uint8_t* log, size_t logID);
 	//! Function to parse out useful ephemeris parameters
-	gpsephemb_data Parse_aid_eph(EphemSV ubx_eph);
+	//gpsephemb_data Parse_aid_eph(EphemSV ubx_eph);
 
     //////////////////////////////////////////////////////
     // Serial port reading members

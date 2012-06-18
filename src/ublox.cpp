@@ -524,20 +524,21 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             NavPosLLH cur_nav_position;
             std::cout << sizeof(cur_nav_position) << std::endl;
             memcpy(&cur_nav_position, log, sizeof(cur_nav_position));
-            std::cout << "header: " << std::endl;
+            /*std::cout << "header: " << std::endl;
             std::cout << hex << (int)cur_nav_position.header.message_class <<std::endl;
             std::cout << hex << (int)cur_nav_position.header.message_id <<std::endl;
             std::cout << dec << (int)cur_nav_position.header.payload_length <<std::endl;
             std::cout << dec << cur_nav_position.iTOW << std::endl;
-            std::cout << dec << cur_nav_position.latitude_scaled << std::endl;
+            std::cout << dec << cur_nav_position.latitude_scaled << std::endl;*/
 
             nav_pos_llh_callback_(cur_nav_position, read_timestamp_);
             break;
 		
 		case AID_EPH:			
             EphemSV cur_eph_sv;
-			std::cout << "Ephem size: " << sizeof(cur_eph_sv) << std::end1;		// (112 bytes)
+			std::cout << "Ephem size: " << sizeof(cur_eph_sv) << std::endl;		// (112 bytes)
 			memcpy(&cur_eph_sv, log, sizeof(cur_eph_sv));
+			
 			aid_eph_callback_(cur_eph_sv, read_timestamp_);
 
 				/*ubx.rxm_eph = (struct s_rxm_eph*) log;
@@ -551,7 +552,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 
 		case AID_ALM:
 			AlmSV cur_alm_sv;
-			std::cout << "Alm size: " << sizeof(cur_alm_sv) << end1;			// 48 bytes
+			std::cout << "Alm size: " << sizeof(cur_alm_sv) << endl;			// 48 bytes
 			memcpy(&cur_alm_sv, log, sizeof(cur_alm_sv));
 			aid_alm_callback_(cur_alm_sv, read_timestamp_);
 
@@ -624,26 +625,28 @@ gpsephem_data Ublox::Parse_aid_eph(EphemSV ubx_eph);
 	gpsephem_data eph_data;
 
 	//SVID
-	eph_data.prn = ubx_eph.svprn;
+	//eph_data.prn = (uint8_t) ubx_eph.svprn;
+
 	//T_GD
-	eph_data.tgd = ((char) ubx_eph->SF[0].W[4].bit[0]) * pow(2.0,-31);
+	eph_data.tgd = ((char) ubx_eph->SF[0].W[4].byte[0]) * pow(2.0,-31);
+
 	//t_oc
-	union_unsigned_short.c[0] = ubx_eph->SF[0].W[5].bit[0];
-	union_unsigned_short.c[1] = ubx_eph->SF[0].W[5].bit[1];
+	union_unsigned_short.c[0] = ubx_eph->SF[0].W[5].byte[0];
+	union_unsigned_short.c[1] = ubx_eph->SF[0].W[5].byte[1];
 	eph_data.toc = ((double) union_unsigned_short.s) * pow(2.0,4);
 	
 	//a_f2
-	eph_data.af2 = ((char) ubx_eph->SF[0].W[6].bit[2]) * pow(2.0,-55);
-	 
+	eph_data.af2 = ((char) ubx_eph->SF[0].W[6].byte[2]) * pow(2.0,-55);
+
 	//a_f1
-	union_short.c[0] = ubx_eph->SF[0].W[6].bit[0];
-	union_short.c[1] = ubx_eph->SF[0].W[6].bit[1];
+	union_short.c[0] = ubx_eph->SF[0].W[6].byte[0];
+	union_short.c[1] = ubx_eph->SF[0].W[6].byte[1];
 	eph_data.af1 = ((double) union_short.s) * pow(2.0,-43);
 	 
 	 //a_f0
-	 union_int.c[0] = ubx_eph->SF[0].W[7].bit[0];
-	 union_int.c[1] = ubx_eph->SF[0].W[7].bit[1];
-	 union_int.c[2] = ubx_eph->SF[0].W[7].bit[2];
+	 union_int.c[0] = ubx_eph->SF[0].W[7].byte[0];
+	 union_int.c[1] = ubx_eph->SF[0].W[7].byte[1];
+	 union_int.c[2] = ubx_eph->SF[0].W[7].byte[2];
 	 union_int.i = union_int.i>>2;
 	
 	 if ((union_int.c[2]>>5)&0x01)
@@ -659,56 +662,56 @@ gpsephem_data Ublox::Parse_aid_eph(EphemSV ubx_eph);
 	 eph_data.af0 = ((double) union_int.i) * pow(2.0,-31);
 	 
 	 //M_0 - Mean Anomoly Reference Time
-	 union_int.c[0] = ubx_eph->SF[1].W[2].bit[0];
-	 union_int.c[1] = ubx_eph->SF[1].W[2].bit[1];
-	 union_int.c[2] = ubx_eph->SF[1].W[2].bit[2];
-	 union_int.c[3] = ubx_eph->SF[1].W[1].bit[0];
+	 union_int.c[0] = ubx_eph->SF[1].W[2].byte[0];
+	 union_int.c[1] = ubx_eph->SF[1].W[2].byte[1];
+	 union_int.c[2] = ubx_eph->SF[1].W[2].byte[2];
+	 union_int.c[3] = ubx_eph->SF[1].W[1].byte[0];
 	 eph_data.anrtime = ((double) union_int.i) * pow(2.0,-31) * PI;
 	 
 	 //deltan
-	 union_short.c[0] = ubx_eph->SF[1].W[1].bit[1];
-	 union_short.c[1] = ubx_eph->SF[1].W[1].bit[2];
+	 union_short.c[0] = ubx_eph->SF[1].W[1].byte[1];
+	 union_short.c[1] = ubx_eph->SF[1].W[1].byte[2];
 	 eph_data.dN = ((double) union_short.s) * pow(2.0,-43) * PI;
 	 
 	 //ecc - Eccentricity
-	 union_unsigned_int.c[0] = ubx_eph->SF[1].W[4].bit[0];
-	 union_unsigned_int.c[1] = ubx_eph->SF[1].W[4].bit[1];
-	 union_unsigned_int.c[2] = ubx_eph->SF[1].W[4].bit[2];
-	 union_unsigned_int.c[3] = ubx_eph->SF[1].W[3].bit[0];
+	 union_unsigned_int.c[0] = ubx_eph->SF[1].W[4].byte[0];
+	 union_unsigned_int.c[1] = ubx_eph->SF[1].W[4].byte[1];
+	 union_unsigned_int.c[2] = ubx_eph->SF[1].W[4].byte[2];
+	 union_unsigned_int.c[3] = ubx_eph->SF[1].W[3].byte[0];
 	 eph_data.ecc = ((double) union_unsigned_int.i) * pow(2.0,-33);
 	 
 	 //sqrtA - Square root of the semi-major axis
-	 union_unsigned_int.c[0] = ubx_eph->SF[1].W[6].bit[0];
-	 union_unsigned_int.c[1] = ubx_eph->SF[1].W[6].bit[1];
-	 union_unsigned_int.c[2] = ubx_eph->SF[1].W[6].bit[2];
-	 union_unsigned_int.c[3] = ubx_eph->SF[1].W[5].bit[0];
+	 union_unsigned_int.c[0] = ubx_eph->SF[1].W[6].byte[0];
+	 union_unsigned_int.c[1] = ubx_eph->SF[1].W[6].byte[1];
+	 union_unsigned_int.c[2] = ubx_eph->SF[1].W[6].byte[2];
+	 union_unsigned_int.c[3] = ubx_eph->SF[1].W[5].byte[0];
 	 eph_data.majaxis = ((double) union_unsigned_int.i) * pow(2.0,-19);
 	 
 	 //OMEGA_0 - Longitude of Ascending Node of Orbit Plane at Weekly Epoch
-	 union_int.c[0] = ubx_eph->SF[2].W[1].bit[0];
-	 union_int.c[1] = ubx_eph->SF[2].W[1].bit[1];
-	 union_int.c[2] = ubx_eph->SF[2].W[1].bit[2];
-	 union_int.c[3] = ubx_eph->SF[2].W[0].bit[0];
+	 union_int.c[0] = ubx_eph->SF[2].W[1].byte[0];
+	 union_int.c[1] = ubx_eph->SF[2].W[1].byte[1];
+	 union_int.c[2] = ubx_eph->SF[2].W[1].byte[2];
+	 union_int.c[3] = ubx_eph->SF[2].W[0].byte[0];
 	 eph_data.wo = ((double) union_int.i) * pow(2.0,-31) * PI;
 	 
 	 //i_0 - Inclination Angle
-	 union_int.c[0] = ubx_eph->SF[2].W[3].bit[0];
-	 union_int.c[1] = ubx_eph->SF[2].W[3].bit[1];
-	 union_int.c[2] = ubx_eph->SF[2].W[3].bit[2];
-	 union_int.c[3] = ubx_eph->SF[2].W[2].bit[0];
+	 union_int.c[0] = ubx_eph->SF[2].W[3].byte[0];
+	 union_int.c[1] = ubx_eph->SF[2].W[3].byte[1];
+	 union_int.c[2] = ubx_eph->SF[2].W[3].byte[2];
+	 union_int.c[3] = ubx_eph->SF[2].W[2].byte[0];
 	 eph_data.ia = ((double) union_int.i) * pow(2.0,-31) * PI;
 	 
 	 //omega
-	 union_int.c[0] = ubx_eph->SF[2].W[5].bit[0];
-	 union_int.c[1] = ubx_eph->SF[2].W[5].bit[1];
-	 union_int.c[2] = ubx_eph->SF[2].W[5].bit[2];
-	 union_int.c[3] = ubx_eph->SF[2].W[4].bit[0];
+	 union_int.c[0] = ubx_eph->SF[2].W[5].byte[0];
+	 union_int.c[1] = ubx_eph->SF[2].W[5].byte[1];
+	 union_int.c[2] = ubx_eph->SF[2].W[5].byte[2];
+	 union_int.c[3] = ubx_eph->SF[2].W[4].byte[0];
 	 eph_data.omega = ((double) union_int.i) * pow(2.0,-31) * PI;
 	 
 	 //OMEGADOT
-	 union_int.c[0] = ubx_eph->SF[2].W[6].bit[0];
-	 union_int.c[1] = ubx_eph->SF[2].W[6].bit[1];
-	 union_int.c[2] = ubx_eph->SF[2].W[6].bit[2];
+	 union_int.c[0] = ubx_eph->SF[2].W[6].byte[0];
+	 union_int.c[1] = ubx_eph->SF[2].W[6].byte[1];
+	 union_int.c[2] = ubx_eph->SF[2].W[6].byte[2];
 	 
 	 if ((union_int.c[2]>>7)&0x01)
 	 {
@@ -721,8 +724,8 @@ gpsephem_data Ublox::Parse_aid_eph(EphemSV ubx_eph);
 	 eph_data.dwo = ((double) union_int.i) * pow(2.0,-43) * PI;
 	 
 	 //IDOT - Rate of Inclination Angle
-	 union_short.c[0] = ubx_eph->SF[2].W[7].bit[0];
-	 union_short.c[1] = ubx_eph->SF[2].W[7].bit[1];
+	 union_short.c[0] = ubx_eph->SF[2].W[7].byte[0];
+	 union_short.c[1] = ubx_eph->SF[2].W[7].byte[1];
 	 union_short.s = union_short.s>>2;
 	 if ((union_short.c[1]>>5)&0x01)
 	 {
@@ -735,44 +738,45 @@ gpsephem_data Ublox::Parse_aid_eph(EphemSV ubx_eph);
 	 eph_data.dia = ((double) union_short.s) * pow(2.0,-43) * PI;
 	 
 	 //C_uc
-	 union_short.c[0] = ubx_eph->SF[1].W[3].bit[1];
-	 union_short.c[1] = ubx_eph->SF[1].W[3].bit[2];
+	 union_short.c[0] = ubx_eph->SF[1].W[3].byte[1];
+	 union_short.c[1] = ubx_eph->SF[1].W[3].byte[2];
 	 eph_data.cuc = ((double) union_short.s) * pow(2.0,-29);
 	 
 	 //C_us
-	 union_short.c[0] = ubx_eph->SF[1].W[5].bit[1];
-	 union_short.c[1] = ubx_eph->SF[1].W[5].bit[2];
+	 union_short.c[0] = ubx_eph->SF[1].W[5].byte[1];
+	 union_short.c[1] = ubx_eph->SF[1].W[5].byte[2];
 	 eph_data.cus = ((double) union_short.s) * pow(2.0,-29);
 	 
 	 //C_rc
-	 union_short.c[0] = ubx_eph->SF[2].W[4].bit[1];
-	 union_short.c[1] = ubx_eph->SF[2].W[4].bit[2];
+	 union_short.c[0] = ubx_eph->SF[2].W[4].byte[1];
+	 union_short.c[1] = ubx_eph->SF[2].W[4].byte[2];
 	 eph_data.crc = ((double) union_short.s) * pow(2.0,-5);
 	 
 	 //C_rs
-	 union_short.c[0] = ubx_eph->SF[1].W[0].bit[0];
-	 union_short.c[1] = ubx_eph->SF[1].W[0].bit[1];
+	 union_short.c[0] = ubx_eph->SF[1].W[0].byte[0];
+	 union_short.c[1] = ubx_eph->SF[1].W[0].byte[1];
 	 eph_data.crs = ((double) union_short.s) * pow(2.0,-5);
 	 
 	 //C_ic
-	 union_short.c[0] = ubx_eph->SF[2].W[0].bit[1];
-	 union_short.c[1] = ubx_eph->SF[2].W[0].bit[2];
+	 union_short.c[0] = ubx_eph->SF[2].W[0].byte[1];
+	 union_short.c[1] = ubx_eph->SF[2].W[0].byte[2];
 	 eph_data.cic = ((double) union_short.s) * pow(2.0,-29);
 	 
 	 //C_is
-	 union_short.c[0] = ubx_eph->SF[2].W[2].bit[1];
-	 union_short.c[1] = ubx_eph->SF[2].W[2].bit[2];
+	 union_short.c[0] = ubx_eph->SF[2].W[2].byte[1];
+	 union_short.c[1] = ubx_eph->SF[2].W[2].byte[2];
 	 eph_data.cis = ((double) union_short.s) * pow(2.0,-29);
 	 
 	 //t_oe
-	 union_unsigned_short.c[0] = ubx_eph->SF[1].W[7].bit[1];
-	 union_unsigned_short.c[1] = ubx_eph->SF[1].W[7].bit[2];
+	 union_unsigned_short.c[0] = ubx_eph->SF[1].W[7].byte[1];
+	 union_unsigned_short.c[1] = ubx_eph->SF[1].W[7].byte[2];
 	 eph_data.toe = ((double) union_unsigned_short.s) * pow(2.0,4);
 
 	 // URA Index - User Range Accuracy
-	 eph_data.ura = ubx_eph->SF[0].W[0].bit[]
+	 //eph_data.ura = ubx_eph->SF[0].W[0].byte[]
 
 	 return (eph_data);
-}
+};
+*/
 
 

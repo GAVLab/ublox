@@ -99,13 +99,14 @@ endif(BUILD_WITH_ROS)
 ## Build Examples
 
 # If asked to
+SET (UBLOX_BUILD_EXAMPLES FALSE CACHE BOOL "Build Ublox Examples")
 IF(UBLOX_BUILD_EXAMPLES)
     # Compile the ublox Test program
     add_executable(ublox_example examples/ublox_example.cpp)
     # Link the Test program to the ublox library
     target_link_libraries(ublox_example ublox ${UBLOX_LINK_LIBS})
-    add_executable(simple examples/simple.cc)
-    target_link_libraries(simple ublox ${UBLOX_LINK_LIBS})
+    add_executable(ublox_example examples/ublox_example.cpp)
+    target_link_libraries(ublox_example ublox ${UBLOX_LINK_LIBS})
 ENDIF(UBLOX_BUILD_EXAMPLES)
 
 ## Build tests
