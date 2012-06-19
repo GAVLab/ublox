@@ -131,7 +131,7 @@ struct CfgMsg {
 };
 
 /*!
- * CFM-CFG Message Structure
+ * CFG-CFG Message Structure
  * This message clears, saves, or loads novalitle memory.
  * Set masks to 0x061F to clear, save, or load all values.
  * ID: 0x06  0x09 Length=12 bytes
@@ -141,7 +141,7 @@ struct CfgCfg {
     uint32_t clear_mask;  //!< clear mask
     uint32_t save_mask;     //!< save mask
     uint32_t load_mask;           //!< load mask
-    uint16_t checksum;      //!< Checksum
+    uint16_t checksum[2];      //!< Checksum
 };
 
 /*!
@@ -240,10 +240,11 @@ struct AidHui {
     uint8_t checksum[2];
 };
 
-/*
-struct gpsephem_data {
+
+struct gps_eph_data {
     uint32_t prn;				//PRN number
-    uint8_t tow;					//time stamp of subframe 0 (s)
+    uint8_t tow;				//time stamp of subframe 0 (s)
+    //uint8_t tow;				//time stamp of subframe 0 (s)
     unsigned long health;		//health status, defined in ICD-GPS-200
     unsigned long iode1;		//issue of ephemeris data 1
     unsigned long iode2;		//issue of ephemeris data 2
@@ -267,30 +268,30 @@ struct gpsephem_data {
     double dwo;					//rate of right ascension (rad/s)
     unsigned long iodc;			//issue of data clock
     double toc;					//SV clock correction term (s)
-    double tgd;					//estimated group delay difference						//? .cpp file uses a char type for tgd, this ok??
-    double af0;					//clock aiging parameter 0										// also happens on af0 
+    double tgd;					//estimated group delay difference						
+    double af0;					//clock aiging parameter 0										
     double af1;					//clock aiging parameter 1
     double af2;					//clock aiging parameter 2
 //    yes_no spoof;			//anti spoofing on
     double cmot;				//corrected mean motion
     unsigned int ura;			//user range accuracy variance (value 0-15)
-} ;*/
+} ;
 
 /*!
  * AID-EPH Message Structure
  * This message contains ephemeris for a satellite.
  * ID: 0x0B 0x31 Length = (16) or (112) bytes
  */
-/*
+
 PACK(
 struct EphemW{
-	uint8_t byte[3];				// Each Word contains 4 bytes (4th is ignored)
+	uint8_t byte[4];				// Each Word contains 4 bytes (4th is ignored)
 });
-*/
+
 PACK(
 struct EphemSF{
-	uint32_t W[8];				// Words 3-10 of Subframes
-	//EphemW W[8];				
+	//uint32_t W[8];				// Words 3-10 of Subframes
+	EphemW W[8];				
 });	
 
 PACK(
@@ -299,6 +300,7 @@ struct EphemSV{					// Ephemeris for a Satellite
 	uint32_t svprn;				// Satellite Number
 	uint32_t HOW;				// Hand Over Word
 	EphemSF SF[3];				// Subframes
+	uint8_t checksum[2];		// Checksum
 });
 
 /*!
@@ -312,6 +314,7 @@ struct AlmSV{
 	uint32_t svprn;				// Satellite Number
 	uint32_t issue_week;		// Issue date of Almanac
 	uint32_t words[8];			// Words 3-10 of Almanac data for an SV 
+	uint8_t checksum[2];		// Checksum
 });
 
 
@@ -353,12 +356,4 @@ enum Message_ID
 
 //typedef enum BINARY_LOG_TYPE BINARY_LOG_TYPE;
 
-// Scale factors for ephemeris parameters (from ICD-GPS-200)
-/*
-struct eph_param_sf {
-
-
-
-};
-*/
 #endif
