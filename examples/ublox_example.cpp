@@ -37,9 +37,9 @@ int main(int argc, char **argv)
 
     // configure receiver
     // request NAVPOSLLH message
-    my_gps.ConfigureMessageRate(0x01, 0x02, 1);
+    //my_gps.ConfigureMessageRate(0x01, 0x02, 1);
 	//Request AID_EPH
-	//my_gps.PollMessage(0x0B, 0x31);
+	my_gps.PollMessage(0x0B, 0x31);
 
     while(1);
 

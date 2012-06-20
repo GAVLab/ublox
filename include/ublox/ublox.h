@@ -20,7 +20,7 @@ typedef boost::function<void(const std::string&)> LogMsgCallback;
 typedef boost::function<void(NavPosLLH&, double&)> NavPosLLHCallback;
 typedef boost::function<void(NavSol&, double&)> NavSolCallback;
 typedef boost::function<void(NavVelNed&, double&)> NavVelNedCallback;
-typedef boost::function<void(EphemSV&, double&)> AidEphCallback;
+typedef boost::function<void(EphemSV&, double&)> AidEphCallback;			// Problem here
 typedef boost::function<void(AlmSV&, double&)> AidAlmCallback;
 
 class Ublox
@@ -132,7 +132,8 @@ private:
 	//! Function to parse logs into a usable structure
     void ParseLog(uint8_t* log, size_t logID);
 	//! Function to parse out useful ephemeris parameters
-	//gpsephemb_data Parse_aid_eph(EphemSV ubx_eph);
+	gps_eph_data Parse_aid_eph(EphemSV ubx_eph);
+
 
     //////////////////////////////////////////////////////
     // Serial port reading members
