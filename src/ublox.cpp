@@ -556,7 +556,31 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 			
 			ret_eph_data = Ublox::Parse_aid_eph(cur_eph_sv);
 
+			//Display Parsed Eph Data:
 			cout << "PRN: " << ret_eph_data.prn << endl;
+			cout << "T_GD: " << ret_eph_data.tgd << endl;
+			cout << "t_oc: " << ret_eph_data.toc << endl;
+			cout << "af0: " << ret_eph_data.af0 << endl;
+			cout << "af1: " << ret_eph_data.af1 << endl;
+			cout << "af2: " << ret_eph_data.af2 << endl;
+			cout << "M_0: " << ret_eph_data.anrtime << endl;
+			cout << "deltan: " << ret_eph_data.dN << endl;
+			cout << "ecc: " << ret_eph_data.ecc << endl;
+			cout << "sqrtA: " << ret_eph_data.majaxis << endl;
+			cout << "OMEGA_0: " << ret_eph_data.wo << endl;
+			cout << "i_0: " << ret_eph_data.ia << endl;
+			cout << "Omega: " << ret_eph_data.omega << endl;
+			cout << "Omega dot: " << ret_eph_data.dwo << endl;
+			cout << "IDOT: " << ret_eph_data.dia << endl;
+			cout << "C_uc: " << ret_eph_data.cuc << endl;
+			cout << "C_us: " << ret_eph_data.cus << endl;
+			cout << "C_rc: " << ret_eph_data.crc << endl;
+			cout << "C_rs: " << ret_eph_data.crs << endl;
+			cout << "C_is: " << ret_eph_data.cis << endl;
+			cout << "t_oe: " << ret_eph_data.toe << endl;
+			cout << "----------------------------------" << endl;
+			cout << endl;
+
 			aid_eph_callback_(cur_eph_sv, read_timestamp_);
 			
 				/*ubx.rxm_eph = (struct s_rxm_eph*) log;
