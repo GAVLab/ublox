@@ -53,7 +53,7 @@ inline void DefaultErrorMsgCallback(const std::string &msg) {
 }
 
 inline void DefaultNavPosLlhCallback(NavPosLLH nav_position, double time_stamp){
-    std:: cout << "NAV-POSLLH: \n" <<
+    std:: cout << "NAV-POSLLH: " << endl <<
                   "  GPS milliseconds: " << nav_position.iTOW << std::endl <<
                   "  Latitude: " << nav_position.latitude_scaled << std::endl <<
                   "  Longitude: " << nav_position.longitude_scaled << std::endl <<
@@ -159,7 +159,9 @@ bool Ublox::Ping(int num_attempts) {
         // request version information
 
         // ask for version
+        //PollMessage(0x0A,0x04,0);
         PollMessage(0x0A,0x04);
+
         boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 
         unsigned char result[5000];
@@ -244,11 +246,12 @@ void Ublox::ReadSerialPort() {
 
 }
 
-
+/*
 bool Ublox::RequestLogOnChanged(string logID) {
 
 	cout << "RequestLogOnChanged " << endl;
 
+    // Request for all ephemerides
 	if(logID == "AIDEPH"){
 	
 		cout << "constructing Ephem Request message" << endl;
@@ -286,7 +289,7 @@ bool Ublox::RequestLogOnChanged(string logID) {
 	return true;
 
 }
-
+*/
 //bool Ublox::PollMessage(uint8_t class_id, uint8_t msg_id){
 
 //    CfgMsg message;
@@ -300,34 +303,167 @@ bool Ublox::RequestLogOnChanged(string logID) {
 //    message.message_id=msg_id;
 
 //    unsigned char* msg_ptr = (unsigned char*)&message;
-//    calculateCheckSum(msg_ptr+2,6,message.checksum);
+//    ca     //bool PollMessage(uint8_t class_id, uint8_t msg_id, uint8_t svid);lculateCheckSum(msg_ptr+2,6,message.checksum);
 
 //    size_t bytes_written=serial_port_->write(msg_ptr, sizeof(message));
 //    return bytes_written==sizeof(message);
 //}
 
-bool Ublox::PollMessage(uint8_t class_id, uint8_t msg_id){
+// Use to request Ephemeris, Almanac, Software, etc Data from Reciever
+//bool Ublox::PollMessage(uint8_t class_id, uint8_t msg_id, uint8_t svid){
+//bool Ublox::PollAllEphem(){
 
+//}
+
+//////////////////////////////////////////////////////////////////////////////
+// AIDING DATA POLL MESSAGES
+/////////////////////////////////////////////////////////////////////////////
+
+// Poll Message used to request for all SV
+bool Ublox::PollMessage(uint8_t class_id, uint8_t msg_id){
     uint8_t message[8];
 
-    message[0]=0xB5;    // sync 1
-    message[1]=0x62;    // sync 2
+    message[0]=0xB5;        // sync 1
+    message[1]=0x62;        // sync 2
     message[2]=class_id;
     message[3]=msg_id;
-    message[4]=0;   // length 1
-    message[5]=0;   // length 2
-    message[6]=0;   // checksum 1
-    message[7]=0;   // checksum 2
+    message[4]=0;           // length 1
+    message[5]=0;           // length 2
+    message[6]=0;    // checksum 1
+    message[7]=0;    // checksum 2
 
     uint8_t* msg_ptr = (uint8_t*)&message;
+
     calculateCheckSum(msg_ptr+2,4,msg_ptr+6);
 
-    //printHex((char*)msg_ptr, 8);
-
     size_t bytes_written=serial_port_->write(message, 8);
+
     return bytes_written==8;
 }
 
+// Poll Message used to request for one SV
+bool Ublox::PollMessageIndSV(uint8_t class_id, uint8_t msg_id, uint8_t svid){
+    uint8_t message[9];
+
+    message[0]=0xB5;        // sync 1
+    message[1]=0x62;        // sync 2
+    message[2]=class_id;
+    message[3]=msg_id;
+    message[4]=1;           // length 1
+    message[5]=0;           // length 2
+    message[6]=svid;        // Payload
+    message[7]=0;           // checksum 1
+    message[8]=0;           // checksum 2
+
+
+    uint8_t* msg_ptr = (uint8_t*)&message;
+    calculateCheckSum(msg_ptr+2,5,msg_ptr+7);
+    size_t bytes_written=serial_port_->write(msg_ptr, 9);
+
+    return bytes_written==9;
+}
+
+// (AID-EPH) Polls for Ephemeris data
+bool Ublox::PollEphem(int8_t svid){
+
+    if (svid < -1){
+        std::cout << "Error in PollEphem: Invalid input 'svid'" << endl;
+        return 0;
+    }
+    else if (svid == -1){ // Requests Ephemerides for all SVs
+        return PollMessage(0x0B, 0x31);
+    }
+    else if (svid > 0){ // Requests Ephemeris for a single SV
+        return PollMessageIndSV(0x0B, 0x31, (uint8_t) svid);
+    }
+    else{
+        std::cout << "Error in PollAlmanac: Invalid input 'svid'" << endl;
+        return 0;
+    }
+}
+
+// (AID-ALM) Polls for Almanac Data
+bool Ublox::PollAlmanac(int8_t svid){
+
+    if (svid < -1){
+        std::cout << "Error in PollAlmanac: Invalid input 'svid'" << endl;
+        return 0;
+    }
+    else if (svid == -1){ // Requests Almanac Data for all SVs
+        return PollMessage(0x0B, 0x30);
+    }
+    else if (svid > 0){ // Requests Almanac Data for a single SV
+        return PollMessageIndSV(0x0B, 0x30, (uint8_t) svid);
+    }
+    else{
+        std::cout << "Error in PollAlmanac: Invalid input 'svid'" << endl;
+        return 0;
+    }
+}
+
+// (AID-HUI) Polls GPS Health, UTC and Ionospheric Parameters
+bool Ublox::PollHUI(){
+    return PollMessage(0x0B, 0x02);
+}
+
+// (AID-INI) Polls for Receiver Position, Time, Frequency, and Clock Drift
+bool Ublox::PollIniAid(){
+    return PollMessage(0x0B, 0x01);
+}
+
+// (AID-DATA) Polls for All AID Data (-INI, -HUI, -EPH, -ALM)
+bool Ublox::PollAllAidData(){
+    return PollMessage(0x0B, 0x10);
+}
+
+////////////////////////////////////////////////////////
+// (CFG) Configuration Messages
+////////////////////////////////////////////////////////
+
+// Receiver Reset
+bool Ublox::Reset(uint16_t nav_bbr_mask, uint8_t reset_mode){
+    CfgRst message;
+    message.header.sync1=0xB5;
+    message.header.sync2=0x62;
+    message.header.message_class=0x06;
+    message.header.message_id=0x04;
+    message.header.payload_length=4;
+
+    message.nav_bbr_mask = nav_bbr_mask;
+    message.reset_mode = reset_mode;
+        // Reset Modes:
+            // Hardware Reset 0x00
+            // Controlled Software Reset 0x01
+            // Controlled Software Reset Only GPS 0x02
+            // Hardware Reset After Shutdown 0x04
+            // Controlled GPS Stop 0x08
+            // Controlled GPS Start 0x09
+
+    message.reserved = 0;
+
+    unsigned char* msg_ptr = (unsigned char*)&message;
+    calculateCheckSum(msg_ptr+2,10,message.checksum);
+
+    serial_port_->write(msg_ptr, sizeof(message));
+    return true;
+}
+
+// Receiver Reset Messages - Force Cold Start
+bool Ublox::ResetToColdStart(){
+    return Reset(0xFFFF, 0x01);
+}
+
+// Receiver Reset Messages - Force Warm Start
+bool Ublox::ResetToWarmStart(){
+    return Reset(0x0001, 0x01);
+}
+
+// Receiver Reset Messages - Force Hot Start
+bool Ublox::ResetToHotStart(){
+    return Reset(0x0000, 0x01);
+}
+
+// (CFG-MSG) Set message output rate for specified message
 bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate) {
 	
     CfgMsgRate message;
@@ -341,15 +477,13 @@ bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate)
     message.message_id=msg_id;
     message.rate=rate;
 
-    //std::cout << "CfgMsg size: " << sizeof(message) << std::endl;
-
     unsigned char* msg_ptr = (unsigned char*)&message;
     calculateCheckSum(msg_ptr+2,7,message.checksum);
 
     serial_port_->write(msg_ptr, sizeof(message));
     return true;
 }
-
+// Set Port Configuration
 void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output)
 {
     CfgPrt message;
@@ -548,14 +682,37 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             break;
 		
 		case AID_EPH:			
+        //std::cout << log << std::endl;
             EphemSV cur_eph_sv;
-			gps_eph_data ret_eph_data;
+            //Ephemerides cur_ephemerides;
+            //GpsEphData ret_eph_data;
+            //GpsEphemeridesData ret_ephemerides_data;
 
-			std::cout << "Ephem size: " << sizeof(cur_eph_sv) << std::endl;		// (112 bytes)
-			memcpy(&cur_eph_sv, log, sizeof(cur_eph_sv));
-			
-			ret_eph_data = Ublox::Parse_aid_eph(cur_eph_sv);
+            std::cout << "log size: " << sizeof(log) << std::endl;
 
+            // If Ephemeris for SV is not present (16 bytes)
+                // could also check for HOW==0 or length==8
+            //if (sizeof(log) == 16){
+            //return;
+            //}
+
+            // If Ephemeris for SV is present (112 bytes)
+            //else if (sizeof(log)== 112){
+                memcpy(&cur_eph_sv, log, sizeof(cur_eph_sv));
+            //}
+            //else{
+              //  cout << "Error! AID-EPH log data is not 16 or 112 bytes long! (See ParseLog case AID_EPH)" << endl;
+            //}
+
+            // Stores the ephemeris for all SVs in a structure
+            //cur_ephemerides.ephsv[cur_eph_sv.svprn] = cur_eph_sv;
+
+            // Parse ephemeris data for each SV
+            //ret_eph_data = Ublox::Parse_aid_eph(cur_eph_sv);
+            // Store ephemeris data for all SVs in one structure
+            //ret_ephemerides_data.sv_eph_data[ret_eph_data.prn] = ret_eph_data;
+
+            /*
 			//Display Parsed Eph Data:
 			cout << "PRN: " << ret_eph_data.prn << endl;
 			cout << "T_GD: " << ret_eph_data.tgd << endl;
@@ -580,7 +737,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 			cout << "t_oe: " << ret_eph_data.toe << endl;
 			cout << "----------------------------------" << endl;
 			cout << endl;
-
+            */
 			aid_eph_callback_(cur_eph_sv, read_timestamp_);
 			
 				/*ubx.rxm_eph = (struct s_rxm_eph*) log;
@@ -596,6 +753,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 			AlmSV cur_alm_sv;
 			std::cout << "Alm size: " << sizeof(cur_alm_sv) << endl;			// 48 bytes
 			memcpy(&cur_alm_sv, log, sizeof(cur_alm_sv));
+
 			aid_alm_callback_(cur_alm_sv, read_timestamp_);
 
 			break;
@@ -645,7 +803,7 @@ void Ublox::calculateCheckSum(uint8_t* in, size_t length, uint8_t* out)
 }
 
 
-gps_eph_data Ublox::Parse_aid_eph(EphemSV ubx_eph)
+GpsEphData Ublox::Parse_aid_eph(EphemSV ubx_eph)
 {
 	union {
 		unsigned short s;
@@ -664,7 +822,7 @@ gps_eph_data Ublox::Parse_aid_eph(EphemSV ubx_eph)
 		unsigned char c[4];
 	} union_int;
 	
-	gps_eph_data eph_data;
+    GpsEphData eph_data;
 
 	//SVID
 	eph_data.prn = (uint8_t) ubx_eph.svprn;

@@ -4,7 +4,8 @@
 
 #include "stdint.h"
 
-#define MAX_NOUT_SIZE      (5000)   // Maximum size of a NovAtel log buffer (ALMANACA logs are big!)
+#define MAX_NOUT_SIZE      (5000)   // Maximum size of a NovAtel log buffer (ALMANAC logs are big!)
+                    // find MAX_NOUT_SIZE for ublox (ask Scott how he go this one for Novatel)
 
 #define MAXCHAN		50  // Maximum number of signal channels
 #define MAX_NUM_SAT 28	// Maximum number of satellites with information in the RTKDATA log
@@ -177,8 +178,52 @@ struct CfgPrt {
     uint16_t reserved5; //!< reserved
     uint8_t checksum[2];
 });
-
+//////////////////////////////////////////////////////////////////////
 /*!
+ * AID-EPH Message Structure
+ * This message allows a receiver to be reset.
+ * ID: 0x0B  0x31 Length=8 or 104 bytes
+ */
+ /*
+struct AidEph {
+    UbloxHeader header;		//!< Ublox header
+    uint16_t nav_bbr_mask;  //!< Nav data to clear: 0x0000 = hot start, 0x0001 = warm start, 0xFFFF=cold start
+    uint8_t  reset_mode;     //!< Reset mode
+    uint8_t  reserved;       //!< reserved
+    uint8_t checksum[2];
+};
+*/
+/*!
+ * AID-ALM Message Structure
+ * This message allows a receiver to be reset.
+ * ID: 0x06  0x04 Length=4 bytes
+ */
+/*
+struct AidAlm {
+    UbloxHeader header;		//!< Ublox header
+    uint16_t nav_bbr_mask;  //!< Nav data to clear: 0x0000 = hot start, 0x0001 = warm start, 0xFFFF=cold start
+    uint8_t  reset_mode;     //!< Reset mode
+    uint8_t  reserved;       //!< reserved
+    uint8_t checksum[2];
+};
+*/
+/*!
+ * AID-HUI Message Structure
+ * This message allows a receiver to be reset.
+ * ID: 0x06  0x04 Length=4 bytes
+ */
+/*
+struct AidHui {
+    UbloxHeader header;		//!< Ublox header
+    uint16_t nav_bbr_mask;  //!< Nav data to clear: 0x0000 = hot start, 0x0001 = warm start, 0xFFFF=cold start
+    uint8_t  reset_mode;     //!< Reset mode
+    uint8_t  reserved;       //!< reserved
+    uint8_t checksum[2];
+};
+*/
+//////////////////////////////////////////////////////////////
+
+    /*!
  * AID-INI Message Structure
  * This message allows a receiver to be reset.
  * ID: 0x0B  0x01 Length=48 bytes
@@ -201,47 +246,9 @@ struct AidIni {
     uint8_t checksum[2];
 };
 
-/*!
- * AID-EPH Message Structure
- * This message allows a receiver to be reset.
- * ID: 0x0B  0x31 Length=8 or 104 bytes
- */
-struct AidEph {
-    UbloxHeader header;		//!< Ublox header
-    uint16_t nav_bbr_mask;  //!< Nav data to clear: 0x0000 = hot start, 0x0001 = warm start, 0xFFFF=cold start
-    uint8_t  reset_mode;     //!< Reset mode
-    uint8_t  reserved;       //!< reserved
-    uint8_t checksum[2];
-};
-
-/*!
- * AID-ALM Message Structure
- * This message allows a receiver to be reset.
- * ID: 0x06  0x04 Length=4 bytes
- */
-struct AidAlm {
-    UbloxHeader header;		//!< Ublox header
-    uint16_t nav_bbr_mask;  //!< Nav data to clear: 0x0000 = hot start, 0x0001 = warm start, 0xFFFF=cold start
-    uint8_t  reset_mode;     //!< Reset mode
-    uint8_t  reserved;       //!< reserved
-    uint8_t checksum[2];
-};
-
-/*!
- * AID-HUI Message Structure
- * This message allows a receiver to be reset.
- * ID: 0x06  0x04 Length=4 bytes
- */
-struct AidHui {
-    UbloxHeader header;		//!< Ublox header
-    uint16_t nav_bbr_mask;  //!< Nav data to clear: 0x0000 = hot start, 0x0001 = warm start, 0xFFFF=cold start
-    uint8_t  reset_mode;     //!< Reset mode
-    uint8_t  reserved;       //!< reserved
-    uint8_t checksum[2];
-};
-
-
-struct gps_eph_data {
+// Ephemeris Parameters for a SV
+PACK(
+struct GpsEphData {
     uint32_t prn;				//PRN number
     uint8_t tow;				//time stamp of subframe 0 (s)
     //uint8_t tow;				//time stamp of subframe 0 (s)
@@ -275,7 +282,13 @@ struct gps_eph_data {
 //    yes_no spoof;			//anti spoofing on
     double cmot;				//corrected mean motion
     unsigned int ura;			//user range accuracy variance (value 0-15)
-} ;
+});
+
+// Contains Ephemeris Parameters for all SVs
+PACK(
+    struct GpsEphemeridesData{
+        GpsEphData sv_eph_data[32];
+    });
 
 /*!
  * AID-EPH Message Structure
@@ -303,6 +316,13 @@ struct EphemSV{					// Ephemeris for a Satellite
 	uint8_t checksum[2];		// Checksum
 });
 
+// Holds EphemSV message for all SVs
+    // Don't know if will use yet
+PACK(
+struct Ephemerides{
+        EphemSV ephsv[32];
+});
+
 /*!
  * AID-ALM Message Structure
  * This message contains GPS almanac data for a satellite
@@ -317,6 +337,46 @@ struct AlmSV{
 	uint8_t checksum[2];		// Checksum
 });
 
+// (RXM-RAW) Raw Data for DGPS
+PACK(
+struct RawMeasReap{
+    double cpmeas;      // cycles - Carrier Phase measurement
+    double prmeas;      // m - Psuedorange measurement
+    float domeas;       // Hz - Doppler Measurement
+    uint8_t sv;         // SV Number
+    int8_t measqual;    // Nav Measurement Quality Indicator
+    int8_t cnratio;     // dbHz - Carrier to Noise Ratio
+    uint8_t lli;        // Loss of Lock Indicator (RINEX Definition)
+});
+
+PACK(
+struct RawMeas{
+    UbloxHeader header;
+    int32_t iTow;   // ms - Time of Week
+    int16_t week;   // weeks
+    uint8_t numSV;  // # of SVs following
+    uint8_t reserved;
+    RawMeasReap rawmeasreap[24];
+});
+
+// (RXM-SVSI) SV Status Info
+PACK(
+struct SVStatReap{
+    uint8_t svid;       // Satellite ID
+    uint8_t svflag;     // Information Flag
+    int16_t azim;       // Azimuth
+    int8_t elev;        // Elevation
+    uint8_t age;        // Age of almanac and ephemeris
+});
+
+PACK(
+struct SVStat{
+    int32_t iTow;       // ms - Time of Week
+    int16_t week;       // weeks - GPS Week
+    uint8_t numvis;     // Number of visible SVs
+    uint8_t numSV;      // # of SVs following
+    SVStatReap svstatreap[6];
+});
 
 struct range_data {
 
@@ -338,7 +398,6 @@ struct range_log {
     uint8_t reserved;
     range_data data[MAXCHAN];
 } ;
-
 
 enum Message_ID
 {

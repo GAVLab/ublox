@@ -39,11 +39,46 @@ int main(int argc, char **argv)
     // request NAVPOSLLH message
     //my_gps.ConfigureMessageRate(0x01, 0x02, 1);
 	//Request AID_EPH
-	my_gps.PollMessage(0x0B, 0x31);
+     my_gps.PollEphem();
 
     while(1);
 
     my_gps.Disconnect();
 		
+
+    // Send message to clear all data on receiver
+
+        // log time it takes to get a fix
+    // Collect and save aiding data
+    // Reset receiver and clear all data
+    // Share aiding data
+        // log TTFF
+
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -69,17 +69,15 @@ public:
       */
      void set_time_handler(GetTimeCallback time_handler) {
          this->time_handler_ = time_handler;
-     }
-
+    }
      void SaveConfiguration();
-     void ResetToColdStart();
-     void ResetToWarmStart();
-     void ResetToHotStart();
+     bool Reset(uint16_t nav_bbr_mask, uint8_t reset_mode);
+     bool ResetToColdStart();
+     bool ResetToWarmStart();
+     bool ResetToHotStart();
 
-     void SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output);
-     bool ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate);
-     bool PollMessage(uint8_t class_id, uint8_t msg_id);
-
+    void SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output);
+    bool ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate);
 
     //////////////////////////////////////////////////////
     // Diagnostic Callbacks
@@ -94,6 +92,17 @@ public:
     //////////////////////////////////////////////////////
     HandleAcknowledgementCallback handle_acknowledgement_;
     GetTimeCallback time_handler_; //!< Function pointer to callback function for timestamping
+
+    //////////////////////////////////////////////////////
+    // Aiding Data Polling Messages
+    //////////////////////////////////////////////////////
+    bool PollMessage(uint8_t class_id, uint8_t msg_id);
+    bool PollMessageIndSV(uint8_t class_id, uint8_t msg_id, uint8_t svid);
+    bool PollEphem(int8_t svid = -1);
+    bool PollAlmanac(int8_t svid = -1);
+    bool PollHUI();
+    bool PollIniAid();
+    bool PollAllAidData();
 
 private:
 
@@ -124,7 +133,6 @@ private:
 	 */
 	void ReadSerialPort();
 
-    //bool PollMessage2(uint8_t class_id, uint8_t msg_id);
     bool RequestLogOnChanged(std::string log); //!< request the given log from the receiver at the given rate
 	bool WaitForAck(int timeout); //!< waits for an ack from receiver (timeout in seconds)
 
@@ -132,7 +140,7 @@ private:
 	//! Function to parse logs into a usable structure
     void ParseLog(uint8_t* log, size_t logID);
 	//! Function to parse out useful ephemeris parameters
-	gps_eph_data Parse_aid_eph(EphemSV ubx_eph);
+    GpsEphData Parse_aid_eph(EphemSV ubx_eph);
 
 
     //////////////////////////////////////////////////////

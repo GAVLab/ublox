@@ -22,11 +22,11 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 set(UBLOX_LINK_LIBS "")
 
-if (NOT DEFINED serial_FOUND)
-  SET (serial_FOUND FALSE CACHE BOOL "Has the serial library been found.")
-  SET (serial_INCLUDE_DIRS "C:\serial" CACHE PATH "Serial include directory.")
-  SET (serial_LIBRARIES CACHE FILEPATH "serial.lib")
-endif(NOT DEFINED serial_FOUND)
+#if (NOT DEFINED serial_FOUND)
+#  SET (serial_FOUND FALSE CACHE BOOL "Has the serial library been found.")
+#  SET (serial_INCLUDE_DIRS "C:/serial" CACHE PATH "Serial include directory.")
+#  SET (serial_LIBRARIES CACHE FILEPATH "serial.lib")
+#endif(NOT DEFINED serial_FOUND)
 
 if(BUILD_WITH_ROS)
   include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
