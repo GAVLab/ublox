@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cstring>
 using namespace std;
 using namespace ublox;
 
@@ -52,6 +53,14 @@ inline void DefaultErrorMsgCallback(const std::string &msg) {
     std::cout << "Ublox Error: " << msg << std::endl;
 }
 
+inline void DefaultNavSolCallback(NavSol nav_sol, double time_stamp){
+    std::cout << "NAV-SOL: " << endl;
+}
+
+inline void DefaultNavVelNedCallback(NavVelNed nav_vel_ned, double time_stamp){
+    std::cout << "NAV-VELNED: " << endl;
+}
+
 inline void DefaultNavPosLlhCallback(NavPosLLH nav_position, double time_stamp){
     std:: cout << "NAV-POSLLH: " << endl <<
                   "  GPS milliseconds: " << nav_position.iTOW << std::endl <<
@@ -70,6 +79,22 @@ inline void DefaultAidAlmCallback(AlmSV alm_sv, double time_stamp){
 
 }
 
+inline void DefaultAidHuiCallback(AidHui aid_hui, double time_stamp){
+    std::cout << "AID-HUI: " << std::endl;
+}
+
+inline void DefaultAidIniCallback(AidIni aid_ini, double time_stamp){
+    std::cout << "AID-INI: " << std::endl;
+}
+
+inline void DefaultRxmRawCallback(RawMeas raw_meas, double time_stamp){
+    std::cout << "RXM-RAW: " << std::endl;
+}
+
+inline void DefaultRxmSvsiCallback(SVStat sv_stat, double time_stamp){
+    std::cout << "RXM-SVSI: " << std::endl;
+}
+
 Ublox::Ublox() {
 	serial_port_=NULL;
 	reading_status_=false;
@@ -78,8 +103,12 @@ Ublox::Ublox() {
     nav_pos_llh_callback_=DefaultNavPosLlhCallback;
 	aid_eph_callback_=DefaultAidEphCallback;
 	aid_alm_callback_=DefaultAidAlmCallback;
-    //nav_sol_callback_;
-    //nav_vel_ned_callback;
+    aid_hui_callback_=DefaultAidHuiCallback;
+    aid_ini_callback_=DefaultAidIniCallback;
+    rxm_raw_callback_=DefaultRxmRawCallback;
+    rxm_svsi_callback_=DefaultRxmSvsiCallback;
+    nav_sol_callback_=DefaultNavSolCallback;
+    nav_vel_ned_callback_=DefaultNavVelNedCallback;
     log_debug_=DefaultDebugMsgCallback;
     log_info_=DefaultInfoMsgCallback;
     log_warning_=DefaultWarningMsgCallback;
@@ -416,6 +445,11 @@ bool Ublox::PollAllAidData(){
     return PollMessage(0x0B, 0x10);
 }
 
+// (RXM-EPH) Polls for Raw DGPS data
+bool Ublox::PollRawDgpsData(){
+    return PollMessage(0x02, 0x10);
+}
+
 ////////////////////////////////////////////////////////
 // (CFG) Configuration Messages
 ////////////////////////////////////////////////////////
@@ -662,14 +696,30 @@ bool Ublox::WaitForAck(int timeout) {
 
 void Ublox::ParseLog(uint8_t *log, size_t logID)
 {
-	int length;
+    double length;
 
 	switch (logID)
 	{
+        case NAV_SOL:
+            NavSol cur_nav_sol;
+
+            memcpy(&cur_nav_sol, log, sizeof(cur_nav_sol));
+
+            nav_sol_callback_(cur_nav_sol, read_timestamp_);
+            break;
+
+        case NAV_VELNED:
+            NavVelNed cur_nav_vel_ned;
+
+            memcpy(&cur_nav_vel_ned, log, sizeof(cur_nav_vel_ned));
+
+            nav_vel_ned_callback_(cur_nav_vel_ned, read_timestamp_);
+            break;
 
         case NAV_POSLLH:
             NavPosLLH cur_nav_position;
-            std::cout << sizeof(cur_nav_position) << std::endl;
+            std::cout << "NAV POS: " << endl;
+            //std::cout << sizeof(cur_nav_position) << std::endl;
             memcpy(&cur_nav_position, log, sizeof(cur_nav_position));
             /*std::cout << "header: " << std::endl;
             std::cout << hex << (int)cur_nav_position.header.message_class <<std::endl;
@@ -678,39 +728,51 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             std::cout << dec << cur_nav_position.iTOW << std::endl;
             std::cout << dec << cur_nav_position.latitude_scaled << std::endl;*/
 
+            //write("test.dat", cur_nav_position);
+
+
             nav_pos_llh_callback_(cur_nav_position, read_timestamp_);
             break;
 		
 		case AID_EPH:			
         //std::cout << log << std::endl;
             EphemSV cur_eph_sv;
-            //Ephemerides cur_ephemerides;
-            //GpsEphData ret_eph_data;
-            //GpsEphemeridesData ret_ephemerides_data;
+            Ephemerides cur_ephemerides;
+            ParsedEphData ret_eph_data;
+            ParsedEphermeridesData ret_ephemerides_data;
 
-            std::cout << "log size: " << sizeof(log) << std::endl;
+            length = (double) *(log+4);
 
-            // If Ephemeris for SV is not present (16 bytes)
-                // could also check for HOW==0 or length==8
-            //if (sizeof(log) == 16){
-            //return;
+            //std::cout << "log length: " << length << std::endl;
+
+            //intvoid write(const std::string& filename, NavPosLLH& data){
+
+            //for (n=0; n<=8;n++){
+              //  std::cout << "--> " << (float) *(log+n) << std::endl;
             //}
 
-            // If Ephemeris for SV is present (112 bytes)
-            //else if (sizeof(log)== 112){
+            // If Ephemeris for SV is not present (length is 8 bytes)
+            if (length == 8){
+                std::cout << "SV# " << (double) *(log+6) << "- no ephemeris" << endl;
+
+                break;
+            }
+
+            // If Ephemeris for SV is present (length is 104 bytes)
+            else if (length == 104){
                 memcpy(&cur_eph_sv, log, sizeof(cur_eph_sv));
-            //}
-            //else{
-              //  cout << "Error! AID-EPH log data is not 16 or 112 bytes long! (See ParseLog case AID_EPH)" << endl;
-            //}
 
-            // Stores the ephemeris for all SVs in a structure
-            //cur_ephemerides.ephsv[cur_eph_sv.svprn] = cur_eph_sv;
+                // Store each SV's ephemeris message in a structure
+                cur_ephemerides.ephsv[cur_eph_sv.svprn] = cur_eph_sv;
+                // Put function to parse ephemeris parameters
+                ret_eph_data = Ublox::Parse_aid_eph(cur_eph_sv);
+                // Store ephemeris data for all SVs in one structure
+                ret_ephemerides_data.sv_eph_data[ret_eph_data.prn] = ret_eph_data;
+            }
 
-            // Parse ephemeris data for each SV
-            //ret_eph_data = Ublox::Parse_aid_eph(cur_eph_sv);
-            // Store ephemeris data for all SVs in one structure
-            //ret_ephemerides_data.sv_eph_data[ret_eph_data.prn] = ret_eph_data;
+            else{
+                cout << "Error! AID-EPH log payload is not 8 or 104 bytes long! (See ParseLog case AID_EPH)" << endl;
+            }
 
             /*
 			//Display Parsed Eph Data:
@@ -751,14 +813,37 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 
 		case AID_ALM:
 			AlmSV cur_alm_sv;
-			std::cout << "Alm size: " << sizeof(cur_alm_sv) << endl;			// 48 bytes
-			memcpy(&cur_alm_sv, log, sizeof(cur_alm_sv));
+            Almanac cur_almanac;
+
+            length = (double) *(log+4);
+
+            // If Almanac data for SV is not present (length is 8 bytes)
+            if (length == 8){
+                std::cout << "SV# " << (double) *(log+6) << "- no almanac data" << endl;
+                break;
+            }
+
+            // If Almanac data for SV is present (length is 40 bytes)
+            else if (length == 40){
+                memcpy(&cur_alm_sv, log, sizeof(cur_alm_sv));
+
+                // Store each SV's almanac message in a structure
+                cur_almanac.almsv[cur_alm_sv.svprn] = cur_alm_sv;
+                // Put function to parse almanac parameters
+                //
+                // Store almanac data for all SVs in one structure
+                //
+            }
+
+            else{
+                cout << "Error! AID-ALM log payload is not 8 or 40 bytes long! (See ParseLog case AID_ALM)" << endl;
+            }
 
 			aid_alm_callback_(cur_alm_sv, read_timestamp_);
 
 			break;
 
-		case rangeID:
+        //case rangeID:
 			
 			//cout << "sizeoff range log Struct + " << sizeof(curRawData) << endl;
 			//length = ((log[1])<<8) + log[0];
@@ -767,19 +852,42 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 			//cout << "length of Range message = " << length << endl;
             //memcpy(&curRawData, log+2, length);
 			//PublishRangeToDB(curRawData);
-			break;	
-        case NAV_VELNED:
+            //break;
 
-			//cout << "sizeoff NavSol Struct + " << sizeof(curNavSolData) << endl;
-			//int length;
-			//length = ((log[1])<<8)+log[0];
-			//cout << "length of Nav message = " << length << endl;
-            //memcpy(&curNavVelNed, log+2, sizeof(curNavVelNed));
-			//PublishNavVelNedToDB(curNavVelNed);
-			//cout << "Something Good NAVSOL" << endl;
-			break;
+        case AID_HUI:
+            AidHui cur_aid_hui;
 
-	}
+            memcpy(&cur_aid_hui, log, sizeof(cur_aid_hui));
+
+            aid_hui_callback_(cur_aid_hui, read_timestamp_);
+
+        case AID_INI:
+            AidIni cur_aid_ini;
+
+            memcpy(&cur_aid_ini, log, sizeof(cur_aid_ini));
+
+            aid_ini_callback_(cur_aid_ini, read_timestamp_);
+
+        case RXM_RAW:
+            RawMeas cur_raw_meas;
+
+            length = (double) *(log+4);
+            //std::cout << length << endl;
+
+            memcpy(&cur_raw_meas, log, length);
+
+            rxm_raw_callback_(cur_raw_meas, read_timestamp_);
+
+         case RXM_SVSI:
+            SVStat cur_sv_stat;
+
+            length = (double) *(log+4);
+            //std::cout << length << endl;
+
+            memcpy(&cur_sv_stat, log, length);
+
+            rxm_svsi_callback_(cur_sv_stat, read_timestamp_);
+    }
 }
 
 
@@ -803,7 +911,7 @@ void Ublox::calculateCheckSum(uint8_t* in, size_t length, uint8_t* out)
 }
 
 
-GpsEphData Ublox::Parse_aid_eph(EphemSV ubx_eph)
+ParsedEphData Ublox::Parse_aid_eph(EphemSV ubx_eph)
 {
 	union {
 		unsigned short s;
@@ -822,7 +930,7 @@ GpsEphData Ublox::Parse_aid_eph(EphemSV ubx_eph)
 		unsigned char c[4];
 	} union_int;
 	
-    GpsEphData eph_data;
+    ParsedEphData eph_data;
 
 	//SVID
 	eph_data.prn = (uint8_t) ubx_eph.svprn;

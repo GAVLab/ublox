@@ -22,6 +22,10 @@ typedef boost::function<void(NavSol&, double&)> NavSolCallback;
 typedef boost::function<void(NavVelNed&, double&)> NavVelNedCallback;
 typedef boost::function<void(EphemSV&, double&)> AidEphCallback;			// Problem here
 typedef boost::function<void(AlmSV&, double&)> AidAlmCallback;
+typedef boost::function<void(AidHui&, double&)> AidHuiCallback;
+typedef boost::function<void(AidIni&, double&)> AidIniCallback;
+typedef boost::function<void(RawMeas&, double&)> RxmRawCallback;
+typedef boost::function<void(SVStat&, double&)> RxmSvsiCallback;
 
 class Ublox
 {
@@ -103,6 +107,7 @@ public:
     bool PollHUI();
     bool PollIniAid();
     bool PollAllAidData();
+    bool PollRawDgpsData();
 
 private:
 
@@ -140,7 +145,7 @@ private:
 	//! Function to parse logs into a usable structure
     void ParseLog(uint8_t* log, size_t logID);
 	//! Function to parse out useful ephemeris parameters
-    GpsEphData Parse_aid_eph(EphemSV ubx_eph);
+    ParsedEphData Parse_aid_eph(EphemSV ubx_eph);
 
 
     //////////////////////////////////////////////////////
@@ -158,10 +163,13 @@ private:
     //////////////////////////////////////////////////////
     NavPosLLHCallback nav_pos_llh_callback_;
 	NavSolCallback nav_sol_callback_;
-	NavVelNedCallback nav_vel_ned_callback;
-	AidEphCallback aid_eph_callback_;
-	AidAlmCallback aid_alm_callback_;
-
+    NavVelNedCallback nav_vel_ned_callback_;
+    AidAlmCallback aid_alm_callback_;
+    AidEphCallback aid_eph_callback_;
+    AidHuiCallback aid_hui_callback_;
+    AidIniCallback aid_ini_callback_;
+    RxmRawCallback rxm_raw_callback_;
+    RxmSvsiCallback rxm_svsi_callback_;
 	bool ackReceived;
 	bool readingACK;
 	
