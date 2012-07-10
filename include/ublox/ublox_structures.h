@@ -7,10 +7,10 @@
 #define MAX_NOUT_SIZE      (5000)   // Maximum size of a NovAtel log buffer (ALMANAC logs are big!)
                     // find MAX_NOUT_SIZE for ublox (ask Scott how he go this one for Novatel)
 
-#define MAXCHAN		50  // Maximum number of signal channels
-#define MAX_NUM_SAT 28	// Maximum number of satellites with information in the RTKDATA log
-#define EPHEM_CHAN	33
-#define MAXSAT 28
+//#define MAXCHAN		50  // Maximum number of signal channels
+//#define MAX_NUM_SAT 28	// Maximum number of satellites with information in the RTKDATA log
+//#define EPHEM_CHAN	33
+//#define MAXSAT 28
 
 // define macro to pack structures correctly with both GCC and MSVC compilers
 #ifdef _MSC_VER // using MSVC
@@ -73,7 +73,7 @@ PACK(
         uint32_t clear_mask;  //!< clear mask
         uint32_t save_mask;     //!< save mask
         uint32_t load_mask;           //!< load mask
-        uint16_t checksum[2];      //!< Checksum
+        uint8_t checksum[2];      //!< Checksum
 });
 
 /*!
@@ -110,10 +110,28 @@ PACK(
         uint16_t reserved5; //!< reserved
         uint8_t checksum[2];
 });
-
 /////////////////////////////////////////////////////////////
 // Navigation Messages
 /////////////////////////////////////////////////////////////
+/*!
+ * NAV-STATUS Message Structure
+ * This message contains gps fix type and ttff
+ * ID: 0x01 0x03 length=16 bytes
+ */
+PACK(
+    struct NavStatus {
+        UbloxHeader header;
+        uint32_t iTOW;      // Time of Week (ms)
+        uint8_t fixtype;    // no fix=0x00, deadreckoning only=0x01, 2D=0x02, 3D=0x03, deadreck+GPS=0x04, time fix only=0x05, reserved=0x06..0xff
+        uint8_t flags;
+        uint8_t fixstat;
+        uint8_t flags2;
+        uint32_t ttff;      // TTFF (ms)
+        uint32_t msss;      // Milliseconds since startup/reset
+        uint8_t checksum[2];
+
+});
+
 /*!
 * NAV-SOL Message Structure
 * This message combines Position, velocity and
@@ -185,50 +203,6 @@ PACK(
         uint8_t checksum[2];
 });
 
-
-
-/*!
- * AID-EPH Message Structure
- * This message allows a receiver to be reset.
- * ID: 0x0B  0x31 Length=8 or 104 bytes
- */
- /*
-struct AidEph {
-    UbloxHeader header;		//!< Ublox header
-    uint16_t nav_bbr_mask;  //!< Nav data to clear: 0x0000 = hot start, 0x0001 = warm start, 0xFFFF=cold start
-    uint8_t  reset_mode;     //!< Reset mode
-    uint8_t  reserved;       //!< reserved
-    uint8_t checksum[2];
-};
-*/
-/*!
- * AID-ALM Message Structure
- * This message allows a receiver to be reset.
- * ID: 0x06  0x04 Length=4 bytes
- */
-/*
-struct AidAlm {
-    UbloxHeader header;		//!< Ublox header
-    uint16_t nav_bbr_mask;  //!< Nav data to clear: 0x0000 = hot start, 0x0001 = warm start, 0xFFFF=cold start
-    uint8_t  reset_mode;     //!< Reset mode
-    uint8_t  reserved;       //!< reserved
-    uint8_t checksum[2];
-};
-*/
-/*!
- * AID-HUI Message Structure
- * This message allows a receiver to be reset.
- * ID: 0x06  0x04 Length=4 bytes
- */
-/*
-struct AidHui {
-    UbloxHeader header;		//!< Ublox header
-    uint16_t nav_bbr_mask;  //!< Nav data to clear: 0x0000 = hot start, 0x0001 = warm start, 0xFFFF=cold start
-    uint8_t  reset_mode;     //!< Reset mode
-    uint8_t  reserved;       //!< reserved
-    uint8_t checksum[2];
-};
-*/
 //////////////////////////////////////////////////////////////
 // AIDING DATA MESSAGES
 //////////////////////////////////////////////////////////////
@@ -305,16 +279,14 @@ PACK(
         uint8_t checksum[2];		// Checksum
 });
 
-// Holds EphemSV message for all SVs
-    // Don't know if will use yet
 PACK(
-    struct Ephemerides{
-        EphemSV ephsv[32];
+    struct Ephemerides{             // Holds EphemSV message for all SVs
+        EphemSV ephemsv[32];
 });
 
-// Parsed Ephemeris Parameters for a SV
+// Parsed Ephemeris Parameters for a SV - NOT FINISHED
 PACK(
-    struct ParsedEphData {
+    struct ParsedEphemData {
         uint32_t prn;				//PRN number
         uint8_t tow;				//time stamp of subframe 0 (s)
         //uint8_t tow;				//time stamp of subframe 0 (s)
@@ -352,8 +324,8 @@ PACK(
 
 // Contains Ephemeris Parameters for all SVs
 PACK(
-    struct ParsedEphermeridesData{
-        ParsedEphData sv_eph_data[32];
+    struct ParsedEphemeridesData{
+        ParsedEphemData sv_eph_data[32];
 });
 
 /*!
@@ -421,41 +393,21 @@ PACK(
         uint8_t checksum[2];
 });
 
-/*
-struct range_data {
-	double adr;
-	double psr;
-	float dop;
-    uint8_t svprn; // PRN
-    int8_t mesQI; // Nav measurements quality indicator -- (>=4 PR+DO OK) (>=5 PR+DO+CP OK) (<6 likel loss carrier lock)
-    int8_t cno; // Signal/Noise
-    uint8_t lock; // loss lock indicator 
-} ;
-
-struct range_log {
-    // header
-    int32_t iTow;
-    int16_t week;
-    uint8_t numSV;
-    uint8_t reserved;
-    range_data data[MAXCHAN];
-    //checksum
-} ;
-*/
 enum Message_ID
 {
-
+    NAV_STATUS = 259,               // (ID 0x01 0x03) TTFF, GPS Fix type, time since startup/reset
     NAV_SOL = 262,                  // (ID 0x01 0x06) ECEF Pos,Vel, TOW, Accuracy,
     NAV_VELNED = 274,               // (ID 0x01 0x12) Vel (North, East, Down), Speed, Ground Speed
     NAV_POSLLH = 258,               // (ID 0x01 0x02) Pos (Lat,Long,Height)
     AID_EPH = 2865,					// (ID 0x0B 0x31) Ephemerides
     AID_ALM = 2864,					// (ID 0x0B 0x30) Almanac
-    AID_HUI = 2828,                 // (ID 0x0B 0x02) GPS Health, Ionospheric, UTC
+    AID_HUI = 2818,                 // (ID 0x0B 0x02) GPS Health, Ionospheric, UTC
     AID_INI = 2817,                 // (ID 0x0B 0x01) Position, Time, Frequency, Clock Drift
     MON_VER = 2564,                 // (ID 0x0A 0x04) Reciever/Software/ROM Version
     RXM_RAW = 528,                  // (ID 0x02 0x10) Raw DGPS Data
-    RXM_SVSI = 544                  // (ID 0x02 0x20) SV Status Info
-
+    RXM_SVSI = 544,                 // (ID 0x02 0x20) SV Status Info
+    ACK_ACK = 261,                  // (ID 0x05 0x01) Acknowledged Message
+    ACK_NAK = 1280                  // (ID 0x05 0x00) Message Not Acknowledged
 };
 
 //typedef enum BINARY_LOG_TYPE BINARY_LOG_TYPE;

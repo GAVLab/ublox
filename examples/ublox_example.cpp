@@ -1,7 +1,7 @@
-#include <string>
-#include <iostream>
-#include <sstream>
-
+//#include <string>
+//#include <iostream>
+//#include <sstream>
+//#include <fstream>
 #include "ublox/ublox.h"
 using namespace ublox;
 using namespace std;
@@ -13,8 +13,11 @@ using namespace std;
 //
 //};
 
+
 int main(int argc, char **argv)
 {
+    Ublox my_gps;
+
     if(argc < 3) {
         std::cerr << "Usage: ublox_example <serial port address> <baud rate>" << std::endl;
         return 0;
@@ -23,47 +26,97 @@ int main(int argc, char **argv)
     int baudrate=115200;
     istringstream(argv[2]) >> baudrate;
 
-
-    Ublox my_gps;
+    // Connect to Receiver
     bool result = my_gps.Connect(port,baudrate);
+        if (result) {
+            cout << "Successfully connected." << endl;
+        }
+        else {
+            cout << "Failed to connect." << endl;
+            return -1;
+        }
 
-    if (result) {
-        cout << "Successfully connected." << endl;
-    }
-    else {
-        cout << "Failed to connect." << endl;
-        return -1;
-    }
+    // Run Receiver until I have all aiding data
 
-    // configure receiver
-    // request NAVPOSLLH message
-    //my_gps.ConfigureMessageRate(0x01, 0x02, 1);
+        // Set Port Configuration
+            //my_gps.SetPortConfiguration(1, 1, 0, 0);
+        // Set NAV-STATUS message to output every second
+            //my_gps.ConfigureMessageRate(0x01,0x03,0);
+            //sleep(1); std::cout << "pause 1 sec" << endl;
+        // Poll for all aiding data
+
+            my_gps.PollIniAid();
+            sleep(1); std::cout << "pause 1 sec" << endl;
+                // Receiver Pos, Frequecny, Time
+
+/*
+            my_gps.PollEphem();
+            sleep(1);  std::cout << "pause 1 sec" << endl;
+
+            my_gps.PollHUI();
+            sleep(1); std::cout << "pause 1 sec" << endl;
+                // Health, UTC, Ionosphere
+
+            my_gps.PollAlmanac();
+            sleep(1); std::cout << "pause 1 sec" << endl;
+*/
+           // my_gps.ConfigureMessageRate(0x01,0x03,0);
+            //sleep(1); std::cout << "pause 1 sec" << endl;
+
+    // Reset to Cold Start
+       //my_gps.ResetToColdStart(0x02);
+       //sleep(1); std::cout << "pause 1 sec" << endl;    // Max of 100 ms needed to process AID-INI
+
+    // Pass all aiding data to receiver
+/*
+           my_gps.SendAidIni();
+           sleep(.1); std::cout << "pause 1 sec" << endl;    // Max of 100 ms needed to process AID-INI
 
 
-	//Request AID_EPH
-     my_gps.PollEphem();
+           my_gps.SendAidEphem();
+           sleep(1); std::cout << "pause 1 sec" << endl;
 
-   // my_gps.PollAlmanac();
+           my_gps.SendAidHui();
+           sleep(1); std::cout << "pause 1 sec" << endl;
+           my_gps.SendAidAlm();
+*/
+           // Poll for all aiding data
+/*
+               my_gps.PollIniAid();
+               sleep(1); std::cout << "pause 1 sec" << endl;
+                   // Receiver Pos, Frequecny, Time
 
-   // my_gps.PollRawDgpsData();
+
+               my_gps.PollEphem();
+               sleep(1);  std::cout << "pause 1 sec" << endl;
+
+               my_gps.PollHUI();
+               sleep(1); std::cout << "pause 1 sec" << endl;
+                   // Health, UTC, Ionosphere
+
+               my_gps.PollAlmanac();
+               sleep(1); std::cout << "pause 1 sec" << endl;
+*/
+
+my_gps.ConfigureMessageRate(0x01,0x03,1);
+
+
+       // my_gps.ResetToHotStart();
+    // Log TTFF
+
+    // Reset to Cold Start
+        //my_gps.ResetToColdStart(0x02);
+        //sleep(1); std::cout << "pause 1 sec" << endl;
+
+
+    // Log TTFF
 
     while(1);
 
-    my_gps.Disconnect();
-		
-
-    // Send message to clear all data on receiver
-
-        // log time it takes to get a fix
-    // Collect and save aiding data
-    // Reset receiver and clear all data
-    // Share aiding data
-        // log TTFF
+        my_gps.Disconnect();
 
     return 0;
 }
-
-
 
 
 
