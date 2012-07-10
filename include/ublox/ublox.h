@@ -24,6 +24,7 @@ typedef boost::function<void()> HandleAcknowledgementCallback;
 typedef boost::function<void(const std::string&)> LogMsgCallback;
 
 // GPS Data Callbacks
+typedef boost::function<void(CfgPrt&, double&)> PortSettingsCallback;
 typedef boost::function<void(NavPosLLH&, double&)> NavPosLLHCallback;
 typedef boost::function<void(NavSol&, double&)> NavSolCallback;
 typedef boost::function<void(NavStatus&, double&)> NavStatusCallback;
@@ -89,6 +90,7 @@ public:
      bool ResetToHotStart();
 
     void SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output);
+    void PollPortConfiguration(uint8_t port_identifier = 3);
     bool ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate);
 
     //////////////////////////////////////////////////////
@@ -140,7 +142,7 @@ public:
     AidIni cur_aid_ini;
     RawMeas cur_raw_meas;
     SVStat cur_sv_stat;
-
+    CfgPrt cur_port_settings;
 private:
 
 	/*!
@@ -193,6 +195,7 @@ private:
     //////////////////////////////////////////////////////
     // New Data Callbacks
     //////////////////////////////////////////////////////
+    PortSettingsCallback port_settings_callback_;
     NavPosLLHCallback nav_pos_llh_callback_;
 	NavSolCallback nav_sol_callback_;
     NavStatusCallback nav_status_callback_;

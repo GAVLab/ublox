@@ -94,6 +94,7 @@ PACK(
 /*!
  * CFM-PRT Message Structure
  * This message configures a USART or USB port.
+ * Use to specify input/output protocols to use
  * ID: 0x06  0x00 Length=20 bytes
  */
 PACK(
@@ -395,6 +396,7 @@ PACK(
 
 enum Message_ID
 {
+    CFG_PRT = 1536,                 // (ID 0x06 0x00) I/O Protocol Settings
     NAV_STATUS = 259,               // (ID 0x01 0x03) TTFF, GPS Fix type, time since startup/reset
     NAV_SOL = 262,                  // (ID 0x01 0x06) ECEF Pos,Vel, TOW, Accuracy,
     NAV_VELNED = 274,               // (ID 0x01 0x12) Vel (North, East, Down), Speed, Ground Speed
