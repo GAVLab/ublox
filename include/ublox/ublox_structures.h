@@ -282,7 +282,7 @@ PACK(
 
 PACK(
     struct Ephemerides{             // Holds EphemSV message for all SVs
-        EphemSV ephemsv[32];
+        EphemSV ephemsv[33];
 });
 
 // Parsed Ephemeris Parameters for a SV - NOT FINISHED
@@ -346,7 +346,7 @@ PACK(
 // Holds Almanac data for all SVs
 PACK(
     struct Almanac{
-        AlmSV almsv[32];
+        AlmSV almsv[33];
 });
 
 // (RXM-RAW) Raw Data for DGPS
@@ -401,6 +401,7 @@ enum Message_ID
     NAV_SOL = 262,                  // (ID 0x01 0x06) ECEF Pos,Vel, TOW, Accuracy,
     NAV_VELNED = 274,               // (ID 0x01 0x12) Vel (North, East, Down), Speed, Ground Speed
     NAV_POSLLH = 258,               // (ID 0x01 0x02) Pos (Lat,Long,Height)
+    AID_REQ = 2816,                 // (ID 0x0B 0x00) Receiver Requests Aiding data if not present at startup
     AID_EPH = 2865,					// (ID 0x0B 0x31) Ephemerides
     AID_ALM = 2864,					// (ID 0x0B 0x30) Almanac
     AID_HUI = 2818,                 // (ID 0x0B 0x02) GPS Health, Ionospheric, UTC

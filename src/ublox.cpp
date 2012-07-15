@@ -76,7 +76,6 @@ inline void DefaultNavPosLlhCallback(NavPosLLH nav_position, double time_stamp){
 
 inline void DefaultAidEphCallback(EphemSV eph_sv, double time_stamp){
 	std::cout << "AID-EPH: " << std::endl;
-
 }
 
 inline void DefaultAidAlmCallback(AlmSV alm_sv, double time_stamp){
@@ -559,14 +558,52 @@ void Ublox::PollPortConfiguration(uint8_t port_identifier)
 }
 
 //////////////////////////////////////////////////////////////
+// Save/Read data to file
+//////////////////////////////////////////////////////////////
+
+bool Ublox::SaveEphemerides()
+{
+    // Serializing struct to student.data
+        ofstream output_file("Ephemerides.data", ios::binary);
+        output_file.write((char*)&cur_ephemerides, sizeof(cur_ephemerides));
+        output_file.close();
+        return true;
+}
+
+Ephemerides Ublox::LoadEphemerides()
+{
+    ifstream input_file("Ephemerides.data", ios::binary);
+    input_file.read((char*)&stored_ephems, sizeof(stored_ephems));
+    return stored_ephems;
+}
+
+bool Ublox::SaveAlmanac()
+{
+    // Serializing struct to student.data
+        ofstream output_file("Almanac.data", ios::binary);
+        output_file.write((char*)&cur_almanac, sizeof(cur_almanac));
+        output_file.close();
+        return true;
+}
+
+Almanac Ublox::LoadAlmanac()
+{
+    ifstream input_file("Almanac.data", ios::binary);
+    input_file.read((char*)&stored_almanac, sizeof(stored_almanac));
+    return stored_almanac;
+}
+
+//////////////////////////////////////////////////////////////
 // Functions to Transmit Aiding Data to Receiver
 //////////////////////////////////////////////////////////////
 // Send Message
-bool Ublox::SendMessage(unsigned char* msg_ptr, size_t length)
+bool Ublox::SendMessage(uint8_t* msg_ptr, size_t length)
 {
+    //std::cout << length << std::endl;
     std::cout << "Message Pointer" << endl;
     printHex((char*) msg_ptr, length);
-    serial_port_->write(msg_ptr, length);
+    size_t bytes_written=serial_port_->write(msg_ptr, length);
+    //std::cout << bytes_written << std::endl;
     return true;
 }
 
@@ -579,19 +616,22 @@ bool Ublox::SendAidIni()
 }
 
 // Send AID-EPH to Receiver
-bool Ublox::SendAidEphem()
+bool Ublox::SendAidEphem(Ephemerides ephems)
 {
+
     std::cout << "Sending Ephemerides for available SVs." << endl;
 
     for(uint8_t prn_index=1; prn_index<=32; prn_index++){
-        if (cur_ephemerides.ephemsv[prn_index].svprn == 0){
+        if (ephems.ephemsv[prn_index].svprn == 0){
             std::cout << "No AID-EPH data for PRN # " << (int)prn_index << " .." << endl;
         }
 
+        //uint8_t prn_index = 7;
         else{
-            std::cout << "Sending AID-EPH for PRN # " << (int) cur_ephemerides.ephemsv[prn_index].svprn << " .." << endl;
-            unsigned char* msg_ptr = (unsigned char*)&cur_ephemerides.ephemsv[prn_index];
-            SendMessage(msg_ptr, sizeof(cur_ephemerides.ephemsv[prn_index]));
+            std::cout << "Sending AID-EPH for PRN # " << (int) ephems.ephemsv[prn_index].svprn << " .." << endl;
+            uint8_t* msg_ptr = (uint8_t*)&ephems.ephemsv[prn_index];
+
+            SendMessage(msg_ptr, sizeof(ephems.ephemsv[prn_index]));
 
             sleep(.1);
         }
@@ -600,18 +640,18 @@ bool Ublox::SendAidEphem()
     return true;
 }
 // Send AID-ALM to Receiver
-bool Ublox::SendAidAlm()
+bool Ublox::SendAidAlm(Almanac almanac)
 {
     for(uint8_t prn_index=1; prn_index<=32; prn_index++){
-        if (cur_almanac.almsv[prn_index].svprn == 0){
+        if (almanac.almsv[prn_index].svprn == 0){
             std::cout << "No AID-ALM data for PRN # " << (int)prn_index << " .." << endl;
 
         }
 
         else{
-            std::cout << "Sending AID-ALM for PRN # " << (int) cur_almanac.almsv[prn_index].svprn << " .." << endl;
-            unsigned char* msg_ptr = (unsigned char*)&cur_almanac.almsv[prn_index];
-            SendMessage(msg_ptr, sizeof(cur_almanac.almsv[prn_index]));
+            std::cout << "Sending AID-ALM for PRN # " << (int) almanac.almsv[prn_index].svprn << " .." << endl;
+            unsigned char* msg_ptr = (unsigned char*)&almanac.almsv[prn_index];
+            SendMessage(msg_ptr, sizeof(almanac.almsv[prn_index]));
         }
     }
     return true;
@@ -774,6 +814,9 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 	switch (logID)
     {
 
+        case AID_REQ:
+            std::cout << "AID-REQ message received by computer." << endl;
+
         case CFG_PRT:
             //CfgPrt cur_port_settings;
 
@@ -869,13 +912,15 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             if (length == 8){
 
                 std::cout << "SV# " << (double) *(log+6) << "- no ephemeris" << std::endl;
-                //std::cout << "SVPRN " << cur_ephem_sv.svprn << std::endl;
+
                 break;
             }
 
             // If Ephemeris for SV is present (length is 104 bytes)
             else if (length == 104){
                 memcpy(&cur_ephem_sv, log, sizeof(cur_ephem_sv));
+
+                printHex((char*) &cur_ephem_sv, sizeof(cur_ephem_sv));
 
                 // Store each SV's ephemeris message in a structure
                 cur_ephemerides.ephemsv[cur_ephem_sv.svprn] = cur_ephem_sv;

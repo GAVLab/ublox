@@ -3,14 +3,16 @@
 
 #include "ublox_structures.h"
 #include <serial/serial.h>
+#include <fstream>
+
 /*
 #include <iostream>
 #include <stdlib.h>
-#include <fstream>
 #include <sstream>
 #include <cstring>
 #include <iomanip>
 */
+
 //#include <boost/function.hpp>
 #include <boost/thread.hpp>
 //#include <boost/bind.hpp>
@@ -122,16 +124,25 @@ public:
     bool PollNavStatus();
 
 //////////////////////////////////////////////////////
+// Saving/Reading stored data
+//////////////////////////////////////////////////////
+    bool SaveEphemerides();
+    Ephemerides LoadEphemerides();
+    bool SaveAlmanac();
+    Almanac LoadAlmanac();
+//////////////////////////////////////////////////////
 // Send Aiding Data to Receiver
 //////////////////////////////////////////////////////
-    bool SendMessage(unsigned char* msg_ptr, size_t length);
+    bool SendMessage(uint8_t *msg_ptr, size_t length);
     bool SendAidIni();
-    bool SendAidEphem();
+    bool SendAidEphem(Ephemerides ephems);
     bool SendRawMeas();
     bool SendAidHui();
-    bool SendAidAlm();
+    bool SendAidAlm(Almanac almanac);
 
 // Temporary Method
+    Ephemerides stored_ephems;
+    Almanac stored_almanac;
     Ephemerides cur_ephemerides;    // Contains newest ephemeris available for all 32 SVs
     Almanac cur_almanac;            // Contains almanac data available for all 32 SVs
     NavStatus cur_nav_status;
