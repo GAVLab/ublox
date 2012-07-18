@@ -3,6 +3,7 @@
 //#include <sstream>
 //#include <fstream>
 #include "ublox/ublox.h"
+#include <sys/time.h>
 using namespace ublox;
 using namespace std;
 
@@ -31,12 +32,16 @@ void EphemerisCallback(EphemSV &ephemeris, double &time_stamp) {
 void PositionTimeCallback(AidIni &init_position, double &time_stamp) {
     cur_aid_ini = init_position;
     aid_ini_timestamp = time_stamp;
-    cout << dec << "[" << time_stamp <<  "]" <<  "Received aid_ini." << endl;
+    //timeval t1;
+    //gettimeofday(&t1, NULL);
+    //cout << dec << "[" << time_stamp <<  "]" <<  "Received aid_ini." << endl;
     cout << "Pos X: " << init_position.ecefXorLat << endl;
     cout << "Pos Y: " << init_position.ecefYorLon << endl;
     cout << "Pos Z: " << init_position.ecefZorAlt << endl;
-    cout << "Time accuracy " << init_position.time_accuracy_ms << " ms" << endl;
-    cout << "Time accuracy " << init_position.time_accuracy_ns << " ns" << endl;
+    cout << "TOW1 = " << init_position.time_of_week << " ms" << endl;
+    cout << "TOW2 = " << init_position.time_of_week_ns << " ns" << endl;
+    cout << "Time accuracy1 = " << init_position.time_accuracy_ms << " ms" << endl;
+    cout << "Time accuracy2 = " << init_position.time_accuracy_ns << " ns" << endl;
     cout << "Flags: 0x" << hex << (int)init_position.flags << dec << endl<<endl;
 }
 
@@ -50,6 +55,9 @@ int main(int argc, char **argv)
     Ublox my_gps;
     double ttff_unassisted;
     double ttff_assisted;
+    timeval t1, t2;
+    double elapsedTime;
+
 
     if(argc < 3) {
         std::cerr << "Usage: assist_example <serial port address> <baud rate>" << std::endl;
@@ -75,6 +83,7 @@ int main(int argc, char **argv)
     my_gps.set_nav_status_callback(NavigationStatusCallback);
 
     // turn off nmea messages
+    //my_gps.SetPortConfiguration();
 
     // request nav status data and wait for fix
     my_gps.ConfigureMessageRate(0x01,0x03,1); // nav status at 1 Hz
@@ -112,9 +121,8 @@ int main(int argc, char **argv)
     // make sure we got the aid_ini data
     while(cur_aid_ini.header.sync1==0)
         usleep(200*1000);
-
     // make sure we got all of the ephemeris
-    while(stored_ephems.ephemsv[31].header.sync1==0)
+    while(stored_ephems.ephemsv[32].header.sync1==0)
         usleep(200*1000);
 
 
@@ -133,21 +141,22 @@ int main(int argc, char **argv)
 
     ///////////////////////////////////////////////////////////////////
     // SEND AIDING DATA
-
-    // send ephemeris
-    cout << "Send ephemeris back to receiver." << endl;
-    my_gps.SendAidEphem(stored_ephems);
-
     // update time in AidIni message and send
     cur_aid_ini.flags = cur_aid_ini.flags & 0xF7; // clear time pulse flag
-    cur_aid_ini.time_accuracy_ms=100;
+    cur_aid_ini.time_accuracy_ms=1000;
     double cur_time = GetTime();
     int time_correction=(cur_time-aid_ini_timestamp)*1000;
+    std::cout << "cur_time = " << cur_time << "sec" << std::endl;
+    std::cout << "aid_ini_timestamp = " << aid_ini_timestamp << "sec" << std::endl;
     cout << "Correct time by " << (cur_time-aid_ini_timestamp) << " sec." << endl;
     cout << "Correct time by " << time_correction << " ms." << endl;
     cur_aid_ini.time_of_week=cur_aid_ini.time_of_week + time_correction;
     cout << "Initialize receiver position and time." << endl;
     my_gps.SendAidIni(cur_aid_ini);
+
+    // send ephemeris
+    cout << "Send ephemeris back to receiver." << endl;
+    my_gps.SendAidEphem(stored_ephems);
 
     ///////////////////////////////////////////////////////////////////
     // WAIT FOR FIX
