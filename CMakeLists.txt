@@ -1,6 +1,14 @@
 ## Project Setup
 cmake_minimum_required(VERSION 2.4.6)
 
+# Use clang if available
+  IF(EXISTS /usr/bin/clang)
+    set(CMAKE_CXX_COMPILER /usr/bin/clang++)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "")
+    set(SERIAL_BUILD_WARNINGS TRUE)
+    set(CMAKE_BUILD_TYPE Debug)
+  ENDIF(EXISTS /usr/bin/clang)
+
 # Detect ROS
 set(ROS_ROOT $ENV{ROS_ROOT})
 set(ROS_ROOT_DEFINED FALSE)
@@ -22,6 +30,12 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 set(UBLOX_LINK_LIBS "")
 
+#if (NOT DEFINED serial_FOUND)
+#  SET (serial_FOUND FALSE CACHE BOOL "Has the serial library been found.")
+#  SET (serial_INCLUDE_DIRS "C:/serial" CACHE PATH "Serial include directory.")
+#  SET (serial_LIBRARIES CACHE FILEPATH "serial.lib")
+#endif(NOT DEFINED serial_FOUND)
+
 if(BUILD_WITH_ROS)
   include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
   # Set the build type.  Options are:
@@ -40,7 +54,9 @@ if(BUILD_WITH_ROS)
 else(BUILD_WITH_ROS)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Built type for cmake")
   # Find serial, if it hasn't already been found
-  find_package(serial REQUIRED)
+  if(NOT serial_FOUND)
+     find_package(serial REQUIRED)
+  endif(NOT serial_FOUND)
 
   if(serial_FOUND)
     include_directories(${serial_INCLUDE_DIRS})
@@ -91,13 +107,14 @@ endif(BUILD_WITH_ROS)
 ## Build Examples
 
 # If asked to
+SET (UBLOX_BUILD_EXAMPLES FALSE CACHE BOOL "Build Ublox Examples")
 IF(UBLOX_BUILD_EXAMPLES)
     # Compile the ublox Test program
     add_executable(ublox_example examples/ublox_example.cpp)
     # Link the Test program to the ublox library
     target_link_libraries(ublox_example ublox ${UBLOX_LINK_LIBS})
-    add_executable(simple examples/simple.cc)
-    target_link_libraries(simple ublox ${UBLOX_LINK_LIBS})
+    add_executable(assist_example examples/assist_example.cpp)
+    target_link_libraries(assist_example ublox ${UBLOX_LINK_LIBS})
 ENDIF(UBLOX_BUILD_EXAMPLES)
 
 ## Build tests
