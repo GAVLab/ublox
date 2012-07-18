@@ -512,7 +512,7 @@ bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate)
     return true;
 }
 // Set Port Configuration
-/* NO ACK RETURNS - Prob
+ //NO ACK RETURNS - Prob
 void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output)
 {
     CfgPrt message;
@@ -532,7 +532,6 @@ void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_inpu
     message.output_mask=0;      // Specifies output protocols
     message.reserved4=0;
     message.reserved5=0;
-
 
     if (ubx_input)
         message.input_mask=message.input_mask | 0x0001;   // set first bit
@@ -563,7 +562,7 @@ void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_inpu
     serial_port_->write(msg_ptr, sizeof(message));
     return;
 }
-*/
+
 // Poll Port Configuration
 void Ublox::PollPortConfiguration(uint8_t port_identifier)
 {                                   // Port identifier = 3 for USB (default value if left blank)
