@@ -3,7 +3,6 @@
 //#include <sstream>
 //#include <fstream>
 #include "ublox/ublox.h"
-#include <sys/time.h>
 using namespace ublox;
 using namespace std;
 
@@ -55,9 +54,6 @@ int main(int argc, char **argv)
     Ublox my_gps;
     double ttff_unassisted;
     double ttff_assisted;
-    timeval t1, t2;
-    double elapsedTime;
-
 
     if(argc < 3) {
         std::cerr << "Usage: assist_example <serial port address> <baud rate>" << std::endl;
