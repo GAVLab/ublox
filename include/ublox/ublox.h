@@ -3,10 +3,19 @@
 
 #include "ublox_structures.h"
 #include <serial/serial.h>
+#include <fstream>
 
-#include <boost/function.hpp>
+/*
+#include <iostream>
+#include <stdlib.h>
+#include <sstream>
+#include <cstring>
+#include <iomanip>
+*/
+
+//#include <boost/function.hpp>
 #include <boost/thread.hpp>
-#include <boost/bind.hpp>
+//#include <boost/bind.hpp>
 
 namespace ublox {
 
@@ -17,9 +26,17 @@ typedef boost::function<void()> HandleAcknowledgementCallback;
 typedef boost::function<void(const std::string&)> LogMsgCallback;
 
 // GPS Data Callbacks
+typedef boost::function<void(CfgPrt&, double&)> PortSettingsCallback;
 typedef boost::function<void(NavPosLLH&, double&)> NavPosLLHCallback;
 typedef boost::function<void(NavSol&, double&)> NavSolCallback;
+typedef boost::function<void(NavStatus&, double&)> NavStatusCallback;
 typedef boost::function<void(NavVelNed&, double&)> NavVelNedCallback;
+typedef boost::function<void(EphemSV&, double&)> AidEphCallback;			// Problem here
+typedef boost::function<void(AlmSV&, double&)> AidAlmCallback;
+typedef boost::function<void(AidHui&, double&)> AidHuiCallback;
+typedef boost::function<void(AidIni&, double&)> AidIniCallback;
+typedef boost::function<void(RawMeas&, double&)> RxmRawCallback;
+typedef boost::function<void(SVStat&, double&)> RxmSvsiCallback;
 
 class Ublox
 {
@@ -67,17 +84,16 @@ public:
       */
      void set_time_handler(GetTimeCallback time_handler) {
          this->time_handler_ = time_handler;
-     }
-
+    }
      void SaveConfiguration();
-     void ResetToColdStart();
-     void ResetToWarmStart();
-     void ResetToHotStart();
+     bool Reset(uint16_t nav_bbr_mask, uint8_t reset_mode);
+     bool ResetToColdStart(uint8_t reset_mode);
+     bool ResetToWarmStart();
+     bool ResetToHotStart();
 
-     void SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output);
-     bool ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate);
-     bool PollMessage(uint8_t class_id, uint8_t msg_id);
-
+    void SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output);
+    void PollPortConfiguration(uint8_t port_identifier = 3);
+    bool ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate);
 
     //////////////////////////////////////////////////////
     // Diagnostic Callbacks
@@ -93,6 +109,56 @@ public:
     HandleAcknowledgementCallback handle_acknowledgement_;
     GetTimeCallback time_handler_; //!< Function pointer to callback function for timestamping
 
+    //////////////////////////////////////////////////////
+    // Aiding Data Polling Messages
+    //////////////////////////////////////////////////////
+    bool PollMessage(uint8_t class_id, uint8_t msg_id);
+    bool PollMessageIndSV(uint8_t class_id, uint8_t msg_id, uint8_t svid);
+    bool PollEphem(int8_t svid = -1);
+    bool PollAlmanac(int8_t svid = -1);
+    bool PollHUI();
+    bool PollIniAid();
+    bool PollAllAidData();
+    bool PollRawDgpsData();
+    bool PollSVStatus();
+    bool PollNavStatus();
+
+//////////////////////////////////////////////////////
+// Saving/Reading stored data
+//////////////////////////////////////////////////////
+    bool SaveEphemerides();
+    Ephemerides LoadEphemerides();
+    bool SaveAlmanac();
+    Almanac LoadAlmanac();
+//////////////////////////////////////////////////////
+// Send Aiding Data to Receiver
+//////////////////////////////////////////////////////
+    bool SendMessage(uint8_t *msg_ptr, size_t length);
+    bool SendAidIni(AidIni ini);
+    bool SendAidEphem(Ephemerides ephems);
+    bool SendRawMeas();
+    bool SendAidHui();
+    bool SendAidAlm(Almanac almanac);
+
+    void set_aid_eph_callback(AidEphCallback callback){aid_eph_callback_=callback;};
+    void set_aid_hui_callback(AidHuiCallback callback){aid_hui_callback_=callback;};
+    void set_aid_ini_callback(AidIniCallback callback){aid_ini_callback_=callback;};
+    void set_nav_status_callback(NavStatusCallback callback){nav_status_callback_=callback;};
+
+// Temporary Method
+    Ephemerides stored_ephems;
+    Almanac stored_almanac;
+    Ephemerides cur_ephemerides;    // Contains newest ephemeris available for all 32 SVs
+    Almanac cur_almanac;            // Contains almanac data available for all 32 SVs
+    NavStatus cur_nav_status;
+    NavSol cur_nav_sol;
+    NavVelNed cur_nav_vel_ned;
+    NavPosLLH cur_nav_position;
+    AidHui cur_aid_hui;
+    AidIni cur_aid_ini;
+    RawMeas cur_raw_meas;
+    SVStat cur_sv_stat;
+    CfgPrt cur_port_settings;
 private:
 
 	/*!
@@ -122,14 +188,15 @@ private:
 	 */
 	void ReadSerialPort();
 
-    //bool PollMessage2(uint8_t class_id, uint8_t msg_id);
     bool RequestLogOnChanged(std::string log); //!< request the given log from the receiver at the given rate
 	bool WaitForAck(int timeout); //!< waits for an ack from receiver (timeout in seconds)
 
     void BufferIncomingData(uint8_t* msg, size_t length);
 	//! Function to parse logs into a usable structure
     void ParseLog(uint8_t* log, size_t logID);
-	void Parse_rxm_eph();
+	//! Function to parse out useful ephemeris parameters
+    ParsedEphemData Parse_aid_eph(EphemSV ubx_eph);
+
 
     //////////////////////////////////////////////////////
     // Serial port reading members
@@ -144,12 +211,17 @@ private:
     //////////////////////////////////////////////////////
     // New Data Callbacks
     //////////////////////////////////////////////////////
+    PortSettingsCallback port_settings_callback_;
     NavPosLLHCallback nav_pos_llh_callback_;
 	NavSolCallback nav_sol_callback_;
-	NavVelNedCallback nav_vel_ned_callback;
-
-	bool ackReceived;
-	bool readingACK;
+    NavStatusCallback nav_status_callback_;
+    NavVelNedCallback nav_vel_ned_callback_;
+    AidAlmCallback aid_alm_callback_;
+    AidEphCallback aid_eph_callback_;
+    AidHuiCallback aid_hui_callback_;
+    AidIniCallback aid_ini_callback_;
+    RxmRawCallback rxm_raw_callback_;
+    RxmSvsiCallback rxm_svsi_callback_;
 	
 	//////////////////////////////////////////////////////
 	// Incoming data buffers
@@ -162,12 +234,11 @@ private:
 	bool reading_acknowledgement_;	//!< true if an acknowledgement is being received
 	double read_timestamp_; 		//!< time stamp when last serial port read completed
 	double parse_timestamp_;		//!< time stamp when last parse began
-	int hdrLength;
 	unsigned short msgID;
-	struct s_ubx ubx;
 	
     void calculateCheckSum(uint8_t* in, size_t length, uint8_t* out);
 
 };
 }
+
 #endif
