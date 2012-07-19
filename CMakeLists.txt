@@ -91,6 +91,7 @@ endif(BUILD_WITH_ROS)
 ## Build Examples
 
 # If asked to
+option(UBLOX_BUILD_EXAMPLES off "Build uBlox examples.")
 IF(UBLOX_BUILD_EXAMPLES)
     # Compile the ublox Test program
     add_executable(ublox_example examples/ublox_example.cpp)
