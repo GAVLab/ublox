@@ -117,6 +117,10 @@ IF(UBLOX_BUILD_EXAMPLES)
     target_link_libraries(ublox_example ublox ${UBLOX_LINK_LIBS})
     add_executable(simple examples/simple.cc)
     target_link_libraries(simple ublox ${UBLOX_LINK_LIBS})
+    # Compile the ublox Test program
+    add_executable(assist_example examples/assist_example.cpp)
+    # Link the Test program to the ublox library
+    target_link_libraries(assist_example ublox ${UBLOX_LINK_LIBS})
 ENDIF(UBLOX_BUILD_EXAMPLES)
 
 ## Build tests
