@@ -1,13 +1,17 @@
 ## Project Setup
 cmake_minimum_required(VERSION 2.4.6)
 
+IF(DEFINED BUILD_NO_CLANG)
+  option(BUILD_NO_CLANG "Do not use the Clang compiler." OFF)
+ENDIF(DEFINED BUILD_NO_CLANG)
+
 # Use clang if available
-  IF(EXISTS /usr/bin/clang)
-    set(CMAKE_CXX_COMPILER /usr/bin/clang++)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "")
-    set(SERIAL_BUILD_WARNINGS TRUE)
-    set(CMAKE_BUILD_TYPE Debug)
-  ENDIF(EXISTS /usr/bin/clang)
+IF(EXISTS /usr/bin/clang AND NOT BUILD_NO_CLANG)
+  set(CMAKE_CXX_COMPILER /usr/bin/clang++)
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "")
+  set(SERIAL_BUILD_WARNINGS TRUE)
+  set(CMAKE_BUILD_TYPE Debug)
+ENDIF(EXISTS /usr/bin/clang AND NOT BUILD_NO_CLANG)
 
 # Detect ROS
 set(ROS_ROOT $ENV{ROS_ROOT})
@@ -48,7 +52,13 @@ if(BUILD_WITH_ROS)
 else(BUILD_WITH_ROS)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Built type for cmake")
   # Find serial, if it hasn't already been found
-  find_package(serial REQUIRED)
+  
+  if(NOT DEFINED serial_LIBRARIES OR NOT DEFINED serial_INCLUDE_DIRS)
+    find_package(serial REQUIRED)
+  else (NOT DEFINED serial_LIBRARIES OR NOT DEFINED serial_INCLUDE_DIRS)
+    set(serial_FOUND TRUE)
+  endif(NOT DEFINED serial_LIBRARIES OR NOT DEFINED serial_INCLUDE_DIRS)
+
 
   if(serial_FOUND)
     include_directories(${serial_INCLUDE_DIRS})
