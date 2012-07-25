@@ -1,6 +1,10 @@
 ## Project Setup
 cmake_minimum_required(VERSION 2.4.6)
 
+if(COMMAND cmake_policy)
+  cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
 IF(DEFINED BUILD_NO_CLANG)
   option(BUILD_NO_CLANG "Do not use the Clang compiler." OFF)
 ENDIF(DEFINED BUILD_NO_CLANG)
@@ -12,6 +16,10 @@ IF(EXISTS /usr/bin/clang AND NOT BUILD_NO_CLANG)
   set(SERIAL_BUILD_WARNINGS TRUE)
   set(CMAKE_BUILD_TYPE Debug)
 ENDIF(EXISTS /usr/bin/clang AND NOT BUILD_NO_CLANG)
+
+IF(NOT DEFINED BUILD_SHARED_LIBS)
+    OPTION(BUILD_SHARED_LIBS "Build shared libraries." OFF)
+ENDIF(NOT DEFINED BUILD_SHARED_LIBS)
 
 # Detect ROS
 set(ROS_ROOT $ENV{ROS_ROOT})
@@ -31,8 +39,6 @@ endif(BUILD_WITH_ROS AND NOT ROS_ROOT_DEFINED)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 # Set the default path for built libraries to the "lib" directory
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
-
-set(UBLOX_LINK_LIBS "")
 
 if(BUILD_WITH_ROS)
   include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
@@ -81,6 +87,7 @@ set(UBLOX_HEADERS include/ublox/ublox.h
                   include/ublox/ublox_structures.h)
 
 # Find Boost, if it hasn't already been found
+#set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost COMPONENTS thread system REQUIRED)
 
 link_directories(${Boost_LIBRARY_DIRS})
@@ -107,7 +114,6 @@ if(BUILD_WITH_ROS)
 endif(BUILD_WITH_ROS)
 
 ## Build Examples
-
 # If asked to
 option(UBLOX_BUILD_EXAMPLES off "Build uBlox examples.")
 IF(UBLOX_BUILD_EXAMPLES)
@@ -152,7 +158,7 @@ IF(NOT UBLOX_DONT_CONFIGURE_INSTALL AND NOT BUILD_WITH_ROS)
       set(CMAKE_FIND_INSTALL_PATH ${CMAKE_ROOT})
   ENDIF(NOT CMAKE_FIND_INSTALL_PATH)
   
-  # INSTALL(FILES Findublox.cmake DESTINATION ${CMAKE_FIND_INSTALL_PATH}/Modules/)
+  INSTALL(FILES Findublox.cmake DESTINATION ${CMAKE_FIND_INSTALL_PATH}/Modules/)
   
   ADD_CUSTOM_TARGET(uninstall @echo uninstall package)
   
