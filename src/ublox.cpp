@@ -161,7 +161,15 @@ Ublox::~Ublox() {
 bool Ublox::Connect(std::string port, int baudrate) {
     //serial_port_ = new serial::Serial(port,baudrate,serial::Timeout::simpleTimeout(1000));
     serial::Timeout my_timeout(100,1000,0,1000,0);
-    serial_port_ = new serial::Serial(port,baudrate,my_timeout);
+    try {
+        serial_port_ = new serial::Serial(port,baudrate,my_timeout);
+    } catch (std::exception e) {
+        std::stringstream output;
+        output << "Failed to open port " << port << "  Err: " << e.what();
+        log_error_(output.str());
+        serial_port_=NULL;
+        return false;
+    }
 
     if (!serial_port_->isOpen()){
         std::stringstream output;
