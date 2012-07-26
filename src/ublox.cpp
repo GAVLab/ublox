@@ -279,10 +279,14 @@ bool Ublox::Ping(int num_attempts) {
 }
 
 void Ublox::Disconnect() {
-    StopReading();
-    serial_port_->close();
-    delete serial_port_;
-    serial_port_=NULL;
+    if (reading_status_)
+        StopReading();
+    if (serial_port_!=NULL) {
+        if (serial_port_->isOpen())
+            serial_port_->close();
+        delete serial_port_;
+        serial_port_=NULL;
+    }
 }
 
 void Ublox::StartReading() {
