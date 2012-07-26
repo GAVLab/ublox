@@ -1,4 +1,5 @@
 #include "ublox/ublox.h"
+#include <iostream>
 
 using namespace std;
 using namespace ublox;
@@ -59,7 +60,35 @@ inline void DefaultNavSolCallback(NavSol nav_sol, double time_stamp){
 }
 
 inline void DefaultNavStatusCallback(NavStatus nav_status, double time_stamp){
-    std::cout << "NAV-STATUS: " << endl;
+    std::cout << "GPS Fix Type: ";
+    if (nav_status.fixtype == 0x00){
+        std::cout << "No Fix" << std::endl;
+        std::cout << "TTFF: " <<  " none ms" << std::endl;
+        std::cout << "Milliseconds since Startup/Reset: " << nav_status.msss << std::endl;
+    }
+    else if (nav_status.fixtype == 0x01){
+        std::cout << "Dead Reckoning Only"<< std::endl;
+    }
+    else if (nav_status.fixtype == 0x02){
+        std::cout << "2D Fix"<< std::endl;
+    }
+    else if (nav_status.fixtype == 0x03){
+        std::cout << "3D Fix"<< std::endl;
+    }
+    else if (nav_status.fixtype == 0x04){
+        std::cout << "GPS + Dead Reckoning"<< std::endl;
+    }
+    else if (nav_status.fixtype == 0x05){
+        std::cout << "Time Only"<< std::endl;
+    }
+    else {
+        std::cout << std::endl;
+    }
+
+    if (nav_status.fixtype != 0x00){
+        std::cout << "TTFF: " << (nav_status.ttff/1000.) << " sec" << std::endl;
+        std::cout << "Milliseconds since Startup/Reset: " << (nav_status.msss/1000.) << " sec" << std::endl;
+    }
 }
 
 inline void DefaultNavVelNedCallback(NavVelNed nav_vel_ned, double time_stamp){
@@ -132,7 +161,15 @@ Ublox::~Ublox() {
 bool Ublox::Connect(std::string port, int baudrate) {
     //serial_port_ = new serial::Serial(port,baudrate,serial::Timeout::simpleTimeout(1000));
     serial::Timeout my_timeout(100,1000,0,1000,0);
-    serial_port_ = new serial::Serial(port,baudrate,my_timeout);
+    try {
+        serial_port_ = new serial::Serial(port,baudrate,my_timeout);
+    } catch (std::exception e) {
+        std::stringstream output;
+        output << "Failed to open port " << port << "  Err: " << e.what();
+        log_error_(output.str());
+        serial_port_=NULL;
+        return false;
+    }
 
     if (!serial_port_->isOpen()){
         std::stringstream output;
@@ -205,8 +242,10 @@ bool Ublox::Ping(int num_attempts) {
         //std::cout << "bytes read: " << (int)bytes_read << std::endl;
         //std::cout << dec << result << std::endl;
 
-        if (bytes_read<8)
+        if (bytes_read<8) {
+            std::cout << "Only read " << bytes_read << " bytes in response to ping." << std::endl;
             continue;
+        }
 
         uint16_t length;
         // search through result for version message
@@ -241,16 +280,21 @@ bool Ublox::Ping(int num_attempts) {
                 return true;
             }
         }
+        std::cout << "Read " << bytes_read << " bytes, but version message not found." << std::endl;
 
     }
     return false;
 }
 
 void Ublox::Disconnect() {
-    StopReading();
-    serial_port_->close();
-    delete serial_port_;
-    serial_port_=NULL;
+    if (reading_status_)
+        StopReading();
+    if (serial_port_!=NULL) {
+        if (serial_port_->isOpen())
+            serial_port_->close();
+        delete serial_port_;
+        serial_port_=NULL;
+    }
 }
 
 void Ublox::StartReading() {
@@ -481,7 +525,7 @@ bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate)
     return true;
 }
 // Set Port Configuration
-/* NO ACK RETURNS - Prob
+ //NO ACK RETURNS - Prob
 void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output)
 {
     CfgPrt message;
@@ -501,7 +545,6 @@ void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_inpu
     message.output_mask=0;      // Specifies output protocols
     message.reserved4=0;
     message.reserved5=0;
-
 
     if (ubx_input)
         message.input_mask=message.input_mask | 0x0001;   // set first bit
@@ -532,7 +575,7 @@ void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_inpu
     serial_port_->write(msg_ptr, sizeof(message));
     return;
 }
-*/
+
 // Poll Port Configuration
 void Ublox::PollPortConfiguration(uint8_t port_identifier)
 {                                   // Port identifier = 3 for USB (default value if left blank)
@@ -600,19 +643,21 @@ Almanac Ublox::LoadAlmanac()
 bool Ublox::SendMessage(uint8_t* msg_ptr, size_t length)
 {
     //std::cout << length << std::endl;
-    std::cout << "Message Pointer" << endl;
-    printHex((char*) msg_ptr, length);
+    //std::cout << "Message Pointer" << endl;
+    //printHex((char*) msg_ptr, length);
     size_t bytes_written=serial_port_->write(msg_ptr, length);
     //std::cout << bytes_written << std::endl;
     return true;
 }
 
 // Send AID-INI to Receiver
-bool Ublox::SendAidIni()
+bool Ublox::SendAidIni(AidIni ini)
 {  
-    std::cout << "Sending AID-INI to receiver.." << endl;
-    unsigned char* msg_ptr = (unsigned char*)&cur_aid_ini;
-    return SendMessage(msg_ptr, sizeof(cur_aid_ini));
+    //std::cout << "Sending AID-INI to receiver.." << endl;
+    unsigned char* msg_ptr = (unsigned char*)&ini;
+    // calculate checksum
+    calculateCheckSum(msg_ptr+2,4+ini.header.payload_length,ini.checksum);
+    return SendMessage(msg_ptr, sizeof(ini));
 }
 
 // Send AID-EPH to Receiver
@@ -622,18 +667,16 @@ bool Ublox::SendAidEphem(Ephemerides ephems)
     std::cout << "Sending Ephemerides for available SVs." << endl;
 
     for(uint8_t prn_index=1; prn_index<=32; prn_index++){
-        if (ephems.ephemsv[prn_index].svprn == 0){
-            std::cout << "No AID-EPH data for PRN # " << (int)prn_index << " .." << endl;
+        if (ephems.ephemsv[prn_index].header.payload_length == 8){
+            //std::cout << "No AID-EPH data for PRN # " << (int)prn_index << " .." << endl;
         }
-
-        //uint8_t prn_index = 7;
         else{
-            std::cout << "Sending AID-EPH for PRN # " << (int) ephems.ephemsv[prn_index].svprn << " .." << endl;
+            //std::cout << "Sending AID-EPH for PRN # " << (int) ephems.ephemsv[prn_index].svprn << " .." << endl;
             uint8_t* msg_ptr = (uint8_t*)&ephems.ephemsv[prn_index];
 
             SendMessage(msg_ptr, sizeof(ephems.ephemsv[prn_index]));
 
-            sleep(.1);
+            //sleep(.1);
         }
 
     }
@@ -732,21 +775,21 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length)
 
                 if (msg[i+1]==0x01) // ACK Message
                 {
-                   std::cout << "Receiver Acknowledged Message ";
-                    printf("0x%.2X ", (unsigned)class_id);
-                    std::cout << " ";
-                    printf("0x%.2X ", (unsigned)msg_id);
-                    std::cout << endl;
+                   std::cout << "Receiver Acknowledged Message " << std::endl;
+                    //printf("0x%.2X ", (unsigned)class_id);
+                    //std::cout << " ";
+                    //printf("0x%.2X ", (unsigned)msg_id);
+                    //std::cout << endl;
 
                 }
 
                 else if (msg[i+1]==0x00)    // NAK Message
                 {
-                    std::cout << "Receiver Did Not Acknowledged Message ";
-                     printf("0x%.2X ", (unsigned)class_id);
-                     std::cout << " ";
-                     printf("0x%.2X ", (unsigned)msg_id);
-                     std::cout << endl;
+                    std::cout << "Receiver Did Not Acknowledged Message " << std::endl;
+                     //printf("0x%.2X ", (unsigned)class_id);
+                     //std::cout << " ";
+                     //printf("0x%.2X ", (unsigned)msg_id);
+                     //std::cout << endl;
                 }
 
                 buffer_index_ = 0;
@@ -833,37 +876,8 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 
             memcpy(&cur_nav_status, log, sizeof(cur_nav_status));
 
-            std::cout << "GPS Fix Type: ";
-            if (cur_nav_status.fixtype == 0x00){
-                std::cout << "No Fix" << std::endl;
-                std::cout << "TTFF: " <<  " none ms" << std::endl;
-                std::cout << "Milliseconds since Startup/Reset: " << cur_nav_status.msss << std::endl;
-            }
-            else if (cur_nav_status.fixtype == 0x01){
-                std::cout << "Dead Reckoning Only"<< std::endl;
-            }
-            else if (cur_nav_status.fixtype == 0x02){
-                std::cout << "2D Fix"<< std::endl;
-            }
-            else if (cur_nav_status.fixtype == 0x03){
-                std::cout << "3D Fix"<< std::endl;
-            }
-            else if (cur_nav_status.fixtype == 0x04){
-                std::cout << "GPS + Dead Reckoning"<< std::endl;
-            }
-            else if (cur_nav_status.fixtype == 0x05){
-                std::cout << "Time Only"<< std::endl;
-            }
-            else {
-                std::cout << std::endl;
-            }
-
-            if (cur_nav_status.fixtype != 0x00){
-            std::cout << "TTFF: " << cur_nav_status.ttff << " ms" << std::endl;
-            std::cout << "Milliseconds since Startup/Reset: " << cur_nav_status.msss << " ms" << std::endl;
-            }
-
-            nav_status_callback_(cur_nav_status, read_timestamp_);
+            if (nav_status_callback_)
+                nav_status_callback_(cur_nav_status, read_timestamp_);
             break;
 
         case NAV_SOL:
@@ -871,7 +885,8 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 
             memcpy(&cur_nav_sol, log, sizeof(cur_nav_sol));
 
-            nav_sol_callback_(cur_nav_sol, read_timestamp_);
+            if (nav_sol_callback_)
+                nav_sol_callback_(cur_nav_sol, read_timestamp_);
             break;
 
         case NAV_VELNED:
@@ -879,7 +894,8 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 
             memcpy(&cur_nav_vel_ned, log, sizeof(cur_nav_vel_ned));
 
-            nav_vel_ned_callback_(cur_nav_vel_ned, read_timestamp_);
+            if (nav_vel_ned_callback_)
+                nav_vel_ned_callback_(cur_nav_vel_ned, read_timestamp_);
             break;
 
         case NAV_POSLLH:
@@ -894,42 +910,40 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             std::cout << dec << cur_nav_position.iTOW << std::endl;
             std::cout << dec << cur_nav_position.latitude_scaled << std::endl;*/
 
-            nav_pos_llh_callback_(cur_nav_position, read_timestamp_);
+            if (nav_pos_llh_callback_)
+                nav_pos_llh_callback_(cur_nav_position, read_timestamp_);
             break;
 		
         case AID_EPH:
-        //std::cout << log << std::endl;
             EphemSV cur_ephem_sv;
-           //ParsedEphemData parsed_ephem_data;
-           //ParsedEphemeridesData parsed_ephemerides_data;
-
-            memset(&cur_ephem_sv, 0, sizeof(cur_ephem_sv));
+            // determine length of log to see if it contains satellite
+            // information or just the header
             length = (double) *(log+4);
 
             //std::cout << "log length: " << length << std::endl;
 
             // If Ephemeris for SV is not present (length is 8 bytes)
             if (length == 8){
+                // nothing to parse - no ephemerides for this satellite
+                //std::cout << "SV# " << (double) *(log+6) << "- no ephemeris" << std::endl;
+                memcpy(&cur_ephem_sv, log, 8+sizeof(UbloxHeader));
 
-                std::cout << "SV# " << (double) *(log+6) << "- no ephemeris" << std::endl;
-
-                break;
+                // make sure functino pointer is set and call callback
+                if (aid_eph_callback_)
+                    aid_eph_callback_(cur_ephem_sv, read_timestamp_);
             }
-
             // If Ephemeris for SV is present (length is 104 bytes)
             else if (length == 104){
                 memcpy(&cur_ephem_sv, log, sizeof(cur_ephem_sv));
 
-                printHex((char*) &cur_ephem_sv, sizeof(cur_ephem_sv));
+                //printHex((char*) &cur_ephem_sv, sizeof(cur_ephem_sv));
 
                 // Store each SV's ephemeris message in a structure
                 cur_ephemerides.ephemsv[cur_ephem_sv.svprn] = cur_ephem_sv;
 
-                // Put function to parse ephemeris parameters
-                    //parsed_ephem_data = Ublox::Parse_aid_eph(cur_eph_sv);
-
-                // Store parsed ephemeris data for all SVs in one structure
-                    //parsed_ephemerides_data.sv_eph_data[parsed_ephem_data.prn] = parsed_ephem_data;
+                // make sure functino pointer is set and call callback
+                if (aid_eph_callback_)
+                    aid_eph_callback_(cur_ephem_sv, read_timestamp_);
             }
 
             else{
@@ -963,7 +977,6 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             cout << std::endl;
             */
 
-            aid_eph_callback_(cur_ephem_sv, read_timestamp_);
 
 			break;
 
@@ -1022,15 +1035,16 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
         case AID_INI:
             //AidIni cur_aid_ini;
 
-            std::cout << "Received AID-INI Message." << std::endl;
+            //std::cout << "Received AID-INI Message." << std::endl;
             memcpy(&cur_aid_ini, log, sizeof(cur_aid_ini));
 
             //std::cout << "LOG message:" << std::endl;
             //printHex((char*) log, sizeof(cur_aid_ini));
             //std::cout << "Message stored in cur_aid_ini:" << std::endl;
-            printHex((char*) &cur_aid_ini, sizeof(cur_aid_ini));
+            //printHex((char*) &cur_aid_ini, sizeof(cur_aid_ini));
 
-            aid_ini_callback_(cur_aid_ini, read_timestamp_);
+            if (aid_ini_callback_)
+                aid_ini_callback_(cur_aid_ini, read_timestamp_);
 
             break;
 
@@ -1050,7 +1064,8 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             std::cout << "SV ID " << (double)cur_raw_meas.rawmeasreap[3].svid << endl;
             std::cout << "SV ID " << (double)cur_raw_meas.rawmeasreap[4].svid << endl;
         */
-            rxm_raw_callback_(cur_raw_meas, read_timestamp_);
+            if (rxm_raw_callback_)
+                rxm_raw_callback_(cur_raw_meas, read_timestamp_);
 
             break;
 /*

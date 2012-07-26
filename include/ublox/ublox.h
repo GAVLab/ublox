@@ -134,11 +134,19 @@ public:
 // Send Aiding Data to Receiver
 //////////////////////////////////////////////////////
     bool SendMessage(uint8_t *msg_ptr, size_t length);
-    bool SendAidIni();
+    bool SendAidIni(AidIni ini);
     bool SendAidEphem(Ephemerides ephems);
     bool SendRawMeas();
     bool SendAidHui();
     bool SendAidAlm(Almanac almanac);
+
+    void set_aid_eph_callback(AidEphCallback callback){aid_eph_callback_=callback;};
+    void set_aid_hui_callback(AidHuiCallback callback){aid_hui_callback_=callback;};
+    void set_aid_ini_callback(AidIniCallback callback){aid_ini_callback_=callback;};
+    void set_nav_status_callback(NavStatusCallback callback){nav_status_callback_=callback;};
+    void set_nav_solution_callback(NavSolCallback callback){nav_sol_callback_=callback;};
+    void set_get_time_callback(GetTimeCallback callback){time_handler_=callback;};
+
 
 // Temporary Method
     Ephemerides stored_ephems;
