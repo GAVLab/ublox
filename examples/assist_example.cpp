@@ -31,9 +31,7 @@ void EphemerisCallback(EphemSV &ephemeris, double &time_stamp) {
 void PositionTimeCallback(AidIni &init_position, double &time_stamp) {
     cur_aid_ini = init_position;
     aid_ini_timestamp = time_stamp;
-    //timeval t1;
-    //gettimeofday(&t1, NULL);
-    //cout << dec << "[" << time_stamp <<  "]" <<  "Received aid_ini." << endl;
+    cout << dec << "[" << time_stamp <<  "]" <<  "Received aid_ini." << endl;
     cout << "Pos X: " << init_position.ecefXorLat << endl;
     cout << "Pos Y: " << init_position.ecefYorLon << endl;
     cout << "Pos Z: " << init_position.ecefZorAlt << endl;
@@ -83,6 +81,14 @@ int main(int argc, char **argv)
 
     // request nav status data and wait for fix
     my_gps.ConfigureMessageRate(0x01,0x03,1); // nav status at 1 Hz
+
+    // Loop 10 times to get average TTFF
+    uint8_t iterations = 10;
+    double un_ttff[iterations];
+    double as_ttff[iterations];
+
+    for (uint8_t i=0; i<iterations; i++)
+    {
 
     ///////////////////////////////////////////////////////////////////////////
     // RESET RECEIVER AND PERFORM UNASSISTED COLD START                      //
@@ -172,6 +178,34 @@ int main(int argc, char **argv)
     cout << endl << endl << "Results:" << endl;
     cout << " Unassisted TTFF (sec): " << ttff_unassisted << endl;
     cout << " Assisted TTFF (sec): " << ttff_assisted << endl;
+
+    // Store Unassisted and Assisted TTFF Iterations
+    un_ttff[i] = ttff_unassisted;
+    as_ttff[i] = ttff_assisted;
+
+    }
+
+    // Average TTFF Iterations
+    double un_total;
+    double as_total;
+
+
+    for (uint8_t j=0; j< iterations; j++)
+    {
+        un_total = un_total + un_ttff[j];
+        as_total = as_total + as_ttff[j];
+        std::cout << "un_total = " << un_total << endl;
+        std::cout << "as_total = " << as_total << endl;
+        std::cout << "un_ttff = " << un_ttff << endl;
+        std::cout << "as_ttff = " << as_ttff << endl;
+
+    }
+
+    double un_ave_ttff = un_total/iterations;
+    double as_ave_ttff = as_total/iterations;
+
+    std::cout << "Average Unassisted TTFF = " << un_ave_ttff << endl;
+    std::cout << "Average Assisted TTFF = " << as_ave_ttff << endl;
 
     my_gps.Disconnect();
 
