@@ -32,7 +32,7 @@ double DefaultGetTime() {
 }
 
 void DefaultAcknowledgementHandler() {
-    std::cout << "Acknowledgement received." << std::endl;
+    //std::cout << "Acknowledgement received." << std::endl;
 }
 
 inline void DefaultDebugMsgCallback(const std::string &msg) {
@@ -775,7 +775,7 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length)
 
                 if (msg[i+1]==0x01) // ACK Message
                 {
-                   std::cout << "Receiver Acknowledged Message " << std::endl;
+                   //std::cout << "Receiver Acknowledged Message " << std::endl;
                     //printf("0x%.2X ", (unsigned)class_id);
                     //std::cout << " ";
                     //printf("0x%.2X ", (unsigned)msg_id);
@@ -785,7 +785,7 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length)
 
                 else if (msg[i+1]==0x00)    // NAK Message
                 {
-                    std::cout << "Receiver Did Not Acknowledged Message " << std::endl;
+                    //std::cout << "Receiver Did Not Acknowledged Message " << std::endl;
                      //printf("0x%.2X ", (unsigned)class_id);
                      //std::cout << " ";
                      //printf("0x%.2X ", (unsigned)msg_id);

@@ -145,6 +145,7 @@ public:
     void set_aid_ini_callback(AidIniCallback callback){aid_ini_callback_=callback;};
     void set_nav_status_callback(NavStatusCallback callback){nav_status_callback_=callback;};
     void set_nav_solution_callback(NavSolCallback callback){nav_sol_callback_=callback;};
+    void set_nav_position_llh_callback(NavPosLLHCallback callback){nav_pos_llh_callback_=callback;};
     void set_get_time_callback(GetTimeCallback callback){time_handler_=callback;};
 
 
