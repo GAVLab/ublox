@@ -117,8 +117,8 @@ IF(UBLOX_BUILD_EXAMPLES)
     add_executable(assist_example examples/assist_example.cpp)
     target_link_libraries(assist_example ublox ${UBLOX_LINK_LIBS})
 
-    add_executable(expanded_assist_example examples/expanded_assist_example.cpp)
-    target_link_libraries(expanded_assist_example ublox ${UBLOX_LINK_LIBS})
+    add_executable(Full_AGPS_assist examples/Full_AGPS_assist.cpp)
+    target_link_libraries(Full_AGPS_assist ublox ${UBLOX_LINK_LIBS})
     
     add_executable(almanac_example examples/almanac_example.cpp)
     target_link_libraries(almanac_example ublox ${UBLOX_LINK_LIBS})

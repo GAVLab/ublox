@@ -5,6 +5,7 @@
 //#include <sstream>
 //#include <fstream>
 #include "ublox/ublox.h"
+#include <bitset>
 using namespace ublox;
 using namespace std;
 
@@ -37,10 +38,12 @@ void PositionTimeCallback(AidIni &init_position, double &time_stamp) {
 
 void HuiCallback(AidHui &hui, double &time_stamp) {
     cur_aid_hui = hui;
+    std::bitset<32> svhealth(hui.health);
     std::cout << dec << "[" << time_stamp << "]" << "Received aid_hui." << std::endl;
+    std::cout << "SV health flags: " << svhealth << std::endl;
     std::cout << "TOW: " << hui.tow << std::endl;
     std::cout << "Week #: " << hui.week << std::endl;
-    std::cout << "Leap Seconds: " << hui.leapsecs << std::endl;
+    std::cout << "Leap Seconds: " << hui.beforeleapsecs << std::endl;
 }
 
 void NavigationStatusCallback(NavStatus &status, double &time_stamp) {
@@ -104,16 +107,25 @@ int main(int argc, char **argv)
     cout << "3D fix obtained." << endl;
     cout << " TTFF: " << (cur_nav_status.ttff/1000.) << " sec" << endl;
     cout << " Time since startup: " << (cur_nav_status.msss/1000.) << endl << endl;
-    ttff_unassisted = cur_nav_status.ttff/1000.;
+
 
     // clear stored assist data
     memset(&cur_aid_hui, 0, sizeof(cur_aid_hui));
     memset(&cur_aid_ini, 0, sizeof(cur_aid_ini));
 
+
+
     // request aiding data from receiver
-    my_gps.PollIniAid();  // poll position and time
-    usleep(100*1000);
     my_gps.PollHUI(); // poll HUI
+    /*
+    usleep(200*1000);
+    while(cur_aid_hui.header.payload_length != 72){
+        my_gps.PollHUI();
+        usleep(200*1000);
+    }
+*/
+    my_gps.PollIniAid();  // poll position and time
+
 
     // make sure we got the aid_ini data
     while(cur_aid_ini.header.sync1==0)
@@ -126,7 +138,7 @@ int main(int argc, char **argv)
     ///////////////////////////////////////////////////////////////////////////
     // RESET RECEIVER AND PERFORM ASSISTED COLD START                        //
     ///////////////////////////////////////////////////////////////////////////
-/*
+
     // reset receiver
     cout << "Aiding data stored. Resetting receiver." << endl;
     my_gps.ResetToColdStart(0x02);
@@ -135,7 +147,7 @@ int main(int argc, char **argv)
         usleep(200*1000);
 
     cout << "Receiver reset. Waiting for assisted fix" << endl;
-
+/*
     ///////////////////////////////////////////////////////////////////
     // SEND AIDING DATA
     // update time in AidIni message and send
@@ -149,9 +161,9 @@ int main(int argc, char **argv)
     cout << "Correct time by " << time_correction << " ms." << endl;
     cur_aid_ini.time_of_week=cur_aid_ini.time_of_week + time_correction;
     cout << "Initialize receiver position and time." << endl;
-    my_gps.SendAidIni(cur_aid_ini);
-
-    // send ephemeris
+    //my_gps.SendAidIni(cur_aid_ini);
+*/
+    // send HUI
     cout << "Send HUI back to receiver." << endl;
     my_gps.SendAidHui(cur_aid_hui);
 
@@ -170,6 +182,33 @@ int main(int argc, char **argv)
     // Check Aid-HUI
     memset(&cur_aid_hui, 0, sizeof(cur_aid_hui));
     my_gps.PollHUI();
+    while(cur_aid_hui.header.sync1==0)
+        usleep(200*1000);
+
+    ///////////////////////////////////////////////////////////////////////////
+    // RESET RECEIVER AND PERFORM UNASSISTED COLD START
+    ///////////////////////////////////////////////////////////////////////////
+
+    // reset receiver
+    cout << "Resetting receiver." << endl;
+    my_gps.ResetToColdStart(0x02);
+
+    while (cur_nav_status.fixtype !=0x00) // wait for receiver to reset
+        usleep(200*1000);
+    cout << "Receiver reset. Waiting for unassisted fix" << endl;
+
+    while (cur_nav_status.fixtype !=0x03) // wait for receiver to get 3D fix
+        usleep(200*1000);
+
+    // Check Aid-HUI
+    memset(&cur_aid_hui, 0, sizeof(cur_aid_hui));
+    my_gps.PollHUI();
+
+    while(cur_aid_hui.header.sync1==0)
+        usleep(200*1000);
+
+
+    ttff_unassisted = cur_nav_status.ttff/1000.;
 
     ///////////////////////////////////////////////////////////////////
     // DISPLAY RESULTS
@@ -177,7 +216,9 @@ int main(int argc, char **argv)
     cout << endl << endl << "Results:" << endl;
     cout << " Unassisted TTFF (sec): " << ttff_unassisted << endl;
     cout << " Assisted TTFF (sec): " << ttff_assisted << endl;
-*/
+
+
+
     my_gps.Disconnect();
 
     return 0;
