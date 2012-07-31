@@ -140,6 +140,10 @@ int main(int argc, char **argv)
     // SEND AIDING DATA
     // update time in AidIni message and send
     cur_aid_ini.flags = cur_aid_ini.flags & 0xF7; // clear time pulse flag
+    cur_aid_ini.flags = cur_aid_ini.flags & 0xFB; // clear clock drift flag
+    cur_aid_ini.flags = cur_aid_ini.flags & 0xFE; // clear clock freq flag
+    cur_aid_ini.clock_drift_or_freq=0;
+
     cur_aid_ini.time_accuracy_ms=1000;
     double cur_time = GetTime();
     int time_correction=(cur_time-aid_ini_timestamp)*1000;
