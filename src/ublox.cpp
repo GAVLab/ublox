@@ -32,7 +32,7 @@ double DefaultGetTime() {
 }
 
 void DefaultAcknowledgementHandler() {
-    std::cout << "Acknowledgement received." << std::endl;
+    //std::cout << "Acknowledgement received." << std::endl;
 }
 
 inline void DefaultDebugMsgCallback(const std::string &msg) {
@@ -243,7 +243,9 @@ bool Ublox::Ping(int num_attempts) {
         //std::cout << dec << result << std::endl;
 
         if (bytes_read<8) {
-            std::cout << "Only read " << bytes_read << " bytes in response to ping." << std::endl;
+            stringstream output;
+            output << "Only read " << bytes_read << " bytes in response to ping.";
+            log_warning_(output.str());
             continue;
         }
 
@@ -280,7 +282,9 @@ bool Ublox::Ping(int num_attempts) {
                 return true;
             }
         }
-        std::cout << "Read " << bytes_read << " bytes, but version message not found." << std::endl;
+        stringstream output;
+        output << "Read " << bytes_read << " bytes, but version message not found.";
+        log_warning_(output.str());
 
     }
     return false;
@@ -376,19 +380,21 @@ bool Ublox::PollMessageIndSV(uint8_t class_id, uint8_t msg_id, uint8_t svid){
 bool Ublox::PollEphem(int8_t svid){
 
     if (svid < -1){
-        std::cout << "Error in PollEphem: Invalid input 'svid'" << endl;
+        log_error_("Error in PollEphem: Invalid input 'svid'");
         return 0;
     }
     else if (svid == -1){ // Requests Ephemerides for all SVs
-        std::cout << "Polling for all Ephemerides.." << endl;
+        log_info_("Polling for all Ephemerides..");
         return PollMessage(0x0B, 0x31);
     }
     else if (svid > 0){ // Requests Ephemeris for a single SV
-        std::cout << "Polling for SV# " << (int)svid << " Ephemeris.." << endl;
+        stringstream output;
+        output << "Polling for SV# " << (int)svid << " Ephemeris..";
+        log_info_(output.str());
         return PollMessageIndSV(0x0B, 0x31, (uint8_t) svid);
     }
     else{
-        std::cout << "Error in PollEphem: Invalid input 'svid'" << endl;
+        log_error_("Error in PollEphem: Invalid input 'svid'");
         return 0;
     }
 }
@@ -397,56 +403,58 @@ bool Ublox::PollEphem(int8_t svid){
 bool Ublox::PollAlmanac(int8_t svid){
 
     if (svid < -1){
-        std::cout << "Error in PollAlmanac: Invalid input 'svid'" << endl;
+        log_error_("Error in PollAlmanac: Invalid input 'svid'");
         return 0;
     }
     else if (svid == -1){ // Requests Almanac Data for all SVs
-        std::cout << "Polling for all Almanac Data.." << endl;
+        log_info_("Polling for all Almanac Data..");
         return PollMessage(0x0B, 0x30);
     }
     else if (svid > 0){ // Requests Almanac Data for a single SV
-        std::cout << "Polling for SV# " << (int)svid << " Almanac Data.." << endl;
+        stringstream output;
+        output << "Polling for SV# " << (int)svid << " Almanac Data..";
+        log_info_(output.str());
         return PollMessageIndSV(0x0B, 0x30, (uint8_t) svid);
     }
     else{
-        std::cout << "Error in PollAlmanac: Invalid input 'svid'" << endl;
+        log_error_("Error in PollAlmanac: Invalid input 'svid'");
         return 0;
     }
 }
 
 // (AID-HUI) Polls GPS Health, UTC and Ionospheric Parameters
 bool Ublox::PollHUI(){
-    std::cout << "Polling for AID-HUI.." << endl;
+    log_info_("Polling for AID-HUI..");
     return PollMessage(0x0B, 0x02);
 }
 
 // (AID-INI) Polls for Receiver Position, Time, Frequency, and Clock Drift
 bool Ublox::PollIniAid(){
-    std::cout << "Polling for AID-INI.." << endl;
+    log_info_("Polling for AID-INI..");
     return PollMessage(0x0B, 0x01);
 }
 
 // (AID-DATA) Polls for All AID Data (-INI, -HUI, -EPH, -ALM)
 bool Ublox::PollAllAidData(){
-    std::cout << "Polling for AID-HUI, AID-INI, AID-EPH, & AID-ALM.." << endl;
+    log_info_("Polling for AID-HUI, AID-INI, AID-EPH, & AID-ALM..");
     return PollMessage(0x0B, 0x10);
 }
 
 // (RXM-RAW) Polls for Raw DGPS data
 bool Ublox::PollRawDgpsData(){
-    std::cout << "Polling for RXM-RAW.." << endl;
+    log_info_("Polling for RXM-RAW..");
     return PollMessage(0x02, 0x10);
 }
 
 // (RXM-SVSI) Polls for Satellite Status Info
 bool Ublox::PollSVStatus(){
-    std::cout << "Polling for RXM-SVSI.." << endl;
+    log_info_("Polling for RXM-SVSI..");
     return PollMessage(0x02, 0x20);
 }
 
 // (NAV-STATUS) Polls for Receiver Navigation Status
 bool Ublox::PollNavStatus(){
-    std::cout << "Polling for Receiver NAV-STATUS.." << endl;
+    log_info_("Polling for Receiver NAV-STATUS..");
     return PollMessage(0x01, 0x03);
 }
 
@@ -488,19 +496,19 @@ bool Ublox::Reset(uint16_t nav_bbr_mask, uint8_t reset_mode){
 
 // Receiver Reset Messages - Force Cold Start
 bool Ublox::ResetToColdStart(uint8_t reset_mode){
-    std::cout << "Cold Start." << endl;
+    log_info_("Receiver reset to cold start state.");
     return Reset(0xFFFF, reset_mode);
 }
 
 // Receiver Reset Messages - Force Warm Start
 bool Ublox::ResetToWarmStart(){
-    std::cout << "Warm Start." << endl;
+    log_info_("Receiver reset to warm start state.");
     return Reset(0x0001, 0x02);
 }
 
 // Receiver Reset Messages - Force Hot Start
 bool Ublox::ResetToHotStart(){
-    std::cout << "Hot Start." << endl;
+    log_info_("Receiver reset to hot start state.");
     return Reset(0x0000, 0x02);
 }
 
@@ -569,7 +577,7 @@ void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_inpu
     unsigned char* msg_ptr = (unsigned char*)&message;
     calculateCheckSum(msg_ptr+2,27,message.checksum);
 
-    std::cout << "Set Port Settings Message Sent" << std::endl;
+    log_info_("Set Port Settings Message Sent");
     printHex((char*) &message, sizeof(message));
 
     serial_port_->write(msg_ptr, sizeof(message));
@@ -596,7 +604,7 @@ void Ublox::PollPortConfiguration(uint8_t port_identifier)
     calculateCheckSum(msg_ptr+2,5,msg_ptr+7);
 
     serial_port_->write(msg_ptr, sizeof(message));
-    std::cout << "Polling for Port Protocol Configuration." << std::endl;
+    log_info_("Polling for Port Protocol Configuration.");
     return;
 }
 
@@ -664,7 +672,7 @@ bool Ublox::SendAidIni(AidIni ini)
 bool Ublox::SendAidEphem(Ephemerides ephems)
 {
 
-    std::cout << "Sending Ephemerides for available SVs." << endl;
+    log_info_("Sending Ephemerides for available SVs.");
 
     for(uint8_t prn_index=1; prn_index<=32; prn_index++){
         if (ephems.ephemsv[prn_index].header.payload_length == 8){
@@ -685,14 +693,18 @@ bool Ublox::SendAidEphem(Ephemerides ephems)
 // Send AID-ALM to Receiver
 bool Ublox::SendAidAlm(Almanac almanac)
 {
+    stringstream output;
+
     for(uint8_t prn_index=1; prn_index<=32; prn_index++){
         if (almanac.almsv[prn_index].svprn == 0){
-            std::cout << "No AID-ALM data for PRN # " << (int)prn_index << " .." << endl;
+            output << "No AID-ALM data for PRN # " << (int)prn_index << " ..";
+            log_info_(output.str());
 
         }
 
         else{
-            std::cout << "Sending AID-ALM for PRN # " << (int) almanac.almsv[prn_index].svprn << " .." << endl;
+            output << "Sending AID-ALM for PRN # " << (int) almanac.almsv[prn_index].svprn << " ..";
+            log_info_(output.str());
             unsigned char* msg_ptr = (unsigned char*)&almanac.almsv[prn_index];
             SendMessage(msg_ptr, sizeof(almanac.almsv[prn_index]));
         }
@@ -703,14 +715,14 @@ bool Ublox::SendAidAlm(Almanac almanac)
 // Send AID-HUI to Receiver
 bool Ublox::SendAidHui()
 {
-    std::cout << "Sending AID-HUI to receiver.." << endl;
+    log_info_("Sending AID-HUI to receiver..");
     unsigned char* msg_ptr = (unsigned char*)&cur_aid_hui;
     return SendMessage(msg_ptr, sizeof(cur_aid_hui));
 }
 // Send RXM-RAW to Receiver
 bool Ublox::SendRawMeas()
 {
-    std::cout << "Sending RXM-RAW to receiver.." << endl;
+    log_info_("Sending RXM-RAW to receiver..");
     unsigned char* msg_ptr = (unsigned char*)&cur_raw_meas;
     return SendMessage(msg_ptr, sizeof(cur_raw_meas));
 }
@@ -733,7 +745,7 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length)
         if (buffer_index_>=MAX_NOUT_SIZE)
 		{
             buffer_index_=0;
-            std::cout << "Overflowed receiver buffer. See ublox.cpp BufferIncomingData" << endl;
+            log_warning_("Overflowed receiver buffer. See ublox.cpp BufferIncomingData");
 
 		}
           //cout << "buffer_index_ = " << buffer_index_ << endl;
@@ -775,7 +787,7 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length)
 
                 if (msg[i+1]==0x01) // ACK Message
                 {
-                   std::cout << "Receiver Acknowledged Message " << std::endl;
+                   //std::cout << "Receiver Acknowledged Message " << std::endl;
                     //printf("0x%.2X ", (unsigned)class_id);
                     //std::cout << " ";
                     //printf("0x%.2X ", (unsigned)msg_id);
@@ -785,7 +797,7 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length)
 
                 else if (msg[i+1]==0x00)    // NAK Message
                 {
-                    std::cout << "Receiver Did Not Acknowledged Message " << std::endl;
+                    //std::cout << "Receiver Did Not Acknowledged Message " << std::endl;
                      //printf("0x%.2X ", (unsigned)class_id);
                      //std::cout << " ";
                      //printf("0x%.2X ", (unsigned)msg_id);
@@ -858,7 +870,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
     {
 
         case AID_REQ:
-            std::cout << "AID-REQ message received by computer." << endl;
+            log_info_("AID-REQ message received by computer.");
 
         case CFG_PRT:
             //CfgPrt cur_port_settings;
@@ -947,7 +959,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             }
 
             else{
-                cout << "Error! AID-EPH log payload is not a valid length! (See ParseLog case AID_EPH)" << std::endl;
+                log_error_("Error! AID-EPH log payload is not a valid length! (See ParseLog case AID_EPH)");
             }
 
             /*
@@ -988,7 +1000,9 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 
             // If Almanac data for SV is not present (length is 8 bytes)
             if (length == 8){
-                std::cout << "SV# " << (double) *(log+6) << "- no almanac data" << std::endl;
+                stringstream output;
+                output << "SV# " << (double) *(log+6) << "- no almanac data";
+                log_info_(output.str());
                 break;
             }
 
@@ -1006,7 +1020,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             }
 
             else{
-                cout << "Error! AID-ALM log payload is not 8 or 40 bytes long! (See ParseLog case AID_ALM)" << std::endl;
+                log_error_("Error! AID-ALM log payload is not 8 or 40 bytes long! (See ParseLog case AID_ALM)");
             }
 
 			aid_alm_callback_(cur_alm_sv, read_timestamp_);
@@ -1029,7 +1043,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             memcpy(&cur_aid_hui, log, sizeof(cur_aid_hui));
 
             aid_hui_callback_(cur_aid_hui, read_timestamp_);
-            std::cout << "Received AID-HUI Message." << std::endl;
+            log_info_("Received AID-HUI Message.");
             break;
 
         case AID_INI:
@@ -1051,7 +1065,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
         case RXM_RAW:
             //RawMeas cur_raw_meas;
             length = (double) *(log+4);         // length = 8+24*numSV
-            std::cout << "Length of RXM-RAW " << length << std::endl;
+            //std::cout << "Length of RXM-RAW " << length << std::endl;
 
             memcpy(&cur_raw_meas, log, length);
         /*
