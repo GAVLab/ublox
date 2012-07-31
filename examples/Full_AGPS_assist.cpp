@@ -1,7 +1,3 @@
-//#include <string>
-//#include <iostream>
-//#include <sstream>
-//#include <fstream>
 #include "ublox/ublox.h"
 #include <bitset>
 using namespace ublox;
@@ -15,14 +11,6 @@ Almanac stored_almanac;
 AidHui cur_aid_hui;
 double aid_ini_timestamp;
 NavStatus cur_nav_status;
-
-void printHex(char *data, int length)
-{
-    for(int i = 0; i < length; ++i){
-        printf("0x%.2X ", (unsigned)(unsigned char)data[i]);
-    }
-    printf("\n");
-}
 
 double GetTime() {
     boost::posix_time::ptime present_time(boost::posix_time::microsec_clock::universal_time());
@@ -83,7 +71,7 @@ int main(int argc, char **argv)
     double ttff_assisted;
 
     if(argc < 3) {
-        std::cerr << "Usage: assist_example <serial port address> <baud rate>" << std::endl;
+        std::cerr << "Usage: Full_AGPS_assist <serial port address> <baud rate>" << std::endl;
         return 0;
     }
     std::string port(argv[1]);
