@@ -125,12 +125,7 @@ IF(UBLOX_BUILD_EXAMPLES)
 
     add_executable(HUI_example examples/HUI_example.cpp)
     target_link_libraries(HUI_example ublox ${UBLOX_LINK_LIBS})
-<<<<<<< HEAD
 
-    add_executable(DGPS_example examples/DGPS_example.cpp)
-    target_link_libraries(DGPS_example ublox ${UBLOX_LINK_LIBS})
-=======
->>>>>>> a94935f4e0e1abc1f52ac086c12a8a7aa32d49fa
 ENDIF(UBLOX_BUILD_EXAMPLES)
 
 ## Build tests
