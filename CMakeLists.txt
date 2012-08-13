@@ -126,6 +126,9 @@ IF(UBLOX_BUILD_EXAMPLES)
     add_executable(HUI_example examples/HUI_example.cpp)
     target_link_libraries(HUI_example ublox ${UBLOX_LINK_LIBS})
 
+    add_executable(Save_AGPS_data examples/Save_AGPS_data.cpp)
+    target_link_libraries(Save_AGPS_data ublox ${UBLOX_LINK_LIBS})
+
 ENDIF(UBLOX_BUILD_EXAMPLES)
 
 ## Build tests

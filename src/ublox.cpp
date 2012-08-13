@@ -1010,7 +1010,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             memcpy(&cur_aid_hui, log, sizeof(cur_aid_hui));
 
             //std::cout << "Received AID-HUI Message." << std::endl;
-            //printHex((char*)log, sizeof(cur_aid_hui));
+            printHex((char*)log, sizeof(cur_aid_hui));
             // make sure function pointer is set and call callback
             if (aid_hui_callback_)
                 aid_hui_callback_(cur_aid_hui, read_timestamp_);

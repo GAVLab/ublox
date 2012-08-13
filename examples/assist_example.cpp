@@ -1,5 +1,6 @@
 #include "ublox/ublox.h"
 #include <bitset>
+#include <fstream>
 using namespace ublox;
 using namespace std;
 
@@ -11,6 +12,20 @@ Almanac stored_almanac;
 AidHui cur_aid_hui;
 double aid_ini_timestamp;
 NavStatus cur_nav_status;
+
+
+AidHui LoadHUI(){
+    ifstream input_file("HUI.data", ios::binary);
+    input_file.read((char*)&cur_aid_hui, sizeof(cur_aid_hui));
+    return cur_aid_hui;
+}
+
+Almanac LoadAlmanac(){
+    ifstream input_file("Almanac.data", ios::binary);
+    input_file.read((char*)&stored_almanac, sizeof(stored_almanac));
+    return stored_almanac;
+}
+
 
 double GetTime() {
     boost::posix_time::ptime present_time(boost::posix_time::microsec_clock::universal_time());
@@ -93,9 +108,6 @@ int main(int argc, char **argv)
         return -1;
     }
 
-
-    //
-
     // setup callbacks
     my_gps.set_aid_eph_callback(EphemerisCallback);
     my_gps.set_aid_alm_callback(AlmanacCallback);
@@ -139,8 +151,8 @@ int main(int argc, char **argv)
     // clear stored assist data
     memset(&cur_aid_ini, 0, sizeof(cur_aid_ini));
     memset(&stored_ephems, 0, sizeof(stored_ephems));
-    //memset(&stored_almanac, 0, sizeof(stored_almanac));
-    //memset(&cur_aid_hui, 0, sizeof(cur_aid_hui));
+    memset(&stored_almanac, 0, sizeof(stored_almanac));
+    memset(&cur_aid_hui, 0, sizeof(cur_aid_hui));
 
     while (cur_nav_status.fixtype !=0x03) // wait for 3D fix
         usleep(200*1000);
@@ -149,7 +161,7 @@ int main(int argc, char **argv)
     cout << " TTFF: " << (cur_nav_status.ttff/1000.) << " sec" << endl;
     cout << " Time since startup: " << (cur_nav_status.msss/1000.) << endl << endl;
     ttff_unassisted = cur_nav_status.ttff/1000.;
-
+/*
     // Continue loop, polling receiver until all AGPS data is present on receiver (HUI is last stored)
     while(cur_aid_hui.beforeleapsecs == 0 ){
         std::cout << "Checking if all AGPS data is on receiver..." << endl;
@@ -157,7 +169,7 @@ int main(int argc, char **argv)
         my_gps.PollHUI();   // Poll HUI data
         usleep(5000*1000);
     }
-
+*/
     // All AGPS data present, request aiding data from receiver
     if(postime_onoff == 1){
     my_gps.PollIniAid();  // poll position and time
@@ -167,13 +179,12 @@ int main(int argc, char **argv)
     my_gps.PollEphem(); // poll ephemeris for all satellites
     usleep(100*1000);
     }
+
     if(alm_onoff == 1){
-    my_gps.PollAlmanac();   // Poll almanac data
-    usleep(100*1000);
+        stored_almanac = LoadAlmanac();
     }
     if(hui_onoff == 1){
-    my_gps.PollHUI();   // Poll HUI data
-    usleep(100*1000);
+        cur_aid_hui = LoadHUI();
     }
 
     // make sure we got the aid_ini data
@@ -242,6 +253,7 @@ int main(int argc, char **argv)
     cout << "Send HUI back to receiver." << endl;
     my_gps.SendAidHui(cur_aid_hui);
     }
+
     ///////////////////////////////////////////////////////////////////
     // WAIT FOR FIX
     cout << "Wait for assisted fix." << endl;
@@ -293,8 +305,8 @@ int main(int argc, char **argv)
     {
         un_total = un_total + un_ttff[j];
         as_total = as_total + as_ttff[j];
-        std::cout << "un_total = " << un_total << endl;
-        std::cout << "as_total = " << as_total << endl;
+        //std::cout << "un_total = " << un_total << endl;
+        //std::cout << "as_total = " << as_total << endl;
         std::cout << "un_ttff = " << un_ttff << endl;
         std::cout << "as_ttff = " << as_ttff << endl;
 
