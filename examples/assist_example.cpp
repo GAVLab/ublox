@@ -13,17 +13,30 @@ AidHui cur_aid_hui;
 double aid_ini_timestamp;
 NavStatus cur_nav_status;
 
+inline void printHex(char *data, int length)
+{
+    for(int i = 0; i < length; ++i){
+        printf("0x%.2X ", (unsigned)(unsigned char)data[i]);
+    }
+    printf("\n");
+}
 
 AidHui LoadHUI(){
+    AidHui hui;
     ifstream input_file("HUI.data", ios::binary);
-    input_file.read((char*)&cur_aid_hui, sizeof(cur_aid_hui));
-    return cur_aid_hui;
+    input_file.read((char*)&hui, sizeof(hui));
+    std::cout << "Loading HUI from file..." << std::endl;
+    printHex((char*) &hui, sizeof(hui));
+    return hui;
 }
 
 Almanac LoadAlmanac(){
     ifstream input_file("Almanac.data", ios::binary);
     input_file.read((char*)&stored_almanac, sizeof(stored_almanac));
+    std::cout << "Loading Almanac from file..." << std::endl;
+    printHex((char*) &stored_almanac, sizeof(stored_almanac));
     return stored_almanac;
+
 }
 
 
@@ -122,7 +135,7 @@ int main(int argc, char **argv)
     my_gps.ConfigureMessageRate(0x01,0x03,1); // nav status at 1 Hz
 
     // Loop 10 times to get average TTFF
-    uint8_t iterations = 1;
+    uint8_t iterations = 10;
     double un_ttff[iterations];
     double as_ttff[iterations];
 
@@ -161,15 +174,7 @@ int main(int argc, char **argv)
     cout << " TTFF: " << (cur_nav_status.ttff/1000.) << " sec" << endl;
     cout << " Time since startup: " << (cur_nav_status.msss/1000.) << endl << endl;
     ttff_unassisted = cur_nav_status.ttff/1000.;
-/*
-    // Continue loop, polling receiver until all AGPS data is present on receiver (HUI is last stored)
-    while(cur_aid_hui.beforeleapsecs == 0 ){
-        std::cout << "Checking if all AGPS data is on receiver..." << endl;
 
-        my_gps.PollHUI();   // Poll HUI data
-        usleep(5000*1000);
-    }
-*/
     // All AGPS data present, request aiding data from receiver
     if(postime_onoff == 1){
     my_gps.PollIniAid();  // poll position and time
@@ -186,7 +191,7 @@ int main(int argc, char **argv)
     if(hui_onoff == 1){
         cur_aid_hui = LoadHUI();
     }
-
+    usleep(3000*1000);
     // make sure we got the aid_ini data
     if(postime_onoff == 1){
     while(cur_aid_ini.header.sync1==0)
@@ -291,14 +296,14 @@ int main(int argc, char **argv)
     cout << " Assisted TTFF (sec): " << ttff_assisted << endl;
 
     // Store Unassisted and Assisted TTFF Iterations
-    //un_ttff[i] = ttff_unassisted;
-    //as_ttff[i] = ttff_assisted;
+    un_ttff[i] = ttff_unassisted;
+    as_ttff[i] = ttff_assisted;
 
     }
 
     // Average TTFF Iterations
-    double un_total;
-    double as_total;
+    double un_total = 0;
+    double as_total = 0;
 
 
     for (uint8_t j=0; j< iterations; j++)
@@ -314,7 +319,9 @@ int main(int argc, char **argv)
 
     double un_ave_ttff = un_total/iterations;
     double as_ave_ttff = as_total/iterations;
-
+    //std::cout << "Results for Complete AGPS assist" << endl;
+    //std::cout << "Results for Complete AGPS with degraded AGPS time accuracy" << endl;
+    std::cout << "Results for INI and ephem AGPS with degraded AGPS time accuracy" << endl;
     std::cout << "Average Unassisted TTFF = " << un_ave_ttff << endl;
     std::cout << "Average Assisted TTFF = " << as_ave_ttff << endl;
 

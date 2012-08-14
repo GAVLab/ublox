@@ -65,7 +65,6 @@ void HuiCallback(AidHui &hui, double &time_stamp) {
 int main(int argc, char **argv)
 {
     Ublox my_gps;
-    uint8_t saveit = 0;
 
     if(argc < 3) {
         std::cerr << "Usage: ublox_example <serial port address> <baud rate>" << std::endl;
@@ -103,7 +102,6 @@ int main(int argc, char **argv)
    cout << " TTFF: " << (cur_nav_status.ttff/1000.) << " sec" << endl;
    cout << " Time since startup: " << (cur_nav_status.msss/1000.) << endl << endl;
 
-while(saveit == 0){
 // Reset stored almanac data
    memset(&stored_almanac, 0, sizeof(stored_almanac));
    memset(&cur_aid_hui, 0, sizeof(cur_aid_hui));
@@ -124,19 +122,13 @@ while(saveit == 0){
    while(cur_aid_hui.header.sync1==0)
        usleep(200*1000);
 
+// Save Almanac and HUI to File
 
-   std::cout << "Save data? 1 for yes, 0 for no: ";
-   std::cin >> saveit;
-   if(saveit != 1){
-    saveit = 0;
-    usleep(1000*1000);
-   }
-   if(saveit == 1){
-    // Save Almanac and HUI to File
+    std::cout << "Saving..." << endl;
     SaveAlmanac();
     SaveHUI();
-    }
-}
+    usleep(5000*1000);
+
 
 // Disconnect receiver
     std::cout << "Disconnecting from receiver." << endl;
