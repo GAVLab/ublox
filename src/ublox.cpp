@@ -716,16 +716,16 @@ bool Ublox::SendAidAlm(Almanac almanac)
 bool Ublox::SendAidHui(AidHui hui)
 {
     log_info_("Sending AID-HUI to receiver..");
-    unsigned char* msg_ptr = (unsigned char*)&cur_aid_hui;
-    return SendMessage(msg_ptr, sizeof(cur_aid_hui));
+    unsigned char* msg_ptr = (unsigned char*)&hui;
+    return SendMessage(msg_ptr, sizeof(hui));
 }
 
 // Send RXM-RAW to Receiver
 bool Ublox::SendRawMeas(RawMeas raw_meas)
 {
     log_info_("Sending RXM-RAW to receiver..");
-    unsigned char* msg_ptr = (unsigned char*)&cur_raw_meas;
-    return SendMessage(msg_ptr, sizeof(cur_raw_meas));
+    unsigned char* msg_ptr = (unsigned char*)&raw_meas;
+    return SendMessage(msg_ptr, sizeof(raw_meas));
 }
 
 //////////////////////////////////////////////////////////////

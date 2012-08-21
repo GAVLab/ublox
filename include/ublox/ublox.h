@@ -5,14 +5,6 @@
 #include <serial/serial.h>
 #include <fstream>
 
-/*
-#include <iostream>
-#include <stdlib.h>
-#include <sstream>
-#include <cstring>
-#include <iomanip>
-*/
-
 //#include <boost/function.hpp>
 #include <boost/thread.hpp>
 //#include <boost/bind.hpp>
@@ -155,22 +147,7 @@ public:
     void set_nav_vel_ned_callback(NavVelNedCallback callback){nav_vel_ned_callback_=callback;};
     void set_port_settings_callback(PortSettingsCallback callback){port_settings_callback_ =callback;};
 
-// Temporary Method
-/*
-    Ephemerides stored_ephems;
-    Almanac stored_almanac;
-    Ephemerides cur_ephemerides;    // Contains newest ephemeris available for all 32 SVs
-    Almanac cur_almanac;            // Contains almanac data available for all 32 SVs
-    NavStatus cur_nav_status;
-    NavSol cur_nav_sol;
-    NavVelNed cur_nav_vel_ned;
-    NavPosLLH cur_nav_position;
-    AidHui cur_aid_hui;
-    AidIni cur_aid_ini;
-    RawMeas cur_raw_meas;
-    SVStat cur_sv_stat;
-    CfgPrt cur_port_settings;
-    */
+
 private:
 
 	/*!
