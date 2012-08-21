@@ -141,9 +141,9 @@ int main(int argc, char **argv)
 
     // Turn AGPS data on/off
     postime_onoff = 1;
-    ephem_onoff = 1;
-    alm_onoff = 1;
-    hui_onoff = 1;
+    ephem_onoff = 0;
+    alm_onoff = 0;
+    hui_onoff = 0;
 
     for (uint8_t i=0; i<iterations; i++)
     {
@@ -169,6 +169,8 @@ int main(int argc, char **argv)
 
     while (cur_nav_status.fixtype !=0x03) // wait for 3D fix
         usleep(200*1000);
+
+    usleep(2000*1000);
 
     cout << "3D fix obtained." << endl;
     cout << " TTFF: " << (cur_nav_status.ttff/1000.) << " sec" << endl;
@@ -238,7 +240,7 @@ int main(int argc, char **argv)
     std::cout << "aid_ini_timestamp = " << aid_ini_timestamp << "sec" << std::endl;
     cout << "Correct time by " << (cur_time-aid_ini_timestamp) << " sec." << endl;
     cout << "Correct time by " << time_correction << " ms." << endl;
-    cur_aid_ini.time_of_week=cur_aid_ini.time_of_week ;//+ time_correction;
+    cur_aid_ini.time_of_week=cur_aid_ini.time_of_week + time_correction;
     cout << "Initialize receiver position and time." << endl;
     my_gps.SendAidIni(cur_aid_ini);
     }
@@ -312,7 +314,7 @@ int main(int argc, char **argv)
         as_total = as_total + as_ttff[j];
         //std::cout << "un_total = " << un_total << endl;
         //std::cout << "as_total = " << as_total << endl;
-        //std::cout << "un_ttff = " << un_ttff << endl;
+        std::cout << "un_ttff = " << un_ttff << endl;
         std::cout << "as_ttff = " << as_ttff << endl;
 
     }
@@ -321,11 +323,11 @@ int main(int argc, char **argv)
     double as_ave_ttff = as_total/iterations;
     //std::cout << "Results for Complete AGPS assist" << endl;
     //std::cout << "Results for Complete AGPS with degraded AGPS time accuracy" << endl;
-    std::cout << "Location: Woods Behind Donahue Fields" << endl;
-    std::cout << "Scenario: Under Canopy" << endl;
-    std::cout << "Aiding used: AID-INI EPH ALM HUI, Time uncorrected" << endl;
+    std::cout << "Location: Stadium Parking Deck" << endl;
+    std::cout << "Scenario: Under Overhang" << endl;
+    std::cout << "Aiding used: AID-INI" << endl;
     //std::cout << "Results for INI and ephem AGPS with degraded AGPS time accuracy" << endl;
-    //std::cout << "Average Unassisted TTFF = " << un_ave_ttff << endl;
+    std::cout << "Average Unassisted TTFF = " << un_ave_ttff << endl;
     std::cout << "Average Assisted TTFF = " << as_ave_ttff << endl;
 
     my_gps.Disconnect();
