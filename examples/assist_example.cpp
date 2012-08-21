@@ -1,10 +1,7 @@
 #include "ublox/ublox.h"
-<<<<<<< HEAD
 #include <iostream>
-=======
 #include <bitset>
 #include <fstream>
->>>>>>> chris
 using namespace ublox;
 using namespace std;
 
