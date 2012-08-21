@@ -31,7 +31,7 @@ typedef boost::function<void(NavPosLLH&, double&)> NavPosLLHCallback;
 typedef boost::function<void(NavSol&, double&)> NavSolCallback;
 typedef boost::function<void(NavStatus&, double&)> NavStatusCallback;
 typedef boost::function<void(NavVelNed&, double&)> NavVelNedCallback;
-typedef boost::function<void(EphemSV&, double&)> AidEphCallback;			// Problem here
+typedef boost::function<void(EphemSV&, double&)> AidEphCallback;
 typedef boost::function<void(AlmSV&, double&)> AidAlmCallback;
 typedef boost::function<void(AidHui&, double&)> AidHuiCallback;
 typedef boost::function<void(AidIni&, double&)> AidIniCallback;
@@ -126,30 +126,43 @@ public:
 //////////////////////////////////////////////////////
 // Saving/Reading stored data
 //////////////////////////////////////////////////////
+    /*
     bool SaveEphemerides();
     Ephemerides LoadEphemerides();
     bool SaveAlmanac();
     Almanac LoadAlmanac();
+    */
 //////////////////////////////////////////////////////
 // Send Aiding Data to Receiver
 //////////////////////////////////////////////////////
     bool SendMessage(uint8_t *msg_ptr, size_t length);
     bool SendAidIni(AidIni ini);
     bool SendAidEphem(Ephemerides ephems);
-    bool SendRawMeas();
-    bool SendAidHui();
+    bool SendRawMeas(RawMeas raw_meas);
+    bool SendAidHui(AidHui hui);
     bool SendAidAlm(Almanac almanac);
 
+    void set_rxm_svsi_callback(RxmSvsiCallback callback){rxm_svsi_callback_=callback;};
+    void set_rxm_raw_callback(RxmRawCallback callback){rxm_raw_callback_=callback;};
+    void set_aid_alm_callback(AidAlmCallback callback){aid_alm_callback_=callback;};
     void set_aid_eph_callback(AidEphCallback callback){aid_eph_callback_=callback;};
     void set_aid_hui_callback(AidHuiCallback callback){aid_hui_callback_=callback;};
     void set_aid_ini_callback(AidIniCallback callback){aid_ini_callback_=callback;};
     void set_nav_status_callback(NavStatusCallback callback){nav_status_callback_=callback;};
+<<<<<<< HEAD
     void set_nav_solution_callback(NavSolCallback callback){nav_sol_callback_=callback;};
     void set_nav_position_llh_callback(NavPosLLHCallback callback){nav_pos_llh_callback_=callback;};
     void set_get_time_callback(GetTimeCallback callback){time_handler_=callback;};
 
+=======
+    void set_nav_sol_callback(NavSolCallback callback){nav_sol_callback_=callback;};
+    void set_nav_vel_ned_callback(NavVelNedCallback callback){nav_vel_ned_callback_=callback;};
+    void set_nav_posllh_callback(NavPosLLHCallback callback){nav_pos_llh_callback_=callback;};
+    void set_port_settings_callback(PortSettingsCallback callback){port_settings_callback_ =callback;};
+>>>>>>> chris
 
 // Temporary Method
+/*
     Ephemerides stored_ephems;
     Almanac stored_almanac;
     Ephemerides cur_ephemerides;    // Contains newest ephemeris available for all 32 SVs
@@ -163,6 +176,7 @@ public:
     RawMeas cur_raw_meas;
     SVStat cur_sv_stat;
     CfgPrt cur_port_settings;
+    */
 private:
 
 	/*!

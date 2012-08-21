@@ -244,13 +244,20 @@ PACK(
         double a1;
         uint32_t tow;
         int16_t week;
-        int16_t leapsecs;
+        int16_t beforeleapsecs;
         int16_t nexleapsecweek;
         int16_t nextleapsec;
+        int16_t afterleapsecs;
         int16_t spare;
         float kloba0;
         float kloba1;
         float kloba2;
+        float kloba3;
+        float klobb0;
+        float klobb1;
+        float klobb2;
+        float klobb3;
+        float flags;
         uint8_t checksum[2];
 });
 
