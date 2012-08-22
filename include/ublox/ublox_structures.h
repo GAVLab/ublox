@@ -257,7 +257,7 @@ PACK(
         float klobb1;
         float klobb2;
         float klobb3;
-        float flags;
+        uint32_t flags;
         uint8_t checksum[2];
 });
 
