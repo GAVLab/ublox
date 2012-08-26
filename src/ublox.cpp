@@ -95,6 +95,22 @@ inline void DefaultNavVelNedCallback(NavVelNed nav_vel_ned, double time_stamp){
     std::cout << "NAV-VELNED: " << endl;
 }
 
+inline void DefaultNavSVInfoCallback(NavSVInfo nav_sv_info, double time_stamp){
+
+}
+
+inline void DefaultNavGPSTimeCallback(NavGPSTime nav_gps_time, double time_stamp){
+
+}
+
+inline void DefaultNavUTCTimeCallback(NavUTCTime nav_utc_time, double time_stamp){
+
+}
+
+inline void DefaultNavDOPCallback(NavDOP nav_dop, double time_stamp){
+
+}
+
 inline void DefaultNavPosLlhCallback(NavPosLLH nav_position, double time_stamp){
     std:: cout << "NAV-POSLLH: " << endl <<
                   "  GPS milliseconds: " << nav_position.iTOW << std::endl <<
@@ -144,6 +160,10 @@ Ublox::Ublox() {
     nav_sol_callback_=DefaultNavSolCallback;
     nav_status_callback_=DefaultNavStatusCallback;
     nav_vel_ned_callback_=DefaultNavVelNedCallback;
+    nav_sv_info_callback_=DefaultNavSVInfoCallback;
+    nav_gps_time_callback_=DefaultNavGPSTimeCallback;
+    nav_utc_time_callback_=DefaultNavUTCTimeCallback;
+    nav_dop_callback_=DefaultNavDOPCallback;
     log_debug_=DefaultDebugMsgCallback;
     log_info_=DefaultInfoMsgCallback;
     log_warning_=DefaultWarningMsgCallback;
@@ -921,6 +941,35 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
                 nav_pos_llh_callback_(cur_nav_position, read_timestamp_);
             break;
 		
+        case NAV_SVINFO:
+            NavSVInfo cur_nav_svinfo;
+            length = (double) *(log+4)+8;
+            memcpy(&cur_nav_svinfo, log, length);
+            if (nav_sv_info_callback_)
+                nav_sv_info_callback_(cur_nav_svinfo, read_timestamp_);
+            break;
+
+        case NAV_GPSTIME:
+            NavGPSTime cur_nav_gps_time;
+            memcpy(&cur_nav_gps_time, log, sizeof(cur_nav_gps_time));
+            if (nav_gps_time_callback_)
+                nav_gps_time_callback_(cur_nav_gps_time, read_timestamp_);
+            break;
+
+        case NAV_UTCTIME:
+            NavUTCTime cur_nav_utc_time;
+            memcpy(&cur_nav_utc_time, log, sizeof(cur_nav_utc_time));
+            if (nav_utc_time_callback_)
+                nav_utc_time_callback_(cur_nav_utc_time, read_timestamp_);
+            break;
+
+        case NAV_DOP:
+            NavDOP cur_nav_dop;
+            memcpy(&cur_nav_dop, log, sizeof(cur_nav_dop));
+            if (nav_dop_callback_)
+                nav_dop_callback_(cur_nav_dop, read_timestamp_);
+            break;
+
         case AID_EPH:
             EphemSV cur_ephem_sv;
             // determine length of log to see if it contains satellite

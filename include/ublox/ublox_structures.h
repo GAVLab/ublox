@@ -7,7 +7,7 @@
 #define MAX_NOUT_SIZE      (5000)   // Maximum size of a NovAtel log buffer (ALMANAC logs are big!)
                     // find MAX_NOUT_SIZE for ublox (ask Scott how he go this one for Novatel)
 
-//#define MAXCHAN		50  // Maximum number of signal channels
+#define MAXCHAN		50  // Maximum number of signal channels
 //#define MAX_NUM_SAT 28	// Maximum number of satellites with information in the RTKDATA log
 //#define EPHEM_CHAN	33
 //#define MAXSAT 28
@@ -201,6 +201,78 @@ PACK(
         int32_t heading_scaled; //!< heading [deg]. Scaling 1e-5
         uint32_t speed_accuracy; //!< speed accuracy estimate [cm/s]
         uint32_t heading_accuracy; //!< course/heading accuracy estimate [deg]. Scaling 1e-5
+        uint8_t checksum[2];
+});
+
+/*!
+* NAV-SVInfo Message Structure
+* This message outputs info about each channel
+* and the SVs they are tracking
+* ID: 0x01  0x30  Length=8+12*N bytes
+*/
+PACK(
+    struct SVInfoReapBlock{
+        uint8_t ch_num;     //!< Channel Number (255 if SV not assigned to channel)
+        uint8_t svid;
+        uint8_t flags; // bitfield
+        uint8_t quality;    // signal quality indicator bitfield
+        uint8_t cno;    // carrier to noise ratio
+        int8_t elev;    // elevation in degress
+        int16_t azim;   // azimuth in integer degrees
+        int32_t prRes;  // Psuedorange residual in centimeters
+
+});
+
+PACK(
+    struct NavSVInfo{
+        UbloxHeader header;		//!< Ublox header
+        uint32_t iTOW;
+        uint8_t numch;  //! number of channels
+        uint8_t global_flags;
+        uint16_t reserved2;
+        SVInfoReapBlock svinfo_reap[MAXCHAN];
+        uint8_t checksum[2];
+});
+
+PACK(
+    struct NavGPSTime{
+        UbloxHeader header;
+        uint32_t itow;  // GPS ms time of week
+        int32_t ftow;   // fractional nanoseconds remainder
+        int16_t week;   // GPS week
+        int8_t leapsecs;// GPS UTC leap seconds
+        uint8_t valid;  // validity flags
+        uint32_t tacc;  // time accuracy measurement (nanosecs)
+        uint8_t checksum[2];
+});
+
+PACK(
+    struct NavUTCTime{
+        UbloxHeader header;
+        uint32_t itow;  // GPS time of week (msec)
+        uint32_t tacc;  // time accuracy measurement
+        int32_t nano;   // Nanoseconds of second
+        uint16_t year;  // year
+        uint8_t month;  // month
+        uint8_t day;    // day
+        uint8_t hour;   // hour
+        uint8_t min;    // minute
+        uint8_t sec;    // second
+        uint8_t valid;  // validity flags
+        uint8_t checksum[2];
+});
+
+PACK(
+    struct NavDOP{
+        UbloxHeader header;
+        uint32_t itow;  // GPS ms time of week
+        uint16_t gdop;  // Geometric DOP
+        uint16_t pdop;  // Position DOP
+        uint16_t tdop;  // Time DOP
+        uint16_t vdop;  // Vertical DOP
+        uint16_t hdop;  // Horizontal DOP
+        uint16_t ndop;  // Northing DOP
+        uint16_t edop;  // Easting DOP
         uint8_t checksum[2];
 });
 
@@ -408,6 +480,10 @@ enum Message_ID
     NAV_SOL = 262,                  // (ID 0x01 0x06) ECEF Pos,Vel, TOW, Accuracy,
     NAV_VELNED = 274,               // (ID 0x01 0x12) Vel (North, East, Down), Speed, Ground Speed
     NAV_POSLLH = 258,               // (ID 0x01 0x02) Pos (Lat,Long,Height)
+    NAV_SVINFO = 304,               // (ID 0x01 0x30) Info on Channels and the SVs they're tracking
+    NAV_GPSTIME = 288,             // (ID 0x01 0x20) GPS Time
+    NAV_DOP = 260,                  // (ID 0x01 0x04) Various Dilution of Precisions
+    NAV_UTCTIME = 289,              // (ID 0x01 0x21) UTC Time
     AID_REQ = 2816,                 // (ID 0x0B 0x00) Receiver Requests Aiding data if not present at startup
     AID_EPH = 2865,					// (ID 0x0B 0x31) Ephemerides
     AID_ALM = 2864,					// (ID 0x0B 0x30) Almanac
