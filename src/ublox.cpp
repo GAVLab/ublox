@@ -152,6 +152,7 @@ Ublox::Ublox() {
     buffer_index_=0;
     read_timestamp_=0;
     parse_timestamp_=0;
+    is_connected_=false;
 }
 
 Ublox::~Ublox() {
@@ -168,6 +169,7 @@ bool Ublox::Connect(std::string port, int baudrate) {
         output << "Failed to open port " << port << "  Err: " << e.what();
         log_error_(output.str());
         serial_port_=NULL;
+        is_connected_=false;
         return false;
     }
 
@@ -177,6 +179,7 @@ bool Ublox::Connect(std::string port, int baudrate) {
         log_error_(output.str());
         delete serial_port_;
         serial_port_ = NULL;
+        is_connected_=false;
         return false;
     } else {
         std::stringstream output;
@@ -216,11 +219,13 @@ bool Ublox::Connect(std::string port, int baudrate) {
         log_error_(output.str());
         delete serial_port_;
         serial_port_ = NULL;
+        is_connected_=false;
         return false;
     }
 
     // start reading
     StartReading();
+    is_connected_=true;
     return true;
 
 }

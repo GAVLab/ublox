@@ -57,6 +57,9 @@ public:
     */
     void Disconnect();
 
+    //! Indicates if a connection to the receiver has been established.
+    bool IsConnected() {return is_connected_;};
+
     /*!
      * Pings the GPS to determine if it is properly connected
      *
@@ -240,6 +243,8 @@ private:
 	double parse_timestamp_;		//!< time stamp when last parse began
 	unsigned short msgID;
 	
+  bool is_connected_; //!< indicates if a connection to the receiver has been established
+
     void calculateCheckSum(uint8_t* in, size_t length, uint8_t* out);
 
 };
