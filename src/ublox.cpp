@@ -96,19 +96,27 @@ inline void DefaultNavVelNedCallback(NavVelNed nav_vel_ned, double time_stamp){
 }
 
 inline void DefaultNavSVInfoCallback(NavSVInfo nav_sv_info, double time_stamp){
-
+    std::cout << "NAV-SVINFO: " << endl;
 }
 
 inline void DefaultNavGPSTimeCallback(NavGPSTime nav_gps_time, double time_stamp){
-
+    std::cout << "NAV-GPSTIME: " << endl;
 }
 
 inline void DefaultNavUTCTimeCallback(NavUTCTime nav_utc_time, double time_stamp){
-
+    std::cout << "NAV-UTCTIME: " << endl;
 }
 
 inline void DefaultNavDOPCallback(NavDOP nav_dop, double time_stamp){
+    std::cout << "NAV-DOP: " << endl;
+}
 
+inline void DefaultNavDGPSCallback(NavDGPS nav_dgps, double time_stamp){
+    std::cout << "NAV-DGPS: " << endl;
+}
+
+inline void DefaultNavClockCallback(NavClock nav_clock, double time_stamp){
+    std::cout << "NAV-CLK: " << endl;
 }
 
 inline void DefaultNavPosLlhCallback(NavPosLLH nav_position, double time_stamp){
@@ -164,6 +172,8 @@ Ublox::Ublox() {
     nav_gps_time_callback_=DefaultNavGPSTimeCallback;
     nav_utc_time_callback_=DefaultNavUTCTimeCallback;
     nav_dop_callback_=DefaultNavDOPCallback;
+    nav_dgps_callback_=DefaultNavDGPSCallback;
+    nav_clock_callback_=DefaultNavClockCallback;
     log_debug_=DefaultDebugMsgCallback;
     log_info_=DefaultInfoMsgCallback;
     log_warning_=DefaultWarningMsgCallback;
@@ -968,6 +978,20 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             memcpy(&cur_nav_dop, log, sizeof(cur_nav_dop));
             if (nav_dop_callback_)
                 nav_dop_callback_(cur_nav_dop, read_timestamp_);
+            break;
+
+        case NAV_DGPS:
+            NavDGPS cur_nav_dgps;
+            memcpy(&cur_nav_dgps, log, sizeof(cur_nav_dgps));
+            if (nav_dgps_callback_)
+                nav_dgps_callback_(cur_nav_dgps, read_timestamp_);
+            break;
+
+        case NAV_CLK:
+            NavClock cur_nav_clock;
+            memcpy(&cur_nav_clock, log, sizeof(cur_nav_clock));
+            if (nav_clock_callback_)
+                nav_clock_callback_(cur_nav_clock, read_timestamp_);
             break;
 
         case AID_EPH:

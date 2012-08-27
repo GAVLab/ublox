@@ -27,6 +27,8 @@ typedef boost::function<void(NavSVInfo&, double&)> NavSVInfoCallback;
 typedef boost::function<void(NavGPSTime&, double&)> NavGPSTimeCallback;
 typedef boost::function<void(NavUTCTime&, double&)> NavUTCTimeCallback;
 typedef boost::function<void(NavDOP&, double&)> NavDOPCallback;
+typedef boost::function<void(NavDGPS&, double&)> NavDGPSCallback;
+typedef boost::function<void(NavClock&, double&)> NavClockCallback;
 typedef boost::function<void(EphemSV&, double&)> AidEphCallback;
 typedef boost::function<void(AlmSV&, double&)> AidAlmCallback;
 typedef boost::function<void(AidHui&, double&)> AidHuiCallback;
@@ -151,6 +153,8 @@ public:
     void set_nav_gps_time_callback(NavGPSTimeCallback callback){nav_gps_time_callback_=callback;};
     void set_nav_utc_time_callback(NavUTCTimeCallback callback){nav_utc_time_callback_=callback;};
     void set_nav_dop_callback(NavDOPCallback callback){nav_dop_callback_=callback;};
+    void set_nav_dgps_callback(NavDGPSCallback callback){nav_dgps_callback_=callback;};
+    void set_nav_clock_callback(NavClockCallback callback){nav_clock_callback_=callback;};
     void set_get_time_callback(GetTimeCallback callback){time_handler_=callback;};
     void set_nav_vel_ned_callback(NavVelNedCallback callback){nav_vel_ned_callback_=callback;};
     void set_port_settings_callback(PortSettingsCallback callback){port_settings_callback_ =callback;};
@@ -217,6 +221,8 @@ private:
     NavGPSTimeCallback nav_gps_time_callback_;
     NavUTCTimeCallback nav_utc_time_callback_;
     NavDOPCallback nav_dop_callback_;
+    NavDGPSCallback nav_dgps_callback_;
+    NavClockCallback nav_clock_callback_;
     AidAlmCallback aid_alm_callback_;
     AidEphCallback aid_eph_callback_;
     AidHuiCallback aid_hui_callback_;

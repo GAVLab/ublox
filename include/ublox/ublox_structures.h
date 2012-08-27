@@ -237,7 +237,7 @@ PACK(
 PACK(
     struct NavGPSTime{
         UbloxHeader header;
-        uint32_t itow;  // GPS ms time of week
+        uint32_t iTOW;  // GPS ms time of week
         int32_t ftow;   // fractional nanoseconds remainder
         int16_t week;   // GPS week
         int8_t leapsecs;// GPS UTC leap seconds
@@ -249,7 +249,7 @@ PACK(
 PACK(
     struct NavUTCTime{
         UbloxHeader header;
-        uint32_t itow;  // GPS time of week (msec)
+        uint32_t iTOW;  // GPS time of week (msec)
         uint32_t tacc;  // time accuracy measurement
         int32_t nano;   // Nanoseconds of second
         uint16_t year;  // year
@@ -265,7 +265,7 @@ PACK(
 PACK(
     struct NavDOP{
         UbloxHeader header;
-        uint32_t itow;  // GPS ms time of week
+        uint32_t iTOW;  // GPS ms time of week
         uint16_t gdop;  // Geometric DOP
         uint16_t pdop;  // Position DOP
         uint16_t tdop;  // Time DOP
@@ -275,6 +275,41 @@ PACK(
         uint16_t edop;  // Easting DOP
         uint8_t checksum[2];
 });
+
+PACK(
+    struct NavDGPSReap{
+        uint8_t svid;
+        uint8_t flags;  // bitfield containing channel each sv is on and DGPS status
+        uint16_t agecorr;   // age of latest correction data (ms)
+        float prcorr;   // psuedorange correction   (m)
+        float prrcorr;  // psuedorange rate correction (m/sec)
+});
+
+PACK(
+    struct NavDGPS{
+        UbloxHeader header;
+        uint32_t iTOW;  // GPS ms time of week
+        int32_t age;    // age of newest correction data (ms)
+        int16_t baseID; // DGPS base station ID
+        int16_t basehealth; // DGPS base station health
+        uint8_t numchan;    // nomber of channels for which correction data is following
+        uint8_t status; // DGPS correction type status
+        uint16_t reserved;  // reserved
+        NavDGPSReap nav_dgps_reap;  // repeated portion of NAV-DGPS message
+        uint8_t checksum[2];
+});
+
+
+PACK(
+    struct NavClock{
+        UbloxHeader header;
+        uint32_t iTOW;
+        int32_t clkbias;    // clock bias in nanoseconds
+        int32_t clkdrift;   // clock drift in ns/s
+        uint32_t tacc;      // time accuracy estimate (ns)
+        uint32_t facc;      // frequency accuracy estimate (ps/s)
+});
+
 
 //////////////////////////////////////////////////////////////
 // AIDING DATA MESSAGES
@@ -481,9 +516,11 @@ enum Message_ID
     NAV_VELNED = 274,               // (ID 0x01 0x12) Vel (North, East, Down), Speed, Ground Speed
     NAV_POSLLH = 258,               // (ID 0x01 0x02) Pos (Lat,Long,Height)
     NAV_SVINFO = 304,               // (ID 0x01 0x30) Info on Channels and the SVs they're tracking
-    NAV_GPSTIME = 288,             // (ID 0x01 0x20) GPS Time
+    NAV_GPSTIME = 288,              // (ID 0x01 0x20) GPS Time
+    NAV_DGPS = 305,                 // (ID 0x01 0x31) Outputs correction data used for the nav solution
     NAV_DOP = 260,                  // (ID 0x01 0x04) Various Dilution of Precisions
     NAV_UTCTIME = 289,              // (ID 0x01 0x21) UTC Time
+    NAV_CLK = 290,                  // (ID 0x01 0x22) Clock information
     AID_REQ = 2816,                 // (ID 0x0B 0x00) Receiver Requests Aiding data if not present at startup
     AID_EPH = 2865,					// (ID 0x0B 0x31) Ephemerides
     AID_ALM = 2864,					// (ID 0x0B 0x30) Almanac
