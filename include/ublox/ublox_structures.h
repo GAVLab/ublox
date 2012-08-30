@@ -19,7 +19,6 @@
 	#define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
 #endif
 
-
 //! Header prepended to ubx binary messages
 PACK(
     struct UbloxHeader {
@@ -337,6 +336,16 @@ PACK(
         uint32_t flags; //!< bit field that determines contents of other fields
         uint8_t checksum[2];
 });
+
+// defines for AidIni flags
+#define AIDINI_FLAG_POSITION_VALID 0x01
+#define AIDINI_FLAG_TIME_VALID 0x02
+#define AIDINI_FLAG_CLOCK_DRIFT_VALID 0x04
+#define AIDINI_FLAG_USE_TIME_PULSE 0X08
+#define AIDINI_FLAG_CLOCK_FREQ_VALID 0x10
+#define AIDINI_FLAG_USE_LLA 0x20
+#define AIDINI_FLAG_ALTITUDE_INVALID 0X40
+#define AIDINI_USE_PREV_TIME_PULSE 0X80
 
 /*!
  * AID-HUI Message Structure
