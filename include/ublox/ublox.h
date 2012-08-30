@@ -56,7 +56,7 @@ public:
     void Disconnect();
 
     //! Indicates if a connection to the receiver has been established.
-    bool IsConnected() {return is_connected_;};
+    bool IsConnected() {return is_connected_;}
 
     /*!
      * Pings the GPS to determine if it is properly connected
