@@ -5,14 +5,6 @@
 #include <serial/serial.h>
 #include <fstream>
 
-/*
-#include <iostream>
-#include <stdlib.h>
-#include <sstream>
-#include <cstring>
-#include <iomanip>
-*/
-
 //#include <boost/function.hpp>
 #include <boost/thread.hpp>
 //#include <boost/bind.hpp>
@@ -31,7 +23,13 @@ typedef boost::function<void(NavPosLLH&, double&)> NavPosLLHCallback;
 typedef boost::function<void(NavSol&, double&)> NavSolCallback;
 typedef boost::function<void(NavStatus&, double&)> NavStatusCallback;
 typedef boost::function<void(NavVelNed&, double&)> NavVelNedCallback;
-typedef boost::function<void(EphemSV&, double&)> AidEphCallback;			// Problem here
+typedef boost::function<void(NavSVInfo&, double&)> NavSVInfoCallback;
+typedef boost::function<void(NavGPSTime&, double&)> NavGPSTimeCallback;
+typedef boost::function<void(NavUTCTime&, double&)> NavUTCTimeCallback;
+typedef boost::function<void(NavDOP&, double&)> NavDOPCallback;
+typedef boost::function<void(NavDGPS&, double&)> NavDGPSCallback;
+typedef boost::function<void(NavClock&, double&)> NavClockCallback;
+typedef boost::function<void(EphemSV&, double&)> AidEphCallback;
 typedef boost::function<void(AlmSV&, double&)> AidAlmCallback;
 typedef boost::function<void(AidHui&, double&)> AidHuiCallback;
 typedef boost::function<void(AidIni&, double&)> AidIniCallback;
@@ -129,43 +127,42 @@ public:
 //////////////////////////////////////////////////////
 // Saving/Reading stored data
 //////////////////////////////////////////////////////
+    /*
     bool SaveEphemerides();
     Ephemerides LoadEphemerides();
     bool SaveAlmanac();
     Almanac LoadAlmanac();
+    */
 //////////////////////////////////////////////////////
 // Send Aiding Data to Receiver
 //////////////////////////////////////////////////////
     bool SendMessage(uint8_t *msg_ptr, size_t length);
     bool SendAidIni(AidIni ini);
     bool SendAidEphem(Ephemerides ephems);
-    bool SendRawMeas();
-    bool SendAidHui();
+    bool SendRawMeas(RawMeas raw_meas);
+    bool SendAidHui(AidHui hui);
     bool SendAidAlm(Almanac almanac);
 
+    void set_rxm_svsi_callback(RxmSvsiCallback callback){rxm_svsi_callback_=callback;};
+    void set_rxm_raw_callback(RxmRawCallback callback){rxm_raw_callback_=callback;};
+    void set_aid_alm_callback(AidAlmCallback callback){aid_alm_callback_=callback;};
     void set_aid_eph_callback(AidEphCallback callback){aid_eph_callback_=callback;};
     void set_aid_hui_callback(AidHuiCallback callback){aid_hui_callback_=callback;};
     void set_aid_ini_callback(AidIniCallback callback){aid_ini_callback_=callback;};
     void set_nav_status_callback(NavStatusCallback callback){nav_status_callback_=callback;};
     void set_nav_solution_callback(NavSolCallback callback){nav_sol_callback_=callback;};
     void set_nav_position_llh_callback(NavPosLLHCallback callback){nav_pos_llh_callback_=callback;};
+    void set_nav_sv_info_callback(NavSVInfoCallback callback){nav_sv_info_callback_=callback;};
+    void set_nav_gps_time_callback(NavGPSTimeCallback callback){nav_gps_time_callback_=callback;};
+    void set_nav_utc_time_callback(NavUTCTimeCallback callback){nav_utc_time_callback_=callback;};
+    void set_nav_dop_callback(NavDOPCallback callback){nav_dop_callback_=callback;};
+    void set_nav_dgps_callback(NavDGPSCallback callback){nav_dgps_callback_=callback;};
+    void set_nav_clock_callback(NavClockCallback callback){nav_clock_callback_=callback;};
     void set_get_time_callback(GetTimeCallback callback){time_handler_=callback;};
+    void set_nav_vel_ned_callback(NavVelNedCallback callback){nav_vel_ned_callback_=callback;};
+    void set_port_settings_callback(PortSettingsCallback callback){port_settings_callback_ =callback;};
 
 
-// Temporary Method
-    Ephemerides stored_ephems;
-    Almanac stored_almanac;
-    Ephemerides cur_ephemerides;    // Contains newest ephemeris available for all 32 SVs
-    Almanac cur_almanac;            // Contains almanac data available for all 32 SVs
-    NavStatus cur_nav_status;
-    NavSol cur_nav_sol;
-    NavVelNed cur_nav_vel_ned;
-    NavPosLLH cur_nav_position;
-    AidHui cur_aid_hui;
-    AidIni cur_aid_ini;
-    RawMeas cur_raw_meas;
-    SVStat cur_sv_stat;
-    CfgPrt cur_port_settings;
 private:
 
 	/*!
@@ -223,6 +220,12 @@ private:
 	NavSolCallback nav_sol_callback_;
     NavStatusCallback nav_status_callback_;
     NavVelNedCallback nav_vel_ned_callback_;
+    NavSVInfoCallback nav_sv_info_callback_;
+    NavGPSTimeCallback nav_gps_time_callback_;
+    NavUTCTimeCallback nav_utc_time_callback_;
+    NavDOPCallback nav_dop_callback_;
+    NavDGPSCallback nav_dgps_callback_;
+    NavClockCallback nav_clock_callback_;
     AidAlmCallback aid_alm_callback_;
     AidEphCallback aid_eph_callback_;
     AidHuiCallback aid_hui_callback_;

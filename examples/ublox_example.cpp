@@ -4,9 +4,18 @@ using namespace ublox;
 using namespace std;
 
 
+// Global Variables
+Almanac stored_almanac;
+NavStatus cur_nav_status;
+AidIni cur_aid_ini;
+double aid_ini_timestamp;
+
+
 int main(int argc, char **argv)
 {
     Ublox my_gps;
+    double ttff_unassisted;
+    double ttff_assisted;
 
     if(argc < 3) {
         std::cerr << "Usage: ublox_example <serial port address> <baud rate>" << std::endl;
