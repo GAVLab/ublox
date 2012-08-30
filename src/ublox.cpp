@@ -901,7 +901,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 	switch (logID)
     {
 
-        case AID_REQ:
+        case AID_REQ:   // Receiver outputs if accurate internally stored pos and time aren't available
             log_info_("AID-REQ message received by computer.");
 
         case CFG_PRT:

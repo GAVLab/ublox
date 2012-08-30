@@ -352,7 +352,7 @@ PACK(
         uint32_t tow;
         int16_t week;
         int16_t beforeleapsecs;
-        int16_t nexleapsecweek;
+        int16_t nextleapsecweek;
         int16_t nextleapsec;
         int16_t afterleapsecs;
         int16_t spare;
