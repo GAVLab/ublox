@@ -162,7 +162,7 @@ public:
     void set_nav_vel_ned_callback(NavVelNedCallback callback){nav_vel_ned_callback_=callback;};
     void set_port_settings_callback(PortSettingsCallback callback){port_settings_callback_ =callback;};
 
-
+    void calculateCheckSum(uint8_t* in, size_t length, uint8_t* out);
 private:
 
 	/*!
@@ -248,7 +248,7 @@ private:
 	
   bool is_connected_; //!< indicates if a connection to the receiver has been established
 
-    void calculateCheckSum(uint8_t* in, size_t length, uint8_t* out);
+    
 
 };
 }

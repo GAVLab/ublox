@@ -699,7 +699,7 @@ bool Ublox::SendAidIni(AidIni ini)
     //std::cout << "Sending AID-INI to receiver.." << endl;
     unsigned char* msg_ptr = (unsigned char*)&ini;
     // calculate checksum
-    calculateCheckSum(msg_ptr+2,4+ini.header.payload_length,ini.checksum);
+   // calculateCheckSum(msg_ptr+2,4+ini.header.payload_length,ini.checksum);
             // Should be able to remove calculateCheckSum line
     return SendMessage(msg_ptr, sizeof(ini));
 }
@@ -707,41 +707,36 @@ bool Ublox::SendAidIni(AidIni ini)
 // Send AID-EPH to Receiver
 bool Ublox::SendAidEphem(Ephemerides ephems)
 {
-
-    log_info_("Sending Ephemerides for available SVs.");
-
     for(uint8_t prn_index=1; prn_index<=32; prn_index++){
-        if (ephems.ephemsv[prn_index].header.payload_length == 8){
-            //std::cout << "No AID-EPH data for PRN # " << (int)prn_index << " .." << endl;
-        }
-        else{
-            //std::cout << "Sending AID-EPH for PRN # " << (int) ephems.ephemsv[prn_index].svprn << " .." << endl;
+        stringstream output;
+        if (ephems.ephemsv[prn_index].header.payload_length == 104){
+            output << "Sending AID-EPH for PRN # " << (int) ephems.ephemsv[prn_index].svprn << " ..";
             uint8_t* msg_ptr = (uint8_t*)&ephems.ephemsv[prn_index];
 
             SendMessage(msg_ptr, sizeof(ephems.ephemsv[prn_index]));
-
-            //sleep(.1);
         }
-
+        else{ // not a full ephemeris message
+            output << "No AID-EPH data for PRN # " << (int)prn_index << " ..";
+        }
+        log_info_(output.str());
     }
     return true;
 }
 // Send AID-ALM to Receiver
 bool Ublox::SendAidAlm(Almanac almanac)
 {
-    stringstream output;
-
     for(uint8_t prn_index=1; prn_index<=32; prn_index++){
-        if(almanac.almsv[prn_index].svprn == 0){
-            output << "No AID-ALM data for PRN # " << (int)prn_index << " ..";
+        stringstream output;
+        if(almanac.almsv[prn_index].header.payload_length == 40){
+            output << "Sending AID-ALM for PRN # " << (int) almanac.almsv[prn_index].svprn << " ..";
             log_info_(output.str());
+            uint8_t* msg_ptr = (uint8_t*)&almanac.almsv[prn_index];
+            SendMessage(msg_ptr, sizeof(almanac.almsv[prn_index]));
         }
 
         else{
-            output << "Sending AID-ALM for PRN # " << (int) almanac.almsv[prn_index].svprn << " ..";
+            output << "No AID-ALM data for PRN # " << (int)prn_index << " ..";
             log_info_(output.str());
-            unsigned char* msg_ptr = (unsigned char*)&almanac.almsv[prn_index];
-            SendMessage(msg_ptr, sizeof(almanac.almsv[prn_index]));
         }
     }
     return true;
@@ -1063,10 +1058,10 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             */
 
 
-			break;
+            break;
 
-		case AID_ALM:
-			AlmSV cur_alm_sv;
+        case AID_ALM:
+            AlmSV cur_alm_sv;
 
             length = (double) *(log+4);
 

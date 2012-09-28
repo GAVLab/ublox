@@ -307,6 +307,7 @@ PACK(
         int32_t clkdrift;   // clock drift in ns/s
         uint32_t tacc;      // time accuracy estimate (ns)
         uint32_t facc;      // frequency accuracy estimate (ps/s)
+        uint8_t checksum[2];
 });
 
 
@@ -461,9 +462,9 @@ PACK(
     struct AlmSV{
         UbloxHeader header;			// Header
         uint32_t svprn;				// Satellite Number
-        uint32_t issue_week;		// Issue date of Almanac
+        uint32_t issue_week;                    // Issue date of Almanac
         uint32_t words[8];			// Words 3-10 of Almanac data for an SV
-        uint8_t checksum[2];		// Checksum
+        uint8_t checksum[2];                    // Checksum
 });
 
 // Holds Almanac data for all SVs
