@@ -10,13 +10,28 @@ using std::string;
 class UbloxNode
 {
 public:
-  UbloxNode() : nh_("~"), port_("")
-  {
+  UbloxNode() : nh_("~"), port_("") {
     this->getROSParameters();
     this->configureROSCommunications();
   }
   ~UbloxNode() {
 
+  }
+
+  void handle_NavPosLLH(NavPosLLH& nav_pos_llh, double& time_stamp) {
+    sensor_msgs::NavSatFix msg;
+    msg.header.stamp = ros::Time(time_stamp);
+    msg.header.frame_id = "/ublox";
+
+    // See: http://www.ros.org/doc/api/sensor_msgs/html/msg/NavSatFix.html
+    msg.status.status = 0; // GPS_FIX
+    msg.status.service = 0; // GPS
+
+    msg.latitude = nav_pos_llh.latitude_scaled / 1e7f;
+    msg.longitude = nav_pos_llh.longitude_scaled / 1e7f;
+    msg.altitude = nav_pos_llh.height / 1000.0f;
+
+    this->navsatfix_pub_.publish(msg);
   }
 
   void run() {
@@ -27,6 +42,9 @@ public:
       ROS_ERROR_STREAM("Error connecting to the uBlox on port `"
                        << port_ << "`: " << e.what());
     }
+    ublox_.set_nav_position_llh_callback(
+      boost::bind(&UbloxNode::handle_NavPosLLH, this, _1, _2)
+    );
   }
 
   void getROSParameters() {
