@@ -14,7 +14,8 @@
 			"-I${folder:${project_path:ublox.sublime-project}}/include",
 			"-I${folder:${project_path:ublox.sublime-project}}/../serial/include",
 			"-I/usr/include",
-			"-I/usr/local/include"
+			"-I/usr/local/include",
+			"-I/opt/ros/fuerte/include"
 		]
 	}
 }
