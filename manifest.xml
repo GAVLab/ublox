@@ -11,7 +11,7 @@
   <depend package="roscpp"/>
   <depend package="serial"/>
   <depend package="sensor_msgs"/>
-  <depend package="gnss_msgs"/>
+  <!-- <depend package="gnss_msgs"/> -->
 
 </package>
 
