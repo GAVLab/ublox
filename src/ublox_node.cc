@@ -34,7 +34,7 @@ public:
     this->navsatfix_pub_.publish(msg);
   }
 
-  void run() {
+  void setup() {
     bool connect_result = false;
     try {
       connect_result = ublox_.Connect(port_, baudrate_);
@@ -44,7 +44,7 @@ public:
     }
     ublox_.set_nav_position_llh_callback(
       boost::bind(&UbloxNode::handle_NavPosLLH, this, _1, _2)
-    );
+    ); 
   }
 
   void getROSParameters() {
@@ -69,7 +69,9 @@ int main (int argc, char **argv) {
   ros::init(argc, argv, "ublox_node");
 
   UbloxNode ublox_node;
-  ublox_node.run();
+  ublox_node.setup();
+
+  ros::spin();
 
   return 0;
 }
