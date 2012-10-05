@@ -120,11 +120,11 @@ inline void DefaultNavClockCallback(NavClock nav_clock, double time_stamp){
 }
 
 inline void DefaultNavPosLlhCallback(NavPosLLH nav_position, double time_stamp){
-    std:: cout << "NAV-POSLLH: " << endl <<
+    /*std:: cout << "NAV-POSLLH: " << endl <<
                   "  GPS milliseconds: " << nav_position.iTOW << std::endl <<
                   "  Latitude: " << nav_position.latitude_scaled << std::endl <<
                   "  Longitude: " << nav_position.longitude_scaled << std::endl <<
-                  "  Height: " << nav_position.height << std::endl << std::endl;
+                  "  Height: " << nav_position.height << std::endl << std::endl;*/
 }
 
 inline void DefaultAidEphCallback(EphemSV eph_sv, double time_stamp){
@@ -613,7 +613,7 @@ void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_inpu
     calculateCheckSum(msg_ptr+2,27,message.checksum);
 
     log_info_("Set Port Settings Message Sent");
-    printHex((char*) &message, sizeof(message));
+    //printHex((char*) &message, sizeof(message));
 
     serial_port_->write(msg_ptr, sizeof(message));
     return;
@@ -688,6 +688,7 @@ bool Ublox::SendMessage(uint8_t* msg_ptr, size_t length)
     //std::cout << length << std::endl;
     //std::cout << "Message Pointer" << endl;
     //printHex((char*) msg_ptr, length);
+
     size_t bytes_written=serial_port_->write(msg_ptr, length);
     //std::cout << bytes_written << std::endl;
     return true;
@@ -712,7 +713,11 @@ bool Ublox::SendAidEphem(Ephemerides ephems)
         if (ephems.ephemsv[prn_index].header.payload_length == 104){
             output << "Sending AID-EPH for PRN # " << (int) ephems.ephemsv[prn_index].svprn << " ..";
             uint8_t* msg_ptr = (uint8_t*)&ephems.ephemsv[prn_index];
-
+            /*
+            if (prn_index == 6) {
+                printHex((char*) msg_ptr, sizeof(ephems.ephemsv[prn_index]));
+            }
+            */
             SendMessage(msg_ptr, sizeof(ephems.ephemsv[prn_index]));
         }
         else{ // not a full ephemeris message
@@ -731,6 +736,11 @@ bool Ublox::SendAidAlm(Almanac almanac)
             output << "Sending AID-ALM for PRN # " << (int) almanac.almsv[prn_index].svprn << " ..";
             log_info_(output.str());
             uint8_t* msg_ptr = (uint8_t*)&almanac.almsv[prn_index];
+            /*
+            if (prn_index == 1) {
+                printHex((char*) msg_ptr, sizeof(almanac.almsv[prn_index]));
+            }
+            */
             SendMessage(msg_ptr, sizeof(almanac.almsv[prn_index]));
         }
 
@@ -747,6 +757,7 @@ bool Ublox::SendAidHui(AidHui hui)
 {
     log_info_("Sending AID-HUI to receiver..");
     unsigned char* msg_ptr = (unsigned char*)&hui;
+    //printHex((char*) msg_ptr, sizeof(hui));
     return SendMessage(msg_ptr, sizeof(hui));
 }
 
@@ -1020,7 +1031,11 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 
                 // Store each SV's ephemeris message in a structure
                 //cur_ephemerides.ephemsv[cur_ephem_sv.svprn] = cur_ephem_sv;
-
+                /*
+                if (cur_ephem_sv.svprn == 6) {
+                    printHex((char*) &cur_ephem_sv, sizeof(cur_ephem_sv));
+                }
+                */
                 // make sure function pointer is set and call callback
                 if (aid_eph_callback_)
                     aid_eph_callback_(cur_ephem_sv, read_timestamp_);
@@ -1079,7 +1094,11 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
 
                 // Store each SV's almanac message in a structure
                 //cur_almanac.almsv[cur_alm_sv.svprn] = cur_alm_sv;
-
+                /*
+                if (cur_alm_sv.svprn == 1) {
+                    printHex((char*) &cur_alm_sv, sizeof(cur_alm_sv));
+                }
+                */
                 // make sure function pointer is set and call callback
                 if (aid_alm_callback_)
                     aid_alm_callback_(cur_alm_sv, read_timestamp_);
