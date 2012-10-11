@@ -613,7 +613,7 @@ void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_inpu
     calculateCheckSum(msg_ptr+2,27,message.checksum);
 
     log_info_("Set Port Settings Message Sent");
-    printHex((char*) &message, sizeof(message));
+    //printHex((char*) &message, sizeof(message));
 
     serial_port_->write(msg_ptr, sizeof(message));
     return;
