@@ -614,7 +614,7 @@ void Ublox::PollPortConfiguration(uint8_t port_identifier)
 }
 
 //////////////////////////////////////////////////////////////
-// Functions to Transmit Aiding Data to Receiver
+// Functions to  Aiding Data to Receiver
 //////////////////////////////////////////////////////////////
 // Send Message
 bool Ublox::SendMessage(uint8_t* msg_ptr, size_t length)
@@ -843,6 +843,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID)
             payload_length = (double) *(log+4);
             memcpy(&cur_port_settings, log, payload_length+HDR_CHKSM_LENGTH);
             //printHex((char*) &cur_port_settings, sizeof(cur_port_settings));
+            if (port_settings_callback_)
             port_settings_callback_(cur_port_settings, read_timestamp_);
         break;
 
