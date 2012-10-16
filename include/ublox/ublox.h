@@ -5,7 +5,7 @@
 #include <serial/serial.h>
 #include <fstream>
 
-//#include <boost/function.hpp>
+#include <boost/function.hpp>
 #include <boost/thread.hpp>
 //#include <boost/bind.hpp>
 
@@ -35,6 +35,7 @@ typedef boost::function<void(AidHui&, double&)> AidHuiCallback;
 typedef boost::function<void(AidIni&, double&)> AidIniCallback;
 typedef boost::function<void(RawMeas&, double&)> RxmRawCallback;
 typedef boost::function<void(SVStat&, double&)> RxmSvsiCallback;
+typedef boost::function<void(ParsedEphemData&, double&)> ParsedEphemCallback;
 
 class Ublox
 {
@@ -161,6 +162,7 @@ public:
     void set_get_time_callback(GetTimeCallback callback){time_handler_=callback;};
     void set_nav_vel_ned_callback(NavVelNedCallback callback){nav_vel_ned_callback_=callback;};
     void set_port_settings_callback(PortSettingsCallback callback){port_settings_callback_ =callback;};
+    void set_parsed_ephem_callback(ParsedEphemCallback callback){parsed_ephem_callback_ = callback;};
 
     void calculateCheckSum(uint8_t* in, size_t length, uint8_t* out);
 private:
@@ -232,6 +234,7 @@ private:
     AidIniCallback aid_ini_callback_;
     RxmRawCallback rxm_raw_callback_;
     RxmSvsiCallback rxm_svsi_callback_;
+    ParsedEphemCallback parsed_ephem_callback_;
 	
 	//////////////////////////////////////////////////////
 	// Incoming data buffers
