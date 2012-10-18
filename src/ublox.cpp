@@ -865,7 +865,6 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length) {
                 data_buffer_[buffer_index_++] = msg[i];
                 //readingACK = false;
             }
-<<<<<<< HEAD
         } else if (buffer_index_ == 3) {
             // msg[i] and msg[i-1] define message ID
             data_buffer_[buffer_index_++] = msg[i];
@@ -907,7 +906,7 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length) {
 }
 
 void Ublox::ParseLog(uint8_t *log, size_t logID) {
-    double length;
+    double payload_length;
 
     switch (logID) {
 
