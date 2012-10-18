@@ -383,6 +383,11 @@ PACK(
         uint8_t checksum[2];
 });
 
+// defines for AID-HUI flags
+#define AIDHUI_FLAG_HEALTH_VALID 0b001
+#define AIDHUI_FLAG_UTC_VALID 0b010
+#define AIDHUI_FLAG_KLOB_VALID 0b100
+
 /*!
  * AID-EPH Message Structure
  * This message contains ephemeris for a satellite.
