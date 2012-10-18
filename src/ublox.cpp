@@ -118,13 +118,12 @@ inline void DefaultNavClockCallback(NavClock nav_clock, double time_stamp) {
     std::cout << "NAV-CLK: " << endl;
 }
 
-inline void DefaultNavPosLlhCallback(NavPosLLH nav_position,
-        double time_stamp) {
-    std::cout << "NAV-POSLLH: " << endl << "  GPS milliseconds: "
-            << nav_position.iTOW << std::endl << "  Latitude: "
-            << nav_position.latitude_scaled << std::endl << "  Longitude: "
-            << nav_position.longitude_scaled << std::endl << "  Height: "
-            << nav_position.height << std::endl << std::endl;
+inline void DefaultNavPosLlhCallback(NavPosLLH nav_position, double time_stamp){
+    /*std:: cout << "NAV-POSLLH: " << endl <<
+                  "  GPS milliseconds: " << nav_position.iTOW << std::endl <<
+                  "  Latitude: " << nav_position.latitude_scaled << std::endl <<
+                  "  Longitude: " << nav_position.longitude_scaled << std::endl <<
+                  "  Height: " << nav_position.height << std::endl << std::endl;*/
 }
 
 inline void DefaultAidEphCallback(EphemSV eph_sv, double time_stamp) {
@@ -409,14 +408,14 @@ void Ublox::ReadSerialPort() {
 bool Ublox::PollMessage(uint8_t class_id, uint8_t msg_id) {
     uint8_t message[8];
 
-    message[0] = 0xB5;        // sync 1
-    message[1] = 0x62;        // sync 2
-    message[2] = class_id;
-    message[3] = msg_id;
-    message[4] = 0;           // length 1
-    message[5] = 0;           // length 2
-    message[6] = 0;    // checksum 1
-    message[7] = 0;    // checksum 2
+    message[0]=0xB5;        // sync 1
+    message[1]=0x62;        // sync 2
+    message[2]=class_id;
+    message[3]=msg_id;
+    message[4]=0;           // length 1
+    message[5]=0;           // length 2
+    message[6]=0;           // checksum 1
+    message[7]=0;           // checksum 2
 
     uint8_t* msg_ptr = (uint8_t*) &message;
 
@@ -599,8 +598,8 @@ bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id,
     serial_port_->write(msg_ptr, sizeof(message));
     return true;
 }
+
 // Set Port Configuration
-//NO ACK RETURNS - Prob
 void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output,
         bool nmea_input, bool nmea_output) {
     CfgPrt message;
@@ -645,6 +644,7 @@ void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output,
     calculateCheckSum(msg_ptr + 2, 27, message.checksum);
 
     log_info_("Set Port Settings Message Sent");
+
     //printHex((char*) &message, sizeof(message));
 
     serial_port_->write(msg_ptr, sizeof(message));
@@ -652,22 +652,22 @@ void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output,
 }
 
 // Poll Port Configuration
-void Ublox::PollPortConfiguration(uint8_t port_identifier) { // Port identifier = 3 for USB (default value if left blank)
-                                                             //                 = 1 or 2 for UART
+void Ublox::PollPortConfiguration(uint8_t port_identifier)
+{ // Port identifier = 3 for USB (default value if left blank)
+  //                 = 1 or 2 for UART
     uint8_t message[9];
-    //std::cout << sizeof(message) << std::endl;
-    message[0] = 0xB5;
-    message[1] = 0x62;
-    message[2] = 0x06;
-    message[3] = 0x00;
-    message[4] = 1;
-    message[5] = 0;
-    message[6] = port_identifier;         //Port identifier for USB Port (3)
-    message[7] = 0;                       // Checksum A
-    message[8] = 0;                       // Checksum B
+    message[0]=0xB5;
+    message[1]=0x62;
+    message[2]=0x06;
+    message[3]=0x00;
+    message[4]=1;
+    message[5]=0;
+    message[6]=port_identifier;         //Port identifier for USB Port (3)
+    message[7]=0;                       // Checksum A
+    message[8]=0;                       // Checksum B
 
-    unsigned char* msg_ptr = (unsigned char*) &message;
-    calculateCheckSum(msg_ptr + 2, 5, msg_ptr + 7);
+    unsigned char* msg_ptr = (unsigned char*)&message;
+    calculateCheckSum(msg_ptr+2,5,msg_ptr+7);
 
     serial_port_->write(msg_ptr, sizeof(message));
     log_info_("Polling for Port Protocol Configuration.");
@@ -675,112 +675,117 @@ void Ublox::PollPortConfiguration(uint8_t port_identifier) { // Port identifier 
 }
 
 //////////////////////////////////////////////////////////////
-// Save/Read data to file
-//////////////////////////////////////////////////////////////
-/*
- bool Ublox::SaveEphemerides()
- {
- // Serializing struct to student.data
- ofstream output_file("Ephemerides.data", ios::binary);
- output_file.write((char*)&cur_ephemerides, sizeof(cur_ephemerides));
- output_file.close();
- return true;
- }
-
- Ephemerides Ublox::LoadEphemerides()
- {
- ifstream input_file("Ephemerides.data", ios::binary);
- input_file.read((char*)&stored_ephems, sizeof(stored_ephems));
- return stored_ephems;
- }
-
- bool Ublox::SaveAlmanac()
- {
- // Serializing struct to student.data
- ofstream output_file("Almanac.data", ios::binary);
- output_file.write((char*)&cur_almanac, sizeof(cur_almanac));
- output_file.close();
- return true;
- }
-
- Almanac Ublox::LoadAlmanac()
- {
- ifstream input_file("Almanac.data", ios::binary);
- input_file.read((char*)&stored_almanac, sizeof(stored_almanac));
- return stored_almanac;
- }
- */
-//////////////////////////////////////////////////////////////
-// Functions to Transmit Aiding Data to Receiver
+// Functions to  Aiding Data to Receiver
 //////////////////////////////////////////////////////////////
 // Send Message
-bool Ublox::SendMessage(uint8_t* msg_ptr, size_t length) {
+bool Ublox::SendMessage(uint8_t* msg_ptr, size_t length)
+{
+    stringstream output1;
     //std::cout << length << std::endl;
     //std::cout << "Message Pointer" << endl;
     //printHex((char*) msg_ptr, length);
-    size_t bytes_written = serial_port_->write(msg_ptr, length);
-    //std::cout << bytes_written << std::endl;
-    return true;
+
+    size_t bytes_written=serial_port_->write(msg_ptr, length);
+    // check that full message was sent to serial port
+    if (bytes_written == length) return true;
+    else
+    {
+        output1 << "Full message was not sent over serial port.";
+        log_error_(output1.str());
+        return false;
+    }
 }
 
 // Send AID-INI to Receiver
-bool Ublox::SendAidIni(AidIni ini) {
-    //std::cout << "Sending AID-INI to receiver.." << endl;
-    unsigned char* msg_ptr = (unsigned char*) &ini;
-    // calculate checksum
-    // calculateCheckSum(msg_ptr+2,4+ini.header.payload_length,ini.checksum);
-    // Should be able to remove calculateCheckSum line
-    return SendMessage(msg_ptr, sizeof(ini));
+bool Ublox::SendAidIni(AidIni ini)
+{  
+    stringstream output;
+    // Check that provided ini message is correct size before sending
+    if (sizeof(ini) == FULL_LENGTH_AID_INI)
+    {
+        unsigned char* msg_ptr = (unsigned char*)&ini;
+        return SendMessage(msg_ptr, sizeof(FULL_LENGTH_AID_INI));
+        output << "Sending AID-INI to receiver..";
+        log_info_(output.str());
+    }
+    else
+    {
+        output << "Provided AID-INI message not of correct length.";
+        log_error_(output.str());
+        return false;
+    }
 }
 
 // Send AID-EPH to Receiver
-bool Ublox::SendAidEphem(Ephemerides ephems) {
-    for (uint8_t prn_index = 1; prn_index <= 32; prn_index++) {
+bool Ublox::SendAidEphem(Ephemerides ephems)
+{
+    for(uint8_t prn_index=1; prn_index<=32; prn_index++)
+    {
         stringstream output;
-        if (ephems.ephemsv[prn_index].header.payload_length == 104) {
-            output << "Sending AID-EPH for PRN # "
-                    << (int) ephems.ephemsv[prn_index].svprn << " ..";
-            uint8_t* msg_ptr = (uint8_t*) &ephems.ephemsv[prn_index];
 
-            SendMessage(msg_ptr, sizeof(ephems.ephemsv[prn_index]));
-        } else { // not a full ephemeris message
-            output << "No AID-EPH data for PRN # " << (int) prn_index << " ..";
+        if (ephems.ephemsv[prn_index].header.payload_length == PAYLOAD_LENGTH_AID_EPH_WITH_DATA)
+        {
+            output << "Sending AID-EPH for PRN # " << (int) ephems.ephemsv[prn_index].svprn << " ..";
+            uint8_t* msg_ptr = (uint8_t*)&ephems.ephemsv[prn_index];
+            return SendMessage(msg_ptr, FULL_LENGTH_AID_EPH_WITH_DATA);
         }
-        log_info_(output.str());
+        else // not a full ephemeris message
+        {
+            output << "No AID-EPH data for PRN # " << (int)prn_index << " ..";
+        }
+        log_error_(output.str());
+        return false;
     }
-    return true;
 }
 // Send AID-ALM to Receiver
 bool Ublox::SendAidAlm(Almanac almanac) {
     for (uint8_t prn_index = 1; prn_index <= 32; prn_index++) {
         stringstream output;
-        if (almanac.almsv[prn_index].header.payload_length == 40) {
-            output << "Sending AID-ALM for PRN # "
-                    << (int) almanac.almsv[prn_index].svprn << " ..";
-            log_info_(output.str());
-            uint8_t* msg_ptr = (uint8_t*) &almanac.almsv[prn_index];
-            SendMessage(msg_ptr, sizeof(almanac.almsv[prn_index]));
-        }
 
-        else {
-            output << "No AID-ALM data for PRN # " << (int) prn_index << " ..";
+        if(almanac.almsv[prn_index].header.payload_length == PAYLOAD_LENGTH_AID_ALM_WITH_DATA)
+        {
+            output << "Sending AID-ALM for PRN # " << (int) almanac.almsv[prn_index].svprn << " ..";
             log_info_(output.str());
+            uint8_t* msg_ptr = (uint8_t*)&almanac.almsv[prn_index];
+            return SendMessage(msg_ptr, FULL_LENGTH_AID_ALM_WITH_DATA);
+        }
+        else
+        {
+            output << "No AID-ALM data for PRN # " << (int)prn_index << " ..";
+            log_error_(output.str());
+            return false;
         }
     }
-    return true;
 }
 
 // Send AID-HUI to Receiver
-bool Ublox::SendAidHui(AidHui hui) {
-    log_info_("Sending AID-HUI to receiver..");
-    unsigned char* msg_ptr = (unsigned char*) &hui;
-    return SendMessage(msg_ptr, sizeof(hui));
+bool Ublox::SendAidHui(AidHui hui)
+{
+    stringstream output;
+
+    if (sizeof(hui) == FULL_LENGTH_AID_HUI)
+    {
+        unsigned char* msg_ptr = (unsigned char*)&hui;
+        return SendMessage(msg_ptr, FULL_LENGTH_AID_HUI);
+        output << "Sending AID-HUI to receiver..";
+        log_info_(output.str());
+    }
+    else
+    {
+        output << "Provided AID-HUI message not of correct length.";
+        log_error_(output.str());
+        return false;
+    }
 }
 
 // Send RXM-RAW to Receiver
-bool Ublox::SendRawMeas(RawMeas raw_meas) {
-    log_info_("Sending RXM-RAW to receiver..");
-    unsigned char* msg_ptr = (unsigned char*) &raw_meas;
+bool Ublox::SendRawMeas(RawMeas raw_meas)
+{
+    stringstream output;
+
+    output << "Sending RXM-RAW to receiver..";
+    log_info_(output.str());
+    unsigned char* msg_ptr = (unsigned char*)&raw_meas;
     return SendMessage(msg_ptr, sizeof(raw_meas));
 }
 
@@ -860,6 +865,7 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length) {
                 data_buffer_[buffer_index_++] = msg[i];
                 //readingACK = false;
             }
+<<<<<<< HEAD
         } else if (buffer_index_ == 3) {
             // msg[i] and msg[i-1] define message ID
             data_buffer_[buffer_index_++] = msg[i];
@@ -911,177 +917,168 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
     case CFG_PRT:
         CfgPrt cur_port_settings;
 
-        memcpy(&cur_port_settings, log, sizeof(cur_port_settings));
-
-        printHex((char*) &cur_port_settings, sizeof(cur_port_settings));
-
-        port_settings_callback_(cur_port_settings, read_timestamp_);
-
+        payload_length = (double) *(log+4);
+        memcpy(&cur_port_settings, log, payload_length+HDR_CHKSM_LENGTH);
+        //printHex((char*) &cur_port_settings, sizeof(cur_port_settings));
+        if (port_settings_callback_)
+            port_settings_callback_(cur_port_settings, read_timestamp_);
         break;
 
     case NAV_STATUS:
         NavStatus cur_nav_status;
-
-        memcpy(&cur_nav_status, log, sizeof(cur_nav_status));
-
+        payload_length = (double) *(log+4);
+        memcpy(&cur_nav_status, log, payload_length+HDR_CHKSM_LENGTH);
         if (nav_status_callback_)
             nav_status_callback_(cur_nav_status, read_timestamp_);
         break;
 
     case NAV_SOL:
         NavSol cur_nav_sol;
-
-        memcpy(&cur_nav_sol, log, sizeof(cur_nav_sol));
-
+        payload_length = (double) *(log+4);
+        memcpy(&cur_nav_sol, log, payload_length+HDR_CHKSM_LENGTH);
         if (nav_sol_callback_)
             nav_sol_callback_(cur_nav_sol, read_timestamp_);
         break;
 
     case NAV_VELNED:
         NavVelNed cur_nav_vel_ned;
-
-        memcpy(&cur_nav_vel_ned, log, sizeof(cur_nav_vel_ned));
-
+        payload_length = (double) *(log+4);
+        memcpy(&cur_nav_vel_ned, log, payload_length+HDR_CHKSM_LENGTH);
         if (nav_vel_ned_callback_)
             nav_vel_ned_callback_(cur_nav_vel_ned, read_timestamp_);
         break;
 
     case NAV_POSLLH:
         NavPosLLH cur_nav_position;
-        //std::cout << sizeof(cur_nav_position) << std::endl;
-        memcpy(&cur_nav_position, log, sizeof(cur_nav_position));
-
+        payload_length = (double) *(log+4);
+        memcpy(&cur_nav_position, log, payload_length+HDR_CHKSM_LENGTH);
         if (nav_pos_llh_callback_)
             nav_pos_llh_callback_(cur_nav_position, read_timestamp_);
         break;
-
+		
     case NAV_SVINFO:
         NavSVInfo cur_nav_svinfo;
-        length = (double) *(log + 4) + 8;
-        memcpy(&cur_nav_svinfo, log, length);
+        payload_length = (double) *(log+4);
+        memcpy(&cur_nav_svinfo, log, payload_length+HDR_CHKSM_LENGTH);
         if (nav_sv_info_callback_)
             nav_sv_info_callback_(cur_nav_svinfo, read_timestamp_);
         break;
 
     case NAV_GPSTIME:
         NavGPSTime cur_nav_gps_time;
-        memcpy(&cur_nav_gps_time, log, sizeof(cur_nav_gps_time));
+        payload_length = (double) *(log+4);
+        memcpy(&cur_nav_gps_time, log, payload_length+HDR_CHKSM_LENGTH);
         if (nav_gps_time_callback_)
             nav_gps_time_callback_(cur_nav_gps_time, read_timestamp_);
         break;
 
     case NAV_UTCTIME:
         NavUTCTime cur_nav_utc_time;
-        memcpy(&cur_nav_utc_time, log, sizeof(cur_nav_utc_time));
+        payload_length = (double) *(log+4);
+        memcpy(&cur_nav_utc_time, log, payload_length+HDR_CHKSM_LENGTH);
         if (nav_utc_time_callback_)
             nav_utc_time_callback_(cur_nav_utc_time, read_timestamp_);
         break;
 
     case NAV_DOP:
         NavDOP cur_nav_dop;
-        memcpy(&cur_nav_dop, log, sizeof(cur_nav_dop));
+        payload_length = (double) *(log+4);
+        memcpy(&cur_nav_dop, log, payload_length+HDR_CHKSM_LENGTH);
         if (nav_dop_callback_)
             nav_dop_callback_(cur_nav_dop, read_timestamp_);
         break;
 
     case NAV_DGPS:
         NavDGPS cur_nav_dgps;
-        memcpy(&cur_nav_dgps, log, sizeof(cur_nav_dgps));
+        payload_length = (double) *(log+4);
+        memcpy(&cur_nav_dgps, log, payload_length+HDR_CHKSM_LENGTH);
         if (nav_dgps_callback_)
             nav_dgps_callback_(cur_nav_dgps, read_timestamp_);
         break;
 
     case NAV_CLK:
         NavClock cur_nav_clock;
-        memcpy(&cur_nav_clock, log, sizeof(cur_nav_clock));
+        payload_length = (double) *(log+4);
+        memcpy(&cur_nav_clock, log, payload_length+HDR_CHKSM_LENGTH);
         if (nav_clock_callback_)
             nav_clock_callback_(cur_nav_clock, read_timestamp_);
         break;
 
     case AID_EPH:
         EphemSV cur_ephem_sv;
-        // determine length of log to see if it contains satellite
-        // information or just the header
-        length = (double) *(log + 4);
 
-        //std::cout << "log length: " << length << std::endl;
 
-        // If Ephemeris for SV is not present (length is 8 bytes)
-        if (length == 8) {
-            // nothing to parse - no ephemerides for this satellite
-            //std::cout << "SV# " << (double) *(log+6) << "- no ephemeris" << std::endl;
-            memcpy(&cur_ephem_sv, log, 10 + sizeof(UbloxHeader)); // doesn't this leave off checksum???
+        payload_length = (double) *(log+4);
+        //printHex((char*) &cur_ephem_sv, sizeof(cur_ephem_sv));
+        memcpy(&cur_ephem_sv, log, payload_length+HDR_CHKSM_LENGTH);
 
-            // make sure function pointer is set and call callback
-            if (aid_eph_callback_)
-                aid_eph_callback_(cur_ephem_sv, read_timestamp_);
+        // If Ephemeris for SV is not present (payload_length is 8 bytes)
+        if (payload_length == PAYLOAD_LENGTH_AID_EPH_NO_DATA)
+        {
+            stringstream output;
+            output << "SV# " << (double) *(log+6) << "- no ephemeris data";
+            log_debug_(output.str());
         }
-        // If Ephemeris for SV is present (length is 104 bytes)
-        else if (length == 104) {
-            memcpy(&cur_ephem_sv, log, sizeof(cur_ephem_sv));
-
-            //printHex((char*) &cur_ephem_sv, sizeof(cur_ephem_sv));
-
-            // Store each SV's ephemeris message in a structure
-            //cur_ephemerides.ephemsv[cur_ephem_sv.svprn] = cur_ephem_sv;
-
-            // make sure function pointer is set and call callback
-            if (aid_eph_callback_)
-                aid_eph_callback_(cur_ephem_sv, read_timestamp_);
-            if (parsed_ephem_callback_) {
-                ParsedEphemData parsed_ephem = Parse_aid_eph(cur_ephem_sv);
-                parsed_ephem_callback_(parsed_ephem, read_timestamp_);
-            }
+        // If Ephemeris for SV is present (payload_length is 104 bytes)
+        else if (payload_length == PAYLOAD_LENGTH_AID_EPH_WITH_DATA)
+        {
+            stringstream output;
+            output << "SV# " << (double) *(log+6) << "- has ephemeris data";
+            log_debug_(output.str());
+        }
+        else
+        {
+            log_error_("Error! AID-EPH log payload is not a valid length! (See ParseLog case AID_EPH)");
         }
 
-        else {
-            log_error_(
-                    "Error! AID-EPH log payload is not a valid length! (See ParseLog case AID_EPH)");
-        }
+        // make sure function pointer is set and call callback
+        if (aid_eph_callback_)
+            aid_eph_callback_(cur_ephem_sv, read_timestamp_);
 
+        if (parsed_ephem_callback_) {
+            ParsedEphemData parsed_ephem = Parse_aid_eph(cur_ephem_sv);
+            parsed_ephem_callback_(parsed_ephem, read_timestamp_);
+        }
         break;
 
     case AID_ALM:
         AlmSV cur_alm_sv;
 
-        length = (double) *(log + 4);
+        payload_length = (double) *(log+4);
 
-        // If Almanac data for SV is not present (length is 8 bytes)
-        if (length == 8) {
+        memcpy(&cur_alm_sv, log, payload_length+HDR_CHKSM_LENGTH);
+
+        // If Almanac data for SV is not present (payload_length is 8 bytes)
+        if (payload_length == 8)
+        {
             stringstream output;
-            output << "SV# " << (double) *(log + 6) << "- no almanac data";
-            log_info_(output.str());
-            break;
+            output << "SV# " << (double) *(log+6) << "- no almanac data";
+            log_debug_(output.str());
         }
 
-        // If Almanac data for SV is present (length is 40 bytes)
-        else if (length == 40) {
-            memcpy(&cur_alm_sv, log, sizeof(cur_alm_sv));
-
-            // Store each SV's almanac message in a structure
-            //cur_almanac.almsv[cur_alm_sv.svprn] = cur_alm_sv;
-
-            // make sure function pointer is set and call callback
-            if (aid_alm_callback_)
-                aid_alm_callback_(cur_alm_sv, read_timestamp_);
-
-            // Put function to parse almanac parameters here
-            //
-            // Store almanac data for all SVs in one structure
-            //
+        // If Almanac data for SV is present (payload_length is 40 bytes)
+        else if (payload_length == 40)
+        {
+            stringstream output;
+            output << "SV# " << (double) *(log+6) << "- has almanac data";
+            log_debug_(output.str());
+        }
+        else
+        {
+            log_error_("Error! AID-ALM log payload is not 8 or 40 bytes long! (See ParseLog case AID_ALM)");
         }
 
-        else {
-            log_error_(
-                    "Error! AID-ALM log payload is not 8 or 40 bytes long! (See ParseLog case AID_ALM)");
-        }
-
+        // make sure function pointer is set and call callback
+        if (aid_alm_callback_)
+            aid_alm_callback_(cur_alm_sv, read_timestamp_);
         break;
 
     case AID_HUI:
         AidHui cur_aid_hui;
 
-        memcpy(&cur_aid_hui, log, sizeof(cur_aid_hui));
+        payload_length = (double) *(log+4);
+
+        memcpy(&cur_aid_hui, log, payload_length+HDR_CHKSM_LENGTH);
 
         log_info_("Received AID-HUI Message.");
 
@@ -1095,12 +1092,10 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
     case AID_INI:
         AidIni cur_aid_ini;
 
-        //std::cout << "Received AID-INI Message." << std::endl;
-        memcpy(&cur_aid_ini, log, sizeof(cur_aid_ini));
+        payload_length = (double) *(log+4);
 
-        //std::cout << "LOG message:" << std::endl;
-        //printHex((char*) log, sizeof(cur_aid_ini));
-        //std::cout << "Message stored in cur_aid_ini:" << std::endl;
+        memcpy(&cur_aid_ini, log, payload_length+HDR_CHKSM_LENGTH);
+
         //printHex((char*) &cur_aid_ini, sizeof(cur_aid_ini));
 
         if (aid_ini_callback_)
@@ -1110,39 +1105,25 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 
     case RXM_RAW:
         RawMeas cur_raw_meas;
-        length = (double) *(log + 4) + 8;         // length = 8+24*numSV + 8
-        //std::cout << "Length of RXM-RAW " << length << std::endl;
+        payload_length = (double) *(log+4); // payload_length = 8+24*numSV
 
-        memcpy(&cur_raw_meas, log, length);
+        memcpy(&cur_raw_meas, log, payload_length+HDR_CHKSM_LENGTH);
         //printHex((char*) &cur_raw_meas, sizeof(cur_raw_meas));
-        /*
-         std::cout << "num of SVs " << (double)cur_raw_meas.numSV << std::endl;
-         std::cout << "GPS Week " << cur_raw_meas.week << std::endl;
-         std::cout << "Carrier Phase " << cur_raw_meas.rawmeasreap[0].cpmeas << endl;
-         std::cout << "SV ID " << (float)cur_raw_meas.rawmeasreap[0].svid << endl;
-         std::cout << "SV ID " << (float)cur_raw_meas.rawmeasreap[1].svid << endl;
-         std::cout << "SV ID " << (double)cur_raw_meas.rawmeasreap[2].svid << endl;
-         std::cout << "SV ID " << (double)cur_raw_meas.rawmeasreap[3].svid << endl;
-         std::cout << "SV ID " << (double)cur_raw_meas.rawmeasreap[4].svid << endl;
-         */
+
         if (rxm_raw_callback_)
             rxm_raw_callback_(cur_raw_meas, read_timestamp_);
-
         break;
 
     case RXM_SVSI:
         SVStat cur_sv_stat;
 
-        length = (double) *(log + 4);
-        //std::cout << "Length of RXM-SVSI " << length << endl;
+        payload_length = (double) *(log+4);
 
-        memcpy(&cur_sv_stat, log, length);
+        memcpy(&cur_sv_stat, log, payload_length+HDR_CHKSM_LENGTH);
 
         if (rxm_svsi_callback_)
             rxm_svsi_callback_(cur_sv_stat, read_timestamp_);
-
         break;
-
     }
 }
 
@@ -1323,6 +1304,5 @@ ParsedEphemData Ublox::Parse_aid_eph(EphemSV ubx_eph) {
     eph_data.toe = ((double) union_unsigned_short.s) * pow(2.0, 4);
 
     return (eph_data);
-}
-;
+};
 
