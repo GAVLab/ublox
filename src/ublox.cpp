@@ -1140,7 +1140,27 @@ void Ublox::calculateCheckSum(uint8_t* in, size_t length, uint8_t* out) {
 
     out[0] = (a & 0xFF);
     out[1] = (b & 0xFF);
+}
 
+ParsedEphemData Ublox::Parse_aid_eph(EphemSV ubx_eph) {
+    union {
+        unsigned short s;
+        unsigned char c[2];
+    } union_unsigned_short;
+    union {
+        short s;
+        unsigned char c[2];
+    } union_short;
+    union {
+        unsigned int i;
+        unsigned char c[4];
+    } union_unsigned_int;
+    union {
+        int i;
+        unsigned char c[4];
+    } union_int;
+
+    ParsedEphemData eph_data;
 	//SVID
 	eph_data.prn = (uint8_t) ubx_eph.svprn;
 
