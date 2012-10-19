@@ -20,6 +20,7 @@
 #endif
 
 //! Header prepended to ubx binary messages
+#define HDR_CHKSM_LENGTH 8 //(includes "sync1 sync2 classid msgid length checksum")
 PACK(
     struct UbloxHeader {
         uint8_t sync1;   //!< start of packet first byte (0xB5)
@@ -319,6 +320,8 @@ PACK(
  * Reciever Position, Time, Clock Drift, Frequency
  * ID: 0x0B  0x01 Length=48 bytes
  */
+#define PAYLOAD_LENGTH_AID_INI 48
+#define FULL_LENGTH_AID_INI 48+8
 PACK(
     struct AidIni {
         UbloxHeader header;		//!< Ublox header
@@ -353,6 +356,8 @@ PACK(
  * GPS Health, Ionospheric, and UTC
  * ID:
  */
+#define PAYLOAD_LENGTH_AID_HUI 72
+#define FULL_LENGTH_AID_HUI 72+8
 PACK(
     struct AidHui{
         UbloxHeader header;
@@ -378,12 +383,20 @@ PACK(
         uint8_t checksum[2];
 });
 
+// defines for AID-HUI flags
+#define AIDHUI_FLAG_HEALTH_VALID 0b001
+#define AIDHUI_FLAG_UTC_VALID 0b010
+#define AIDHUI_FLAG_KLOB_VALID 0b100
+
 /*!
  * AID-EPH Message Structure
  * This message contains ephemeris for a satellite.
  * ID: 0x0B 0x31 Length = (16) or (112) bytes
  */
-
+#define PAYLOAD_LENGTH_AID_EPH_WITH_DATA 104
+#define PAYLOAD_LENGTH_AID_EPH_NO_DATA 8
+#define FULL_LENGTH_AID_EPH_WITH_DATA 104+8
+#define FULL_LENGTH_AID_EPH_NO_DATA 8+8
 PACK(
     struct EphemW{
         uint8_t byte[4];				// Each Word contains 4 bytes (4th is ignored)
@@ -456,8 +469,12 @@ PACK(
 /*!
  * AID-ALM Message Structure
  * This message contains GPS almanac data for a satellite
- * ID: 0x0B 0x30 Length = (16) or (48) bytes
+ * ID: 0x0B 0x30 Length = (8) or (48) bytes
  */
+#define PAYLOAD_LENGTH_AID_ALM_WITH_DATA 40
+#define PAYLOAD_LENGTH_AID_ALM_NO_DATA 8
+#define FULL_LENGTH_AID_ALM_WITH_DATA 40+8
+#define FULL_LENGTH_AID_ALM_NO_DATA 8+8
 PACK(
     struct AlmSV{
         UbloxHeader header;			// Header
@@ -539,8 +556,6 @@ enum Message_ID
     MON_VER = 2564,                 // (ID 0x0A 0x04) Reciever/Software/ROM Version
     RXM_RAW = 528,                  // (ID 0x02 0x10) Raw DGPS Data
     RXM_SVSI = 544,                 // (ID 0x02 0x20) SV Status Info
-    ACK_ACK = 261,                  // (ID 0x05 0x01) Acknowledged Message
-    ACK_NAK = 1280                  // (ID 0x05 0x00) Message Not Acknowledged
 };
 
 //typedef enum BINARY_LOG_TYPE BINARY_LOG_TYPE;

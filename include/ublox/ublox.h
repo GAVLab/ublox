@@ -126,15 +126,6 @@ public:
     bool PollNavStatus();
 
 //////////////////////////////////////////////////////
-// Saving/Reading stored data
-//////////////////////////////////////////////////////
-    /*
-    bool SaveEphemerides();
-    Ephemerides LoadEphemerides();
-    bool SaveAlmanac();
-    Almanac LoadAlmanac();
-    */
-//////////////////////////////////////////////////////
 // Send Aiding Data to Receiver
 //////////////////////////////////////////////////////
     bool SendMessage(uint8_t *msg_ptr, size_t length);
@@ -219,7 +210,7 @@ private:
     //////////////////////////////////////////////////////
     PortSettingsCallback port_settings_callback_;
     NavPosLLHCallback nav_pos_llh_callback_;
-	NavSolCallback nav_sol_callback_;
+    NavSolCallback nav_sol_callback_;
     NavStatusCallback nav_status_callback_;
     NavVelNedCallback nav_vel_ned_callback_;
     NavSVInfoCallback nav_sv_info_callback_;
