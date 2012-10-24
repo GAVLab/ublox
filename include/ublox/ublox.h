@@ -33,7 +33,7 @@ typedef boost::function<void(EphemSV&, double&)> AidEphCallback;
 typedef boost::function<void(AlmSV&, double&)> AidAlmCallback;
 typedef boost::function<void(AidHui&, double&)> AidHuiCallback;
 typedef boost::function<void(AidIni&, double&)> AidIniCallback;
-typedef boost::function<void(RawMeas&, double&)> RxmRawCallback;
+typedef boost::function<void(DGPSRawMeas&, double&)> RxmRawCallback;
 typedef boost::function<void(SVStat&, double&)> RxmSvsiCallback;
 typedef boost::function<void(ParsedEphemData&, double&)> ParsedEphemCallback;
 
@@ -131,7 +131,7 @@ public:
     bool SendMessage(uint8_t *msg_ptr, size_t length);
     bool SendAidIni(AidIni ini);
     bool SendAidEphem(Ephemerides ephems);
-    bool SendRawMeas(RawMeas raw_meas);
+    bool SendRawMeas(DGPSRawMeas raw_meas);
     bool SendAidHui(AidHui hui);
     bool SendAidAlm(Almanac almanac);
 

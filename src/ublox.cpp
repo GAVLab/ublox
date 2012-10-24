@@ -143,7 +143,7 @@ inline void DefaultAidIniCallback(AidIni aid_ini, double time_stamp) {
     std::cout << "AID-INI: " << std::endl;
 }
 
-inline void DefaultRxmRawCallback(RawMeas raw_meas, double time_stamp) {
+inline void DefaultRxmRawCallback(DGPSRawMeas raw_meas, double time_stamp) {
     std::cout << "RXM-RAW: " << std::endl;
 }
 
@@ -779,7 +779,7 @@ bool Ublox::SendAidHui(AidHui hui)
 }
 
 // Send RXM-RAW to Receiver
-bool Ublox::SendRawMeas(RawMeas raw_meas)
+bool Ublox::SendRawMeas(DGPSRawMeas raw_meas)
 {
     stringstream output;
 
@@ -1103,7 +1103,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
         break;
 
     case RXM_RAW:
-        RawMeas cur_raw_meas;
+        DGPSRawMeas cur_raw_meas;
         payload_length = (double) *(log+4); // payload_length = 8+24*numSV
 
         memcpy(&cur_raw_meas, log, payload_length+HDR_CHKSM_LENGTH);

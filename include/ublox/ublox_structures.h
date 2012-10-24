@@ -492,24 +492,24 @@ PACK(
 
 // (RXM-RAW) Raw Data for DGPS
 PACK(
-    struct RawMeasReap{
-        double cpmeas;      // cycles - Carrier Phase measurement
-        double prmeas;      // m - Psuedorange measurement
-        float domeas;       // Hz - Doppler Measurement
-        uint8_t svid;       // SV Number
-        int8_t measqual;    // Nav Measurement Quality Indicator  -- (>=4 PR+DO OK) (>=5 PR+DO+CP OK) (<6 likel loss carrier lock)
-        int8_t cnratio;     // dbHz - Carrier to Noise Ratio
-        uint8_t lli;        // Loss of Lock Indicator (RINEX Definition)
+    struct DGPSRepeatedBlock{
+        double carrier_phase;           // cycles - Carrier Phase measurement
+        double psuedorange;             // m - Psuedorange measurement
+        float doppler;                  // Hz - Doppler Measurement
+        uint8_t svid;                   // SV Number
+        int8_t quality;                 // Nav Measurement Quality Indicator  -- (>=4 PR+DO OK) (>=5 PR+DO+CP OK) (<6 likel loss carrier lock)
+        int8_t cno;                     // dbHz - Carrier to Noise Ratio
+        uint8_t loss_of_lock_indicator; // Loss of Lock Indicator (RINEX Definition)
 });
 
 PACK(
-    struct RawMeas{
+    struct DGPSRawMeas{
         UbloxHeader header;
         int32_t iTow;   // ms - Time of Week
         int16_t week;   // weeks
         uint8_t numSV;  // # of SVs following
         uint8_t reserved;
-        RawMeasReap rawmeasreap[32];
+        DGPSRepeatedBlock repeated_block[32];
         uint8_t checksum[2];
 });
 
