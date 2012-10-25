@@ -494,7 +494,7 @@ PACK(
 PACK(
     struct DGPSRepeatedBlock{
         double carrier_phase;           // cycles - Carrier Phase measurement
-        double psuedorange;             // m - Psuedorange measurement
+        double pseudorange;             // m - Psuedorange measurement
         float doppler;                  // Hz - Doppler Measurement
         uint8_t svid;                   // SV Number
         int8_t quality;                 // Nav Measurement Quality Indicator  -- (>=4 PR+DO OK) (>=5 PR+DO+CP OK) (<6 likel loss carrier lock)
