@@ -162,6 +162,11 @@ PACK(
         uint8_t checksum[2];
 });
 
+#define NAVSOL_FLAG_GPSFIX_VALID 0b0001
+#define NAVSOL_FLAG_DGPS_USED_FOR_FIX 0b0010
+#define NAVSOL_FLAG_WEEK_NUM_VALID 0b0100
+#define NAVSOL_FLAG_TOW_VALID 0b1000
+
 /*!
 * NAV-POSLLH Message Structure
 * This message outputs the Geodetic position in
