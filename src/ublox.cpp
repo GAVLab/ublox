@@ -153,6 +153,7 @@ inline void DefaultRxmSvsiCallback(SVStat sv_stat, double time_stamp) {
 
 inline void DefaultParsedEphemCallback(ParsedEphemData parsed_ephem_data,
         double time_stamp) {
+    /*
     std::cout << "Parsed ephemeris: " << std::endl;
     //Display Parsed Eph Data:
     cout << "PRN: " << parsed_ephem_data.prn << std::endl;
@@ -178,7 +179,7 @@ inline void DefaultParsedEphemCallback(ParsedEphemData parsed_ephem_data,
     cout << "t_oe: " << parsed_ephem_data.toe << std::endl;
     cout << "----------------------------------" << std::endl;
     cout << std::endl;
-
+*/
 }
 
 Ublox::Ublox() {
@@ -719,23 +720,24 @@ bool Ublox::SendAidIni(AidIni ini)
 // Send AID-EPH to Receiver
 bool Ublox::SendAidEphem(Ephemerides ephems)
 {
+    int num_svs = 0;
+    stringstream output;
+
     for(uint8_t prn_index=1; prn_index<=32; prn_index++)
     {
-        stringstream output;
-
         if (ephems.ephemsv[prn_index].header.payload_length == PAYLOAD_LENGTH_AID_EPH_WITH_DATA)
         {
-            output << "Sending AID-EPH for PRN # " << (int) ephems.ephemsv[prn_index].svprn << " ..";
+            num_svs++;
             uint8_t* msg_ptr = (uint8_t*)&ephems.ephemsv[prn_index];
-            return SendMessage(msg_ptr, FULL_LENGTH_AID_EPH_WITH_DATA);
+            bool sent_ephem = SendMessage(msg_ptr, FULL_LENGTH_AID_EPH_WITH_DATA);
         }
         else // not a full ephemeris message
         {
-            output << "No AID-EPH data for PRN # " << (int)prn_index << " ..";
         }
-        log_error_(output.str());
-        return false;
     }
+    output << "Sent Ephemeris data for " << (int)num_svs << " SVs.";
+    log_info_(output.str());
+    return true;
 }
 // Send AID-ALM to Receiver
 bool Ublox::SendAidAlm(Almanac almanac) {
