@@ -10,7 +10,7 @@
 #define MAXCHAN		50  // Maximum number of signal channels
 //#define MAX_NUM_SAT 28	// Maximum number of satellites with information in the RTKDATA log
 //#define EPHEM_CHAN	33
-//#define MAXSAT 28
+#define MAXSAT 33
 
 // define macro to pack structures correctly with both GCC and MSVC compilers
 #ifdef _MSC_VER // using MSVC
@@ -347,14 +347,14 @@ PACK(
 });
 
 // defines for AidIni flags
-#define AIDINI_FLAG_POSITION_VALID 0x01
-#define AIDINI_FLAG_TIME_VALID 0x02
-#define AIDINI_FLAG_CLOCK_DRIFT_VALID 0x04
-#define AIDINI_FLAG_USE_TIME_PULSE 0X08
-#define AIDINI_FLAG_CLOCK_FREQ_VALID 0x10
-#define AIDINI_FLAG_USE_LLA 0x20
-#define AIDINI_FLAG_ALTITUDE_INVALID 0X40
-#define AIDINI_USE_PREV_TIME_PULSE 0X80
+#define AIDINI_FLAG_POSITION_VALID 0b00000001
+#define AIDINI_FLAG_TIME_VALID 0b00000010
+#define AIDINI_FLAG_CLOCK_DRIFT_VALID 0b00000100
+#define AIDINI_FLAG_USE_TIME_PULSE 0b00001000
+#define AIDINI_FLAG_CLOCK_FREQ_VALID 0b00010000
+#define AIDINI_FLAG_USE_LLA 0b00100000
+#define AIDINI_FLAG_ALTITUDE_INVALID 0b01000000
+#define AIDINI_USE_PREV_TIME_PULSE 0b10000000
 
 /*!
  * AID-HUI Message Structure
@@ -496,6 +496,9 @@ PACK(
 });
 
 // (RXM-RAW) Raw Data for DGPS
+#define RXMRAW_QUALITY_PR_DOP_GOOD 4 // Min value for pseudorange and doppler to be good
+#define RXMRAW_QUALITY_PR_DOP_CP_GOOD 4 // Min value for pseudorange, doppler, and carrier phase to be good
+
 PACK(
     struct DGPSRepeatedBlock{
         double carrier_phase;           // cycles - Carrier Phase measurement
@@ -514,7 +517,7 @@ PACK(
         int16_t week;   // weeks
         uint8_t numSV;  // # of SVs following
         uint8_t reserved;
-        DGPSRepeatedBlock repeated_block[32];
+        DGPSRepeatedBlock repeated_block[33];
         uint8_t checksum[2];
 });
 

@@ -704,15 +704,15 @@ bool Ublox::SendAidIni(AidIni ini)
     // Check that provided ini message is correct size before sending
     if (sizeof(ini) == FULL_LENGTH_AID_INI)
     {
-        unsigned char* msg_ptr = (unsigned char*)&ini;
-        return SendMessage(msg_ptr, sizeof(FULL_LENGTH_AID_INI));
         output << "Sending AID-INI to receiver..";
         log_info_(output.str());
+        unsigned char* msg_ptr = (unsigned char*)&ini;
+        return SendMessage(msg_ptr, FULL_LENGTH_AID_INI);
     }
     else
     {
         output << "Provided AID-INI message not of correct length.";
-        log_error_(output.str());
+        log_info_(output.str());
         return false;
     }
 }
@@ -723,7 +723,7 @@ bool Ublox::SendAidEphem(Ephemerides ephems)
     int num_svs = 0;
     stringstream output;
 
-    for(uint8_t prn_index=1; prn_index<=32; prn_index++)
+    for(uint8_t prn_index=1; prn_index<=MAXSAT; prn_index++)
     {
         if (ephems.ephemsv[prn_index].header.payload_length == PAYLOAD_LENGTH_AID_EPH_WITH_DATA)
         {
@@ -741,23 +741,23 @@ bool Ublox::SendAidEphem(Ephemerides ephems)
 }
 // Send AID-ALM to Receiver
 bool Ublox::SendAidAlm(Almanac almanac) {
-    for (uint8_t prn_index = 1; prn_index <= 32; prn_index++) {
-        stringstream output;
+    int num_svs = 0;
+    stringstream output;
 
+    for (uint8_t prn_index = 1; prn_index <= MAXSAT; prn_index++) {
         if(almanac.almsv[prn_index].header.payload_length == PAYLOAD_LENGTH_AID_ALM_WITH_DATA)
         {
-            output << "Sending AID-ALM for PRN # " << (int) almanac.almsv[prn_index].svprn << " ..";
-            log_info_(output.str());
+            num_svs++;
             uint8_t* msg_ptr = (uint8_t*)&almanac.almsv[prn_index];
-            return SendMessage(msg_ptr, FULL_LENGTH_AID_ALM_WITH_DATA);
+            bool sent_alm = SendMessage(msg_ptr, FULL_LENGTH_AID_ALM_WITH_DATA);
         }
         else
         {
-            output << "No AID-ALM data for PRN # " << (int)prn_index << " ..";
-            log_error_(output.str());
-            return false;
         }
     }
+    output << "Sent Almanac data for " << (int)num_svs << " SVs.";
+    log_info_(output.str());
+    return true;
 }
 
 // Send AID-HUI to Receiver
@@ -767,10 +767,10 @@ bool Ublox::SendAidHui(AidHui hui)
 
     if (sizeof(hui) == FULL_LENGTH_AID_HUI)
     {
-        unsigned char* msg_ptr = (unsigned char*)&hui;
-        return SendMessage(msg_ptr, FULL_LENGTH_AID_HUI);
+        uint8_t* msg_ptr = (uint8_t*)&hui;
         output << "Sending AID-HUI to receiver..";
         log_info_(output.str());
+        return SendMessage(msg_ptr, FULL_LENGTH_AID_HUI);
     }
     else
     {
@@ -1105,12 +1105,35 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
         break;
 
     case RXM_RAW:
+
         DGPSRawMeas cur_raw_meas;
+        int num_of_svs;
+
         payload_length = (double) *(log+4); // payload_length = 8+24*numSV
+        num_of_svs = (int) *(log+12);
 
-        memcpy(&cur_raw_meas, log, payload_length+HDR_CHKSM_LENGTH);
+        //std::cout << "Print log." << endl;
+        //printHex((char*) log, 272);
+        memcpy(&cur_raw_meas,log,14); // copy nonrepeated fields into structure
+        //std::cout << "Print unrepeated portion." << endl;
+        //printHex((char*) &cur_raw_meas, 14);
+        if (num_of_svs==0) {
+            log_info_("no svs.");
+        } else { // copy repeated fields
+            DGPSRepeatedBlock rep_block[num_of_svs];
+            memcpy(&rep_block, log+14,sizeof(rep_block));
+            //std::cout << "Print repeated blocks." << endl;
+            //std::cout << "Print sizeof rep_block" << sizeof(rep_block) <<endl;
+            //printHex((char*) &rep_block, sizeof(rep_block));
+
+            for(int index=0;index<=num_of_svs;index++) {
+                memcpy(&cur_raw_meas.repeated_block[rep_block[index].svid],&rep_block[index],sizeof(rep_block[index]));
+            }
+        }
+        memcpy(&cur_raw_meas.checksum, log+6+(uint8_t)payload_length, 2); // copy checksum
+        //std::cout << "Print cur_raw_meas." << endl;
         //printHex((char*) &cur_raw_meas, sizeof(cur_raw_meas));
-
+        //std::cout << endl;
         if (rxm_raw_callback_)
             rxm_raw_callback_(cur_raw_meas, read_timestamp_);
         break;
