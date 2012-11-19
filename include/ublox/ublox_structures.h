@@ -4,13 +4,13 @@
 
 #include "stdint.h"
 
+namespace ublox {
+
 #define MAX_NOUT_SIZE      (5000)   // Maximum size of a NovAtel log buffer (ALMANAC logs are big!)
                     // find MAX_NOUT_SIZE for ublox (ask Scott how he go this one for Novatel)
 
 #define MAXCHAN		50  // Maximum number of signal channels
-//#define MAX_NUM_SAT 28	// Maximum number of satellites with information in the RTKDATA log
-//#define EPHEM_CHAN	33
-//#define MAXSAT 28
+#define MAX_SAT     33  // maximum number of prns - max prn is 32 plus prn 0 is 33
 
 // define macro to pack structures correctly with both GCC and MSVC compilers
 #ifdef _MSC_VER // using MSVC
@@ -419,7 +419,7 @@ PACK(
 
 PACK(
     struct Ephemerides{             // Holds EphemSV message for all SVs
-        EphemSV ephemsv[33];
+        EphemSV ephemsv[MAX_SAT];
 });
 
 // Parsed Ephemeris Parameters for a SV - NOT FINISHED
@@ -463,7 +463,7 @@ PACK(
 // Contains Ephemeris Parameters for all SVs
 PACK(
     struct ParsedEphemeridesData{
-        ParsedEphemData sv_eph_data[32];
+        ParsedEphemData sv_eph_data[MAX_SAT];
 });
 
 /*!
@@ -487,7 +487,7 @@ PACK(
 // Holds Almanac data for all SVs
 PACK(
     struct Almanac{
-        AlmSV almsv[33];
+        AlmSV almsv[MAX_SAT];
 });
 
 // (RXM-RAW) Raw Data for DGPS
@@ -509,7 +509,7 @@ PACK(
         int16_t week;   // weeks
         uint8_t numSV;  // # of SVs following
         uint8_t reserved;
-        RawMeasReap rawmeasreap[32];
+        RawMeasReap rawmeasreap[MAX_SAT];
         uint8_t checksum[2];
 });
 
@@ -559,5 +559,5 @@ enum Message_ID
 };
 
 //typedef enum BINARY_LOG_TYPE BINARY_LOG_TYPE;
-
+} // end namespace
 #endif
