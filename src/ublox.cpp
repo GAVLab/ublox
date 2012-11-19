@@ -296,69 +296,77 @@ bool Ublox::Connect(std::string port, int baudrate) {
 }
 
 bool Ublox::Ping(int num_attempts) {
-    while ((num_attempts--) > 0) {
-        log_info_("Searching for Ublox receiver...");
-        // request version information
+    try {
+        while ((num_attempts--) > 0) {
+            log_info_("Searching for Ublox receiver...");
+            // request version information
 
-        // ask for version
-        PollMessage(0x0A, 0x04);
+            // ask for version
+            PollMessage(0x0A, 0x04);
 
-        boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 
-        unsigned char result[5000];
-        size_t bytes_read;
-        bytes_read = serial_port_->read(result, 5000);
+            unsigned char result[5000];
+            size_t bytes_read;
+            bytes_read = serial_port_->read(result, 5000);
 
-        //std::cout << "bytes read: " << (int)bytes_read << std::endl;
-        //std::cout << dec << result << std::endl;
+            //std::cout << "bytes read: " << (int)bytes_read << std::endl;
+            //std::cout << dec << result << std::endl;
 
-        if (bytes_read < 8) {
-            stringstream output;
-            output << "Only read " << bytes_read
-                    << " bytes in response to ping.";
-            log_warning_(output.str());
-            continue;
-        }
-
-        uint16_t length;
-        // search through result for version message
-        for (int ii = 0; ii < (bytes_read - 8); ii++) {
-            //std::cout << hex << (unsigned int)result[ii] << std::endl;
-            if (result[ii] == 0xB5) {
-                if (result[ii + 1] != 0x62)
-                    continue;
-                if (result[ii + 2] != 0x0A)
-                    continue;
-                if (result[ii + 3] != 0x04)
-                    continue;
-                //std::cout << "length1:" << hex << (unsigned int)result[ii+4] << std::endl;
-                //std::cout << "length2:" << hex << (unsigned int)result[ii+5] << std::endl;
-                length = (result[ii + 4]) + (result[ii + 5] << 8);
-                if (length < 40) {
-                    log_warning_("Incomplete version message received");
-                    //    //return false;
-                    continue;
-                }
-
-                string sw_version;
-                string hw_version;
-                string rom_version;
-                sw_version.append((char*) (result + 6));
-                hw_version.append((char*) (result + 36));
-                //rom_version.append((char*)(result+46));
-                log_info_("Ublox receiver found.");
-                log_info_("Software Version: " + sw_version);
-                log_info_("Hardware Version: " + hw_version);
-                //log_info_("ROM Version: " + rom_version);
-                return true;
+            if (bytes_read < 8) {
+                stringstream output;
+                output << "Only read " << bytes_read
+                        << " bytes in response to ping.";
+                log_warning_(output.str());
+                continue;
             }
-        }
-        stringstream output;
-        output << "Read " << bytes_read
-                << " bytes, but version message not found.";
-        log_warning_(output.str());
 
+            uint16_t length;
+            // search through result for version message
+            for (int ii = 0; ii < (bytes_read - 8); ii++) {
+                //std::cout << hex << (unsigned int)result[ii] << std::endl;
+                if (result[ii] == 0xB5) {
+                    if (result[ii + 1] != 0x62)
+                        continue;
+                    if (result[ii + 2] != 0x0A)
+                        continue;
+                    if (result[ii + 3] != 0x04)
+                        continue;
+                    //std::cout << "length1:" << hex << (unsigned int)result[ii+4] << std::endl;
+                    //std::cout << "length2:" << hex << (unsigned int)result[ii+5] << std::endl;
+                    length = (result[ii + 4]) + (result[ii + 5] << 8);
+                    if (length < 40) {
+                        log_warning_("Incomplete version message received");
+                        //    //return false;
+                        continue;
+                    }
+
+                    string sw_version;
+                    string hw_version;
+                    string rom_version;
+                    sw_version.append((char*) (result + 6));
+                    hw_version.append((char*) (result + 36));
+                    //rom_version.append((char*)(result+46));
+                    log_info_("Ublox receiver found.");
+                    log_info_("Software Version: " + sw_version);
+                    log_info_("Hardware Version: " + hw_version);
+                    //log_info_("ROM Version: " + rom_version);
+                    return true;
+                }
+            }
+            stringstream output;
+            output << "Read " << bytes_read
+                    << " bytes, but version message not found.";
+            log_warning_(output.str());
+
+        }
+    } catch (exception &e) {
+        std::stringstream output;
+        output << "Error pinging receiver: " << e.what();
+        log_error_(output.str());
+        return false;
     }
+
     return false;
 }
 
@@ -391,7 +399,15 @@ void Ublox::ReadSerialPort() {
     // continuously read data from serial port
     while (reading_status_) {
         // read data
-        len = serial_port_->read(buffer, MAX_NOUT_SIZE);
+        try {
+            len = serial_port_->read(buffer, MAX_NOUT_SIZE);
+        } catch (exception &e) {
+            stringstream output;
+            output << "Error reading serial port: " << e.what();
+            log_info_(output.str());
+            Disconnect();
+            return;
+        }
         // timestamp the read
         read_timestamp_ = time_handler_();
         // add data to the buffer to be parsed
@@ -704,6 +720,9 @@ bool Ublox::SendAidIni(AidIni ini)
     if (sizeof(ini) == FULL_LENGTH_AID_INI)
     {
         unsigned char* msg_ptr = (unsigned char*)&ini;
+        calculateCheckSum(msg_ptr + 2,
+                PAYLOAD_LENGTH_AID_INI + 4, ini.checksum);
+
         return SendMessage(msg_ptr, sizeof(FULL_LENGTH_AID_INI));
         output << "Sending AID-INI to receiver..";
         log_info_(output.str());
@@ -719,7 +738,7 @@ bool Ublox::SendAidIni(AidIni ini)
 // Send AID-EPH to Receiver
 bool Ublox::SendAidEphem(Ephemerides ephems)
 {
-    for(uint8_t prn_index=1; prn_index<=32; prn_index++)
+    for(uint8_t prn_index=1; prn_index<MAX_SAT; prn_index++)
     {
         stringstream output;
 
@@ -739,7 +758,7 @@ bool Ublox::SendAidEphem(Ephemerides ephems)
 }
 // Send AID-ALM to Receiver
 bool Ublox::SendAidAlm(Almanac almanac) {
-    for (uint8_t prn_index = 1; prn_index <= 32; prn_index++) {
+    for (uint8_t prn_index = 1; prn_index < MAX_SAT; prn_index++) {
         stringstream output;
 
         if(almanac.almsv[prn_index].header.payload_length == PAYLOAD_LENGTH_AID_ALM_WITH_DATA)
