@@ -724,7 +724,7 @@ bool Ublox::SendAidIni(AidIni ini)
         calculateCheckSum(msg_ptr + 2,
                 PAYLOAD_LENGTH_AID_INI + 4, ini.checksum);
 
-        return SendMessage(msg_ptr, sizeof(FULL_LENGTH_AID_INI));
+        return SendMessage(msg_ptr, FULL_LENGTH_AID_INI);
         output << "Sending AID-INI to receiver..";
         log_info_(output.str());
     }
@@ -739,43 +739,41 @@ bool Ublox::SendAidIni(AidIni ini)
 // Send AID-EPH to Receiver
 bool Ublox::SendAidEphem(Ephemerides ephems)
 {
-    for(uint8_t prn_index=1; prn_index<MAX_SAT; prn_index++)
-    {
-        stringstream output;
 
-        if (ephems.ephemsv[prn_index].header.payload_length == PAYLOAD_LENGTH_AID_EPH_WITH_DATA)
-        {
-            output << "Sending AID-EPH for PRN # " << (int) ephems.ephemsv[prn_index].svprn << " ..";
-            uint8_t* msg_ptr = (uint8_t*)&ephems.ephemsv[prn_index];
-            return SendMessage(msg_ptr, FULL_LENGTH_AID_EPH_WITH_DATA);
+    for (uint8_t prn_index = 1; prn_index <= 32; prn_index++) {
+        stringstream output;
+        if (ephems.ephemsv[prn_index].header.payload_length == PAYLOAD_LENGTH_AID_EPH_WITH_DATA) {
+            output << "Sending AID-EPH for PRN # "
+                    << (int) ephems.ephemsv[prn_index].svprn << " ..";
+            uint8_t* msg_ptr = (uint8_t*) &ephems.ephemsv[prn_index];
+
+            SendMessage(msg_ptr, sizeof(ephems.ephemsv[prn_index]));
+        } else { // not a full ephemeris message
+            output << "No AID-EPH data for PRN # " << (int) prn_index << " ..";
         }
-        else // not a full ephemeris message
-        {
-            output << "No AID-EPH data for PRN # " << (int)prn_index << " ..";
-        }
-        log_error_(output.str());
-        return false;
+        log_info_(output.str());
     }
+    return true;
+
 }
 // Send AID-ALM to Receiver
 bool Ublox::SendAidAlm(Almanac almanac) {
-    for (uint8_t prn_index = 1; prn_index < MAX_SAT; prn_index++) {
+    for (uint8_t prn_index = 1; prn_index <= 32; prn_index++) {
         stringstream output;
-
-        if(almanac.almsv[prn_index].header.payload_length == PAYLOAD_LENGTH_AID_ALM_WITH_DATA)
-        {
-            output << "Sending AID-ALM for PRN # " << (int) almanac.almsv[prn_index].svprn << " ..";
+        if (almanac.almsv[prn_index].header.payload_length == 40) {
+            output << "Sending AID-ALM for PRN # "
+                    << (int) almanac.almsv[prn_index].svprn << " ..";
             log_info_(output.str());
-            uint8_t* msg_ptr = (uint8_t*)&almanac.almsv[prn_index];
-            return SendMessage(msg_ptr, FULL_LENGTH_AID_ALM_WITH_DATA);
+            uint8_t* msg_ptr = (uint8_t*) &almanac.almsv[prn_index];
+            SendMessage(msg_ptr, sizeof(almanac.almsv[prn_index]));
         }
-        else
-        {
-            output << "No AID-ALM data for PRN # " << (int)prn_index << " ..";
-            log_error_(output.str());
-            return false;
+
+        else {
+            output << "No AID-ALM data for PRN # " << (int) prn_index << " ..";
+            log_info_(output.str());
         }
     }
+    return true;
 }
 
 // Send AID-HUI to Receiver
@@ -1034,16 +1032,16 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
         // If Ephemeris for SV is not present (payload_length is 8 bytes)
         if (payload_length == PAYLOAD_LENGTH_AID_EPH_NO_DATA)
         {
-            stringstream output;
-            output << "SV# " << (double) *(log+6) << "- no ephemeris data";
-            log_debug_(output.str());
+            //stringstream output;
+            //output << "SV# " << (double) *(log+6) << "- no ephemeris data";
+            //log_debug_(output.str());
         }
         // If Ephemeris for SV is present (payload_length is 104 bytes)
         else if (payload_length == PAYLOAD_LENGTH_AID_EPH_WITH_DATA)
         {
-            stringstream output;
-            output << "SV# " << (double) *(log+6) << "- has ephemeris data";
-            log_debug_(output.str());
+            //stringstream output;
+            //output << "SV# " << (double) *(log+6) << "- has ephemeris data";
+            //log_debug_(output.str());
         }
         else
         {
