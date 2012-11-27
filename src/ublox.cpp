@@ -207,7 +207,8 @@ Ublox::Ublox() {
     log_info_ = DefaultInfoMsgCallback;
     log_warning_ = DefaultWarningMsgCallback;
     log_error_ = DefaultErrorMsgCallback;
-    parsed_ephem_callback_ = DefaultParsedEphemCallback;
+    //parsed_ephem_callback_ = DefaultParsedEphemCallback;
+    parsed_ephem_callback_ = NULL;
     reading_acknowledgement_ = false;
     bytes_remaining_ = false;
     header_length_ = 0;
