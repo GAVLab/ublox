@@ -727,6 +727,7 @@ bool Ublox::SendAidIni(AidIni ini)
         return SendMessage(msg_ptr, FULL_LENGTH_AID_INI);
         output << "Sending AID-INI to receiver..";
         log_info_(output.str());
+        return true;
     }
     else
     {
@@ -787,6 +788,7 @@ bool Ublox::SendAidHui(AidHui hui)
         return SendMessage(msg_ptr, FULL_LENGTH_AID_HUI);
         output << "Sending AID-HUI to receiver..";
         log_info_(output.str());
+        return true;
     }
     else
     {
