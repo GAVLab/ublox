@@ -717,14 +717,15 @@ bool Ublox::SendMessage(uint8_t* msg_ptr, size_t length)
 bool Ublox::SendAidIni(AidIni ini)
 {  
     stringstream output;
+
+    unsigned char* msg_ptr = (unsigned char*)&ini;
+    calculateCheckSum(msg_ptr + 2, PAYLOAD_LENGTH_AID_INI + 4, 
+                        ini.checksum);
+
     // Check that provided ini message is correct size before sending
     if (sizeof(ini) == FULL_LENGTH_AID_INI)
     {
-        unsigned char* msg_ptr = (unsigned char*)&ini;
-        calculateCheckSum(msg_ptr + 2,
-                PAYLOAD_LENGTH_AID_INI + 4, ini.checksum);
-
-        return SendMessage(msg_ptr, FULL_LENGTH_AID_INI);
+        bool sent_ini = SendMessage(msg_ptr, FULL_LENGTH_AID_INI);
         output << "Sending AID-INI to receiver..";
         log_info_(output.str());
         return true;
@@ -740,6 +741,7 @@ bool Ublox::SendAidIni(AidIni ini)
 // Send AID-EPH to Receiver
 bool Ublox::SendAidEphem(Ephemerides ephems)
 {
+    bool sent_ephem [32];
 
     for (uint8_t prn_index = 1; prn_index <= 32; prn_index++) {
         stringstream output;
@@ -747,32 +749,38 @@ bool Ublox::SendAidEphem(Ephemerides ephems)
             output << "Sending AID-EPH for PRN # "
                     << (int) ephems.ephemsv[prn_index].svprn << " ..";
             uint8_t* msg_ptr = (uint8_t*) &ephems.ephemsv[prn_index];
+            calculateCheckSum(msg_ptr + 2, PAYLOAD_LENGTH_AID_EPH_WITH_DATA + 4, 
+                                ephems.ephemsv[prn_index].checksum);
+            sent_ephem[prn_index] = SendMessage(msg_ptr, FULL_LENGTH_AID_EPH_WITH_DATA);
 
-            SendMessage(msg_ptr, sizeof(ephems.ephemsv[prn_index]));
         } else { // not a full ephemeris message
             output << "No AID-EPH data for PRN # " << (int) prn_index << " ..";
         }
         log_info_(output.str());
     }
     return true;
-
 }
+
 // Send AID-ALM to Receiver
 bool Ublox::SendAidAlm(Almanac almanac) {
+
+    bool sent_alm [32];
+
     for (uint8_t prn_index = 1; prn_index <= 32; prn_index++) {
         stringstream output;
-        if (almanac.almsv[prn_index].header.payload_length == 40) {
+
+        if (almanac.almsv[prn_index].header.payload_length == PAYLOAD_LENGTH_AID_ALM_WITH_DATA) {
             output << "Sending AID-ALM for PRN # "
                     << (int) almanac.almsv[prn_index].svprn << " ..";
-            log_info_(output.str());
             uint8_t* msg_ptr = (uint8_t*) &almanac.almsv[prn_index];
-            SendMessage(msg_ptr, sizeof(almanac.almsv[prn_index]));
+            calculateCheckSum(msg_ptr + 2, PAYLOAD_LENGTH_AID_ALM_WITH_DATA + 4, 
+                                almanac.almsv[prn_index].checksum);
+            sent_alm[prn_index] = SendMessage(msg_ptr, FULL_LENGTH_AID_ALM_WITH_DATA);
         }
-
         else {
             output << "No AID-ALM data for PRN # " << (int) prn_index << " ..";
-            log_info_(output.str());
         }
+        log_info_(output.str());
     }
     return true;
 }
@@ -782,10 +790,14 @@ bool Ublox::SendAidHui(AidHui hui)
 {
     stringstream output;
 
+    unsigned char* msg_ptr = (unsigned char*)&hui;
+    calculateCheckSum(msg_ptr + 2, PAYLOAD_LENGTH_AID_HUI + 4, 
+                                hui.checksum);
+
     if (sizeof(hui) == FULL_LENGTH_AID_HUI)
     {
-        unsigned char* msg_ptr = (unsigned char*)&hui;
-        return SendMessage(msg_ptr, FULL_LENGTH_AID_HUI);
+        
+        bool sent_hui = SendMessage(msg_ptr, FULL_LENGTH_AID_HUI);
         output << "Sending AID-HUI to receiver..";
         log_info_(output.str());
         return true;
@@ -799,6 +811,7 @@ bool Ublox::SendAidHui(AidHui hui)
 }
 
 // Send RXM-RAW to Receiver
+// NOTE: needs fixing still
 bool Ublox::SendRawMeas(RawMeas raw_meas)
 {
     stringstream output;
@@ -1124,17 +1137,43 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
         break;
 
     case RXM_RAW:
+    // NOTE: Needs to be checked/fixed
         RawMeas cur_raw_meas;
         payload_length = (double) *(log+4); // payload_length = 8+24*numSV
+        /*
+        num_of_svs = (int) *(log+12);
 
         memcpy(&cur_raw_meas, log, payload_length+HDR_CHKSM_LENGTH);
         //printHex((char*) &cur_raw_meas, sizeof(cur_raw_meas));
+        //std::cout << "Print log." << endl;
+        //printHex((char*) log, 272);
+        memcpy(&cur_raw_meas,log,14); // copy nonrepeated fields into structure
+        //std::cout << "Print unrepeated portion." << endl;
+        //printHex((char*) &cur_raw_meas, 14);
+        if (num_of_svs==0) {
+            log_info_("no svs.");
+        } else { // copy repeated fields
+            DGPSRepeatedBlock rep_block[num_of_svs];
+            memcpy(&rep_block, log+14,sizeof(rep_block));
+            //std::cout << "Print repeated blocks." << endl;
+            //std::cout << "Print sizeof rep_block" << sizeof(rep_block) <<endl;
+            //printHex((char*) &rep_block, sizeof(rep_block));
+
+            for(int index=0;index<=num_of_svs;index++) {
+                memcpy(&cur_raw_meas.repeated_block[rep_block[index].svid],&rep_block[index],sizeof(rep_block[index]));
+            }
+        }
+        memcpy(&cur_raw_meas.checksum, log+6+(uint8_t)payload_length, 2); // copy checksum
+        //std::cout << "Print cur_raw_meas." << endl;
+        //printHex((char*) &cur_raw_meas, sizeof(cur_raw_meas));
+        //std::cout << endl;
 
         if (rxm_raw_callback_)
             rxm_raw_callback_(cur_raw_meas, read_timestamp_);
         break;
-
+        */
     case RXM_SVSI:
+        // NOTE: needs to be fixed!!
         SVStat cur_sv_stat;
 
         payload_length = (double) *(log+4);
