@@ -752,7 +752,7 @@ bool Ublox::SendAidEphem(Ephemerides ephems)
         } else { // not a full ephemeris message
             output << "No AID-EPH data for PRN # " << (int) prn_index << " ..";
         }
-        log_info_(output.str());
+        log_debug_(output.str());
     }
     return true;
 
@@ -771,7 +771,7 @@ bool Ublox::SendAidAlm(Almanac almanac) {
 
         else {
             output << "No AID-ALM data for PRN # " << (int) prn_index << " ..";
-            log_info_(output.str());
+            log_debug_(output.str());
         }
     }
     return true;
