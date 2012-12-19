@@ -153,6 +153,7 @@ inline void DefaultRxmSvsiCallback(SVStatus sv_stat, double time_stamp) {
 
 inline void DefaultParsedEphemCallback(ParsedEphemData parsed_ephem_data,
         double time_stamp) {
+    /*
     std::cout << "Parsed ephemeris: " << std::endl;
     //Display Parsed Eph Data:
     cout << "PRN: " << parsed_ephem_data.prn << std::endl;
@@ -178,7 +179,7 @@ inline void DefaultParsedEphemCallback(ParsedEphemData parsed_ephem_data,
     cout << "t_oe: " << parsed_ephem_data.toe << std::endl;
     cout << "----------------------------------" << std::endl;
     cout << std::endl;
-
+*/
 }
 
 Ublox::Ublox() {

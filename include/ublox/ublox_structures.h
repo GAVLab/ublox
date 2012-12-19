@@ -169,6 +169,7 @@ PACK(
         uint8_t checksum[2];
 });
 
+
 /*!
 * NAV-POSLLH Message Structure
 * This message outputs the Geodetic position in
