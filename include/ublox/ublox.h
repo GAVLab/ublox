@@ -34,7 +34,7 @@ typedef boost::function<void(AlmSV&, double&)> AidAlmCallback;
 typedef boost::function<void(AidHui&, double&)> AidHuiCallback;
 typedef boost::function<void(AidIni&, double&)> AidIniCallback;
 typedef boost::function<void(RawMeas&, double&)> RxmRawCallback;
-typedef boost::function<void(SVStat&, double&)> RxmSvsiCallback;
+typedef boost::function<void(SVStatus&, double&)> RxmSvsiCallback;
 typedef boost::function<void(ParsedEphemData&, double&)> ParsedEphemCallback;
 
 class Ublox

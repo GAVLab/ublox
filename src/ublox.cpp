@@ -147,7 +147,7 @@ inline void DefaultRxmRawCallback(RawMeas raw_meas, double time_stamp) {
     std::cout << "RXM-RAW: " << std::endl;
 }
 
-inline void DefaultRxmSvsiCallback(SVStat sv_stat, double time_stamp) {
+inline void DefaultRxmSvsiCallback(SVStatus sv_stat, double time_stamp) {
     std::cout << "RXM-SVSI: " << std::endl;
 }
 
@@ -940,6 +940,8 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length) {
 
 void Ublox::ParseLog(uint8_t *log, size_t logID) {
     double payload_length;
+    double num_of_svs;
+    double num_of_channels;
 
     switch (logID) {
 
@@ -990,9 +992,21 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
         break;
 		
     case NAV_SVINFO:
+    // NOTE: needs to be checked!!
+    
         NavSVInfo cur_nav_svinfo;
         payload_length = (double) *(log+4);
-        memcpy(&cur_nav_svinfo, log, payload_length+HDR_CHKSM_LENGTH);
+        num_of_channels = (double) *(log+10);
+
+        // Copy portion of NAV-SVSI before repeated block (8 + header length)
+        memcpy(&cur_nav_svinfo, log, HDR_CHKSM_LENGTH+8);
+        // Copy repeated block
+        for(int index = 0; index < num_of_channels; index++) {
+            memcpy(&cur_nav_svinfo.svinfo_reap[index], log+14+(index*12), 12);
+        }
+        // Copy Checksum
+        memcpy(&cur_nav_svinfo.checksum, log+14+(unsigned char)(num_of_channels*12), 2);
+
         if (nav_sv_info_callback_)
             nav_sv_info_callback_(cur_nav_svinfo, read_timestamp_);
         break;
@@ -1173,15 +1187,22 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
         break;
         */
     case RXM_SVSI:
-        // NOTE: needs to be fixed!!
-        SVStat cur_sv_stat;
-
+        // NOTE: needs to be checked!!
+        SVStatus cur_sv_status;
         payload_length = (double) *(log+4);
+        num_of_svs = (double) *(log+13);
 
-        memcpy(&cur_sv_stat, log, payload_length+HDR_CHKSM_LENGTH);
+        // Copy portion of RXM-SVSI before repeated block (8 + header length)
+        memcpy(&cur_sv_status, log, HDR_CHKSM_LENGTH + 8);
+        // Copy repeated block
+        for (uint8_t index = 0; index < num_of_svs; index++) {
+            memcpy(&cur_sv_status.svstatusreap[index],log+14+(index*6),6);
+        }
+        // Copy Checksum
+        memcpy(&cur_sv_status.checksum, log+14+(unsigned char)(6*num_of_svs), 2);
 
         if (rxm_svsi_callback_)
-            rxm_svsi_callback_(cur_sv_stat, read_timestamp_);
+            rxm_svsi_callback_(cur_sv_status, read_timestamp_);
         break;
     }
 }
