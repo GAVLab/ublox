@@ -123,6 +123,7 @@ public:
     bool PollAllAidData();
     bool PollRawDgpsData();
     bool PollSVStatus();
+    bool PollSVInfo();
     bool PollNavStatus();
 
 //////////////////////////////////////////////////////

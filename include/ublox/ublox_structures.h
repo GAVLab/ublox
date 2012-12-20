@@ -237,7 +237,7 @@ PACK(
         uint8_t numch;  //! number of channels following
         uint8_t global_flags;   // Chip and Hardware Generation
         uint16_t reserved2;
-        SVInfoReapBlock svinfo_reap[MAXCHAN];
+        SVInfoReapBlock svinfo_reap[MAXCHAN]; // NOTE: TODO: True max needs to be confirmed
         uint8_t checksum[2];
 });
 // Description of flags bitfield
@@ -585,7 +585,7 @@ PACK(
         int16_t week;       // weeks - GPS Week
         uint8_t numvis;     // Number of visible SVs
         uint8_t numSV;      // # of SVs following
-        SVStatusReap svstatusreap[6];
+        SVStatusReap svstatusreap[100]; // NOTE: TODO: Find the max repititions possible for this!! max thus far: (71)
         uint8_t checksum[2];
 });
 
