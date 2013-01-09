@@ -1002,9 +1002,9 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
         payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
         num_of_channels = (uint8_t) *(log+10);
 
-        std::cout << "NAV-SVINFO..." << std::endl;
+        //std::cout << "NAV-SVINFO..." << std::endl;
         // print whole message 
-        printHex((char*) log, payload_length+8);
+        //printHex((char*) log, payload_length+8);
 
         // Copy portion of NAV-SVSI before repeated block (8 + header length)
         memcpy(&cur_nav_svinfo, log, HDR_CHKSM_LENGTH+8);
@@ -1016,8 +1016,8 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
         memcpy(&cur_nav_svinfo.checksum, log+14+(num_of_channels*12), 2);
 
         // Print populated structure
-        printHex((char*) &cur_nav_svinfo, sizeof(cur_nav_svinfo));
-        std::cout << std::endl;
+        //printHex((char*) &cur_nav_svinfo, sizeof(cur_nav_svinfo));
+        //std::cout << std::endl;
 
         if (nav_sv_info_callback_)
             nav_sv_info_callback_(cur_nav_svinfo, read_timestamp_);
