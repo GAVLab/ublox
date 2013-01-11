@@ -543,13 +543,13 @@ PACK(
 //#define RXMRAW_QUALITY_PR_DOP_CP_GOOD 4 // Min value for pseudorange, doppler, and carrier phase to be good
 PACK(
     struct RawMeasReap{
-        double carrier_phase;      // cycles - Carrier Phase measurement
-        double psuedorange;      // m - Psuedorange measurement
-        float doppler;       // Hz - Doppler Measurement
-        uint8_t svid;       // SV Number
-        int8_t quality;    // Nav Measurement Quality Indicator  -- (>=4 PR+DO OK) (>=5 PR+DO+CP OK) (<6 likel loss carrier lock)
-        int8_t cno;     // dbHz - Carrier to Noise Ratio
-        uint8_t lli;        // Loss of Lock Indicator (RINEX Definition)
+        double carrier_phase;           // cycles - Carrier Phase measurement
+        double psuedorange;             // m - Psuedorange measurement
+        float doppler;                  // Hz - Doppler Measurement
+        uint8_t svid;                   // SV Number
+        int8_t quality;                 // Nav Measurement Quality Indicator  -- (>=4 PR+DO OK) (>=5 PR+DO+CP OK) (<6 likel loss carrier lock)
+        int8_t cno;                     // dbHz - Carrier to Noise Ratio
+        uint8_t loss_of_lock_indicator; // Loss of Lock Indicator (RINEX Definition)
 });
 
 PACK(
