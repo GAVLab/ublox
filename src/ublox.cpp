@@ -1006,8 +1006,8 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
         // print whole message 
         //printHex((char*) log, payload_length+8);
 
-        // Copy portion of NAV-SVSI before repeated block (8 + header length)
-        memcpy(&cur_nav_svinfo, log, HDR_CHKSM_LENGTH+8);
+        // Copy portion of NAV-INFO before repeated block (8 + header length)
+        memcpy(&cur_nav_svinfo, log, 6+8);
         // Copy repeated block
         for(int index = 0; index < num_of_channels; index++) {
             memcpy(&cur_nav_svinfo.svinfo_reap[index], log+14+(index*12), 12);
@@ -1165,39 +1165,23 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
     case RXM_RAW:
     // NOTE: Needs to be checked/fixed
         RawMeas cur_raw_meas;
+
         payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4)); // payload_length = 8+24*numSV
-        /*
         num_of_svs = (uint8_t) *(log+12);
 
-        memcpy(&cur_raw_meas, log, payload_length+HDR_CHKSM_LENGTH);
-        //printHex((char*) &cur_raw_meas, sizeof(cur_raw_meas));
-        //std::cout << "Print log." << endl;
-        //printHex((char*) log, 272);
-        memcpy(&cur_raw_meas,log,14); // copy nonrepeated fields into structure
-        //std::cout << "Print unrepeated portion." << endl;
-        //printHex((char*) &cur_raw_meas, 14);
-        if (num_of_svs==0) {
-            log_info_("no svs.");
-        } else { // copy repeated fields
-            DGPSRepeatedBlock rep_block[num_of_svs];
-            memcpy(&rep_block, log+14,sizeof(rep_block));
-            //std::cout << "Print repeated blocks." << endl;
-            //std::cout << "Print sizeof rep_block" << sizeof(rep_block) <<endl;
-            //printHex((char*) &rep_block, sizeof(rep_block));
-
-            for(int index=0;index<=num_of_svs;index++) {
-                memcpy(&cur_raw_meas.repeated_block[rep_block[index].svid],&rep_block[index],sizeof(rep_block[index]));
-            }
+        // Copy portion of RXM-SVSI before repeated block (8 + header length)
+        memcpy(&cur_raw_meas, log, 6+8);
+        // Copy repeated block
+        for (uint8_t index = 0; index < num_of_svs; index++) {
+            memcpy(&cur_raw_meas.rawmeasreap[index],log+14+(index*24),24);
         }
-        memcpy(&cur_raw_meas.checksum, log+6+(uint8_t)payload_length, 2); // copy checksum
-        //std::cout << "Print cur_raw_meas." << endl;
-        //printHex((char*) &cur_raw_meas, sizeof(cur_raw_meas));
-        //std::cout << endl;
+        // Copy Checksum
+        memcpy(&cur_raw_meas.checksum, log+14+(24*num_of_svs), 2);
 
         if (rxm_raw_callback_)
             rxm_raw_callback_(cur_raw_meas, read_timestamp_);
         break;
-        */
+
     case RXM_SVSI:
         // NOTE: needs to be checked!!
         SVStatus cur_sv_status;
@@ -1216,7 +1200,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
         */
 
         // Copy portion of RXM-SVSI before repeated block (8 + header length)
-        memcpy(&cur_sv_status, log, HDR_CHKSM_LENGTH + 8);
+        memcpy(&cur_sv_status, log, 6 + 8);
         // Copy repeated block
         for (uint8_t index = 0; index < num_of_svs; index++) {
             memcpy(&cur_sv_status.svstatusreap[index],log+14+(index*6),6);
