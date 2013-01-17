@@ -36,8 +36,8 @@ PACK(
 ///////////////////////////////////////////////////////////
 /*!
  * CFM-MSG Message Structure
- * This message requests a message at a given rate.
- * ID: 0x06  0x01 Length=3 bytes
+ * This message requests a specifiable message at a given rate.
+ * ID: 0x06  0x01 Payload Length=3 bytes
  */
 PACK(
     struct CfgMsgRate {
@@ -51,7 +51,7 @@ PACK(
 /*!
  * CFM-MSG Message Structure
  * This message requests a message once.
- * ID: 0x06  0x01 Length=2 bytes
+ * ID: 0x06  0x01 Payload Length=2 bytes
  */
  PACK(
     struct CfgMsg {
@@ -65,7 +65,7 @@ PACK(
  * CFG-CFG Message Structure
  * This message clears, saves, or loads novalitle memory.
  * Set masks to 0x061F to clear, save, or load all values.
- * ID: 0x06  0x09 Length=12 bytes
+ * ID: 0x06  0x09 Payload Length=12 bytes
  */
 PACK(
     struct CfgCfg {
@@ -79,7 +79,7 @@ PACK(
 /*!
  * CFM-RST Message Structure
  * This message allows a receiver to be reset.
- * ID: 0x06  0x04 Length=4 bytes
+ * ID: 0x06  0x04 Payload Length=4 bytes
  */
  PACK(
     struct CfgRst {
@@ -95,7 +95,7 @@ PACK(
  * CFM-PRT Message Structure
  * This message configures a USART or USB port.
  * Use to specify input/output protocols to use
- * ID: 0x06  0x00 Length=20 bytes
+ * ID: 0x06  0x00 Payload Length=20 bytes
  */
 PACK(
     struct CfgPrt {
@@ -111,13 +111,14 @@ PACK(
         uint16_t reserved5; //!< reserved
         uint8_t checksum[2];
 });
+
 /////////////////////////////////////////////////////////////
 // Navigation Messages
 /////////////////////////////////////////////////////////////
 /*!
  * NAV-STATUS Message Structure
  * This message contains gps fix type and ttff
- * ID: 0x01 0x03 length=16 bytes
+ * ID: 0x01 0x03 Payload Length=16 bytes
  */
 PACK(
     struct NavStatus {
@@ -137,7 +138,13 @@ PACK(
 * NAV-SOL Message Structure
 * This message combines Position, velocity and
 * time solution in ECEF, including accuracy figures.
-* ID: 0x01  0x06  Length=52 bytes
+* ID: 0x01  0x06  Payload Length=52 bytes
+*/
+/*
+#define NAVSOL_FLAG_GPSFIX_VALID 0b0001
+#define NAVSOL_FLAG_DGPS_USED_FOR_FIX 0b0010
+#define NAVSOL_FLAG_WEEK_NUM_VALID 0b0100
+#define NAVSOL_FLAG_TOW_VALID 0b1000
 */
 PACK(
     struct NavSol{
@@ -162,13 +169,14 @@ PACK(
         uint8_t checksum[2];
 });
 
+
 /*!
 * NAV-POSLLH Message Structure
 * This message outputs the Geodetic position in
 * the currently selected Ellipsoid. The default is
 * the WGS84 Ellipsoid, but can be changed with the
 * message CFG-DAT.
-* ID: 0x01  0x02  Length=28 bytes
+* ID: 0x01  0x02  Payload Length=28 bytes
 */
 PACK(
     struct NavPosLLH{
@@ -187,7 +195,7 @@ PACK(
 * NAV-VELNED Message Structure
 * This message outputs the current 3D velocity
 * in a north-east-down frame.
-* ID: 0x01  0x12  Length=36 bytes
+* ID: 0x01  0x12  Payload Length=36 bytes
 */
 PACK(
     struct NavVelNed{
@@ -205,35 +213,49 @@ PACK(
 });
 
 /*!
-* NAV-SVInfo Message Structure
-* This message outputs info about each channel
-* and the SVs they are tracking
-* ID: 0x01  0x30  Length=8+12*N bytes
+* NAV-SVINFO Message Structure
+* This message outputs info about SVs each 
+* channel is tracking
+* ID: 0x01  0x30  Payload Length= (8+12*NumChannels bytes)
 */
 PACK(
     struct SVInfoReapBlock{
-        uint8_t ch_num;     //!< Channel Number (255 if SV not assigned to channel)
-        uint8_t svid;
-        uint8_t flags; // bitfield
+        uint8_t ch_num;     //!< Channel Number (255 if SV isn't assigned to channel)
+        uint8_t svid;       // Satellite ID number
+        uint8_t flags;      // bitfield (description of contents follows)
         uint8_t quality;    // signal quality indicator bitfield
-        uint8_t cno;    // carrier to noise ratio
-        int8_t elev;    // elevation in degress
-        int16_t azim;   // azimuth in integer degrees
-        int32_t prRes;  // Psuedorange residual in centimeters
-
+        uint8_t cno;        // carrier to noise ratio (dbHz)
+        int8_t elev;        // elevation (deg)
+        int16_t azim;       // azimuth (deg)
+        int32_t prRes;      // Psuedorange residual (centimeters)
 });
 
 PACK(
     struct NavSVInfo{
         UbloxHeader header;		//!< Ublox header
-        uint32_t iTOW;
-        uint8_t numch;  //! number of channels
-        uint8_t global_flags;
+        uint32_t iTOW;  // GPS time of week (ms)
+        uint8_t numch;  //! number of channels following
+        uint8_t global_flags;   // Chip and Hardware Generation
         uint16_t reserved2;
-        SVInfoReapBlock svinfo_reap[MAXCHAN];
+        SVInfoReapBlock svinfo_reap[MAXCHAN]; // NOTE: TODO: True max needs to be confirmed
         uint8_t checksum[2];
 });
+// Description of flags bitfield
+#define NAV_SVINFO_FLAGS_USED4NAV 0B00000001 // SV used in NAV sol
+#define NAV_SVINFO_FLAGS_DGPS_AVAIL 0B00000010 // DGPS corr data available for SV
+#define NAV_SVINFO_FLAGS_ORBIT_INFO_AVAIL 0B00000100 // Ephemeris of Almanac orbit info available for SV
+#define NAV_SVINFO_FLAGS_EPHEMS_AVAIL 0B00001000 // Ephemeris orbit info available for SV
+#define NAV_SVINFO_FLAGS_SV_UNHEALTHY 0B00010000 // SV unhealthy and not used
+#define NAV_SVINFO_FLAGS_ALMPLUS_AVAIL 0B00100000 // Almanac Plus orbit info used
+#define NAV_SVINFO_FLAGS_ASSNOW_AUTO 0B01000000 // AssistNow Autonomous orbit info used
+#define NAV_SVINFO_FLAGS_PR_SMOOTHED 0B10000000 // Carrier Smoothed pseudorange used (PPP)
 
+
+/*!
+* NAV-TIMEGPS Message Structure
+* This message outputs GPS Time information
+* ID: 0x01  0x20  Payload Length= 16 bytes
+*/
 PACK(
     struct NavGPSTime{
         UbloxHeader header;
@@ -246,6 +268,11 @@ PACK(
         uint8_t checksum[2];
 });
 
+/*!
+* NAV-TIMEUTC Message Structure
+* This message outputs UTC Time information
+* ID: 0x01  0x21  Payload Length= 20 bytes
+*/
 PACK(
     struct NavUTCTime{
         UbloxHeader header;
@@ -262,10 +289,18 @@ PACK(
         uint8_t checksum[2];
 });
 
+/*!
+* NAV-DOP Message Structure
+* This message outputs various DOPs. All 
+* DOP values are scaled by a factor of 100.
+* Ex. If gdop contains a value 156, the true
+* value is 1.56
+* ID: 0x01  0x04  Payload Length= 18 bytes
+*/
 PACK(
     struct NavDOP{
         UbloxHeader header;
-        uint32_t iTOW;  // GPS ms time of week
+        uint32_t iTOW;  // GPS ms time of week (ms)
         uint16_t gdop;  // Geometric DOP
         uint16_t pdop;  // Position DOP
         uint16_t tdop;  // Time DOP
@@ -276,6 +311,12 @@ PACK(
         uint8_t checksum[2];
 });
 
+/*!
+* NAV-DGPS Message Structure
+* This message outputs DGPS correction data as it
+* has been applied to the current NAV Solution
+* ID: 0x01  0x31  Payload Length= (16 + 12*numChannels bytes)
+*/
 PACK(
     struct NavDGPSReap{
         uint8_t svid;
@@ -299,7 +340,11 @@ PACK(
         uint8_t checksum[2];
 });
 
-
+/*!
+* NAV-CLOCK Message Structure
+* This message outputs receiver clock information
+* ID: 0x01  0x22  Payload Length= 20 bytes
+*/
 PACK(
     struct NavClock{
         UbloxHeader header;
@@ -318,7 +363,7 @@ PACK(
 /*!
  * AID-INI Message Structure
  * Reciever Position, Time, Clock Drift, Frequency
- * ID: 0x0B  0x01 Length=48 bytes
+ * ID: 0x0B  0x01 Payload Length=48 bytes
  */
 #define PAYLOAD_LENGTH_AID_INI 48
 #define FULL_LENGTH_AID_INI 48+8
@@ -353,8 +398,8 @@ PACK(
 
 /*!
  * AID-HUI Message Structure
- * GPS Health, Ionospheric, and UTC
- * ID:
+ * GPS Health, Ionospheric, and UTC Parameters
+ * ID: 0x0B  0x02 Payload Length: 72
  */
 #define PAYLOAD_LENGTH_AID_HUI 72
 #define FULL_LENGTH_AID_HUI 72+8
@@ -382,7 +427,6 @@ PACK(
         uint32_t flags;
         uint8_t checksum[2];
 });
-
 // defines for AID-HUI flags
 #define AIDHUI_FLAG_HEALTH_VALID 0b001
 #define AIDHUI_FLAG_UTC_VALID 0b010
@@ -391,7 +435,7 @@ PACK(
 /*!
  * AID-EPH Message Structure
  * This message contains ephemeris for a satellite.
- * ID: 0x0B 0x31 Length = (16) or (112) bytes
+ * ID: 0x0B 0x31 Payload Length = (16) or (112) bytes
  */
 #define PAYLOAD_LENGTH_AID_EPH_WITH_DATA 104
 #define PAYLOAD_LENGTH_AID_EPH_NO_DATA 8
@@ -469,7 +513,7 @@ PACK(
 /*!
  * AID-ALM Message Structure
  * This message contains GPS almanac data for a satellite
- * ID: 0x0B 0x30 Length = (8) or (48) bytes
+ * ID: 0x0B 0x30 Payload Length = (8) or (48) bytes
  */
 #define PAYLOAD_LENGTH_AID_ALM_WITH_DATA 40
 #define PAYLOAD_LENGTH_AID_ALM_NO_DATA 8
@@ -490,16 +534,22 @@ PACK(
         AlmSV almsv[MAX_SAT];
 });
 
-// (RXM-RAW) Raw Data for DGPS
+/*!
+ * RXM-RAW Message Structure
+ * This message contains raw DGPS measurements data
+ * ID: 0x02 0x10 Payload Length = (8 + 24*#SVs) bytes
+ */
+//#define RXMRAW_QUALITY_PR_DOP_GOOD 4 // Min value for pseudorange and doppler to be good    
+//#define RXMRAW_QUALITY_PR_DOP_CP_GOOD 4 // Min value for pseudorange, doppler, and carrier phase to be good
 PACK(
     struct RawMeasReap{
-        double cpmeas;      // cycles - Carrier Phase measurement
-        double prmeas;      // m - Psuedorange measurement
-        float domeas;       // Hz - Doppler Measurement
-        uint8_t svid;       // SV Number
-        int8_t measqual;    // Nav Measurement Quality Indicator  -- (>=4 PR+DO OK) (>=5 PR+DO+CP OK) (<6 likel loss carrier lock)
-        int8_t cnratio;     // dbHz - Carrier to Noise Ratio
-        uint8_t lli;        // Loss of Lock Indicator (RINEX Definition)
+        double carrier_phase;           // cycles - Carrier Phase measurement
+        double psuedorange;             // m - Psuedorange measurement
+        float doppler;                  // Hz - Doppler Measurement
+        uint8_t svid;                   // SV Number
+        int8_t quality;                 // Nav Measurement Quality Indicator  -- (>=4 PR+DO OK) (>=5 PR+DO+CP OK) (<6 likel loss carrier lock)
+        int8_t cno;                     // dbHz - Carrier to Noise Ratio
+        uint8_t loss_of_lock_indicator; // Loss of Lock Indicator (RINEX Definition)
 });
 
 PACK(
@@ -513,9 +563,13 @@ PACK(
         uint8_t checksum[2];
 });
 
-// (RXM-SVSI) SV Status Info
+/*!
+ * RXM-SVSI Message Structure
+ * This message contains SV orbit knowledge for SVs
+ * ID: 0x02 0x20 Payload Length = (8 + 6*#SVs) bytes
+ */
 PACK(
-    struct SVStatReap{
+    struct SVStatusReap{
         uint8_t svid;       // Satellite ID
         uint8_t svflag;     // Information Flag
         int16_t azim;       // Azimuth
@@ -525,13 +579,13 @@ PACK(
 });
 
 PACK(
-    struct SVStat{
+    struct SVStatus{
         UbloxHeader header;
         int32_t iTow;       // ms - Time of Week
         int16_t week;       // weeks - GPS Week
         uint8_t numvis;     // Number of visible SVs
         uint8_t numSV;      // # of SVs following
-        SVStatReap svstatreap[6];
+        SVStatusReap svstatusreap[100]; // NOTE: TODO: Find the max repititions possible for this!! max thus far: (71)
         uint8_t checksum[2];
 });
 
