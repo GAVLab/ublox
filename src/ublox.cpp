@@ -51,6 +51,11 @@ inline void DefaultPortSettingsCallback(CfgPrt port_settings,
     std::cout << "CFG-PRT:" << std::endl;
 }
 
+inline void DefaultConfigureNavigationParametersCallback(CfgNav5 cfg_nav,
+        double time_stamp) {
+    std::cout << "CFG-NAV5:" << std::endl;
+}
+
 inline void DefaultErrorMsgCallback(const std::string &msg) {
     std::cout << "Ublox Error: " << msg << std::endl;
 }
@@ -188,6 +193,7 @@ Ublox::Ublox() {
     time_handler_ = DefaultGetTime;
     handle_acknowledgement_ = DefaultAcknowledgementHandler;
     port_settings_callback_ = DefaultPortSettingsCallback;
+    configure_navigation_parameters_callback_ = DefaultConfigureNavigationParametersCallback;
     nav_pos_llh_callback_ = DefaultNavPosLlhCallback;
     aid_eph_callback_ = DefaultAidEphCallback;
     aid_alm_callback_ = DefaultAidAlmCallback;
@@ -997,6 +1003,15 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
         //printHex((char*) &cur_port_settings, sizeof(cur_port_settings));
         if (port_settings_callback_)
             port_settings_callback_(cur_port_settings, read_timestamp_);
+        break;
+
+    case CFG_NAV5:
+        CfgNav5 cur_nav5_settings;
+        payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
+        memcpy(&cur_nav5_settings, log, payload_length+HDR_CHKSM_LENGTH);
+        //printHex((char*) &cur_port_settings, sizeof(cur_port_settings));
+        if (configure_navigation_parameters_callback_)
+            configure_navigation_parameters_callback_(cur_nav5_settings, read_timestamp_);
         break;
 
     case NAV_STATUS:
