@@ -601,6 +601,40 @@ bool Ublox::ResetToHotStart() {
     return Reset(0x0000, 0x02);
 }
 
+// (CFG-NAV5) Cofigure Navigation Algorithm Parameters
+bool Ublox::ConfigureNavigationParameters(uint8_t dynamic_model, uint8_t fix_mode){
+    CfgNav5 message;
+
+    message.header.sync1 = 0xB5;
+    message.header.sync2 = 0x62;
+    message.header.message_class = 0x06;
+    message.header.message_id = 0x24;
+    message.header.payload_length = 36;
+
+    message.mask = 0b00000101;
+    message.dynamic_model = dynamic_model;
+    message.fix_mode = fix_mode;
+    message.fixed_altitude = 0;
+    message.fixed_altitude_variance = 0;
+    message.min_elevation = 0;
+    message.dead_reckoning_limit = 0;
+    message.pdop = 0;
+    message.tdop = 0;
+    message.pos_accuracy_mask = 0;
+    message.time_accuracy_mask = 0;
+    message.static_hold_threshold = 0;
+    message.dgps_timeout = 0;
+    message.reserved2 = 0;
+    message.reserved3 = 0;
+    message.reserved4 = 0;
+
+    unsigned char* msg_ptr = (unsigned char*) &message;
+    calculateCheckSum(msg_ptr + 2, 36+4, message.checksum);
+
+    serial_port_->write(msg_ptr, sizeof(message));
+    return true;
+}
+
 // (CFG-MSG) Set message output rate for specified message
 bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id,
         uint8_t rate) {

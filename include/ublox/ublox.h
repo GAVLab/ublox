@@ -132,6 +132,7 @@ public:
     void SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output);
     void PollPortConfiguration(uint8_t port_identifier = 3);
     bool ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate);
+    bool ConfigureNavigationParameters(uint8_t dynamic_model = 3, uint8_t fix_mode = 3);
 
     //////////////////////////////////////////////////////
     // Diagnostic Callbacks

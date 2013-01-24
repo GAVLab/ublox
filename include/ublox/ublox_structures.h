@@ -112,6 +112,35 @@ PACK(
         uint8_t checksum[2];
 });
 
+/*!
+* CFG-NAV5 Message Structure
+* This message configures Navigation algorithm
+* parameters.
+* ID: 0x06  0x24 Payload Length=36 bytes
+*/
+PACK(
+    struct CfgNav5 {
+        UbloxHeader header;		//!< Ublox header
+        uint16_t mask; //!< parameters bitmask (only masked params applied)
+        uint8_t dynamic_model; //!< dynamic platform
+        uint8_t fix_mode; //!< positioning fix mode
+        int32_t fixed_altitude; //!< (scale .01) (m)
+        uint32_t fixed_altitude_variance; //!< (scale .0001) (m^2)
+        int8_t min_elevation; //!< (deg)
+        uint8_t dead_reckoning_limit; //!< max time to perform DR w/out GPS (sec)
+        uint16_t pdop; //!< (scale .1)
+        uint16_t tdop; //!< (scale .1)
+        uint16_t pos_accuracy_mask; //!< (m)
+        uint16_t time_accuracy_mask; //!< (m)
+        uint8_t static_hold_threshold; //!<
+        uint8_t dgps_timeout; //!<
+        uint32_t reserved2; //!< reserved (always set to zero)
+        uint32_t reserved3; //!< reserved (always set to zero)
+        uint32_t reserved4; //!< reserved (always set to zero)
+        uint8_t checksum[2];
+});
+
+
 /////////////////////////////////////////////////////////////
 // Navigation Messages
 /////////////////////////////////////////////////////////////
