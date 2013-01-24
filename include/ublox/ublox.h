@@ -152,7 +152,7 @@ public:
     // Receiver Configuration Settings Polling Messages
     //////////////////////////////////////////////////////
     void PollPortConfiguration(uint8_t port_identifier = 3);
-    void PollNavigationParamterConfiguration();
+    bool PollNavigationParamterConfiguration();
 
     //////////////////////////////////////////////////////
     // Aiding Data Polling Messages

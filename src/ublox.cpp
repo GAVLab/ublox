@@ -471,6 +471,12 @@ bool Ublox::PollMessageIndSV(uint8_t class_id, uint8_t msg_id, uint8_t svid) {
     return bytes_written == 9;
 }
 
+// (CFG-NAV5) Polls current navigation algorithms parameters
+bool Ublox::PollNavigationParamterConfiguration() {
+    log_info_("Polling for CFG-NAV5..");
+    return PollMessage(0x06, 0x24);
+}
+
 // (AID-EPH) Polls for Ephemeris data
 bool Ublox::PollEphem(int8_t svid) {
 
