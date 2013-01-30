@@ -55,6 +55,7 @@ typedef boost::function<void(const std::string&)> LogMsgCallback;
 
 // GPS Data Callbacks
 typedef boost::function<void(CfgPrt&, double&)> PortSettingsCallback;
+typedef boost::function<void(CfgNav5&, double&)> ConfigureNavigationParametersCallback;
 typedef boost::function<void(NavPosLLH&, double&)> NavPosLLHCallback;
 typedef boost::function<void(NavSol&, double&)> NavSolCallback;
 typedef boost::function<void(NavStatus&, double&)> NavStatusCallback;
@@ -130,8 +131,8 @@ public:
      bool ResetToHotStart();
 
     void SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output);
-    void PollPortConfiguration(uint8_t port_identifier = 3);
     bool ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate);
+    bool ConfigureNavigationParameters(uint8_t dynamic_model = 3, uint8_t fix_mode = 3);
 
     //////////////////////////////////////////////////////
     // Diagnostic Callbacks
@@ -146,6 +147,12 @@ public:
     //////////////////////////////////////////////////////
     HandleAcknowledgementCallback handle_acknowledgement_;
     GetTimeCallback time_handler_; //!< Function pointer to callback function for timestamping
+
+    //////////////////////////////////////////////////////
+    // Receiver Configuration Settings Polling Messages
+    //////////////////////////////////////////////////////
+    void PollPortConfiguration(uint8_t port_identifier = 3);
+    bool PollNavigationParamterConfiguration();
 
     //////////////////////////////////////////////////////
     // Aiding Data Polling Messages
@@ -190,6 +197,8 @@ public:
     void set_get_time_callback(GetTimeCallback callback){time_handler_=callback;};
     void set_nav_vel_ned_callback(NavVelNedCallback callback){nav_vel_ned_callback_=callback;};
     void set_port_settings_callback(PortSettingsCallback callback){port_settings_callback_ =callback;};
+    void set_configure_navigation_parameters_callback(ConfigureNavigationParametersCallback callback){
+        configure_navigation_parameters_callback_ = callback;};
     void set_parsed_ephem_callback(ParsedEphemCallback callback){parsed_ephem_callback_ = callback;};
 
     void calculateCheckSum(uint8_t* in, size_t length, uint8_t* out);
@@ -246,6 +255,7 @@ private:
     // New Data Callbacks
     //////////////////////////////////////////////////////
     PortSettingsCallback port_settings_callback_;
+    ConfigureNavigationParametersCallback configure_navigation_parameters_callback_;
     NavPosLLHCallback nav_pos_llh_callback_;
     NavSolCallback nav_sol_callback_;
     NavStatusCallback nav_status_callback_;

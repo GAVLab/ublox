@@ -51,6 +51,11 @@ inline void DefaultPortSettingsCallback(CfgPrt port_settings,
     std::cout << "CFG-PRT:" << std::endl;
 }
 
+inline void DefaultConfigureNavigationParametersCallback(CfgNav5 cfg_nav,
+        double time_stamp) {
+    std::cout << "CFG-NAV5:" << std::endl;
+}
+
 inline void DefaultErrorMsgCallback(const std::string &msg) {
     std::cout << "Ublox Error: " << msg << std::endl;
 }
@@ -188,6 +193,7 @@ Ublox::Ublox() {
     time_handler_ = DefaultGetTime;
     handle_acknowledgement_ = DefaultAcknowledgementHandler;
     port_settings_callback_ = DefaultPortSettingsCallback;
+    configure_navigation_parameters_callback_ = DefaultConfigureNavigationParametersCallback;
     nav_pos_llh_callback_ = DefaultNavPosLlhCallback;
     aid_eph_callback_ = DefaultAidEphCallback;
     aid_alm_callback_ = DefaultAidAlmCallback;
@@ -467,6 +473,12 @@ bool Ublox::PollMessageIndSV(uint8_t class_id, uint8_t msg_id, uint8_t svid) {
     return bytes_written == 9;
 }
 
+// (CFG-NAV5) Polls current navigation algorithms parameters
+bool Ublox::PollNavigationParamterConfiguration() {
+    log_info_("Polling for CFG-NAV5..");
+    return PollMessage(0x06, 0x24);
+}
+
 // (AID-EPH) Polls for Ephemeris data
 bool Ublox::PollEphem(int8_t svid) {
 
@@ -601,6 +613,40 @@ bool Ublox::ResetToWarmStart() {
 bool Ublox::ResetToHotStart() {
     log_info_("Receiver reset to hot start state.");
     return Reset(0x0000, 0x02);
+}
+
+// (CFG-NAV5) Cofigure Navigation Algorithm Parameters
+bool Ublox::ConfigureNavigationParameters(uint8_t dynamic_model, uint8_t fix_mode){
+    CfgNav5 message;
+
+    message.header.sync1 = 0xB5;
+    message.header.sync2 = 0x62;
+    message.header.message_class = 0x06;
+    message.header.message_id = 0x24;
+    message.header.payload_length = 36;
+
+    message.mask = 0b00000101;
+    message.dynamic_model = dynamic_model;
+    message.fix_mode = fix_mode;
+    message.fixed_altitude = 0;
+    message.fixed_altitude_variance = 0;
+    message.min_elevation = 0;
+    message.dead_reckoning_limit = 0;
+    message.pdop = 0;
+    message.tdop = 0;
+    message.pos_accuracy_mask = 0;
+    message.time_accuracy_mask = 0;
+    message.static_hold_threshold = 0;
+    message.dgps_timeout = 0;
+    message.reserved2 = 0;
+    message.reserved3 = 0;
+    message.reserved4 = 0;
+
+    unsigned char* msg_ptr = (unsigned char*) &message;
+    calculateCheckSum(msg_ptr + 2, 36+4, message.checksum);
+
+    serial_port_->write(msg_ptr, sizeof(message));
+    return true;
 }
 
 // (CFG-MSG) Set message output rate for specified message
@@ -965,6 +1011,15 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
         //printHex((char*) &cur_port_settings, sizeof(cur_port_settings));
         if (port_settings_callback_)
             port_settings_callback_(cur_port_settings, read_timestamp_);
+        break;
+
+    case CFG_NAV5:
+        CfgNav5 cur_nav5_settings;
+        payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
+        memcpy(&cur_nav5_settings, log, payload_length+HDR_CHKSM_LENGTH);
+        //printHex((char*) &cur_port_settings, sizeof(cur_port_settings));
+        if (configure_navigation_parameters_callback_)
+            configure_navigation_parameters_callback_(cur_nav5_settings, read_timestamp_);
         break;
 
     case NAV_STATUS:
