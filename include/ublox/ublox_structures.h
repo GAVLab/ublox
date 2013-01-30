@@ -118,12 +118,29 @@ PACK(
 * parameters.
 * ID: 0x06  0x24 Payload Length=36 bytes
 */
+enum DynamicModel {
+    Portable = 0,
+    Stationary = 2,
+    Pedestrian = 3,
+    Automotive = 4,
+    Sea = 5,
+    Airborne1g = 6,
+    Airborne2g = 7,
+    Airborne4g = 8,
+}
+
+enum PositionFixMode {
+    Only2D = 1,
+    Only3D = 2,
+    2or3D = 3,
+}
+
 PACK(
     struct CfgNav5 {
         UbloxHeader header;		//!< Ublox header
         uint16_t mask; //!< parameters bitmask (only masked params applied)
-        uint8_t dynamic_model; //!< dynamic platform
-        uint8_t fix_mode; //!< positioning fix mode
+        DynamicModel dynamic_model; //!< dynamic platform
+        PositionFixMode fix_mode; //!< positioning fix mode
         int32_t fixed_altitude; //!< (scale .01) (m)
         uint32_t fixed_altitude_variance; //!< (scale .0001) (m^2)
         int8_t min_elevation; //!< (deg)
@@ -139,7 +156,6 @@ PACK(
         uint32_t reserved4; //!< reserved (always set to zero)
         uint8_t checksum[2];
 });
-
 
 /////////////////////////////////////////////////////////////
 // Navigation Messages
