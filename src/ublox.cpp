@@ -484,12 +484,12 @@ bool Ublox::PollEphem(int8_t svid) {
         log_error_("Error in PollEphem: Invalid input 'svid'");
         return 0;
     } else if (svid == -1) { // Requests Ephemerides for all SVs
-        log_info_("Polling for all Ephemerides..");
+        log_debug_("Polling for all Ephemerides..");
         return PollMessage(0x0B, 0x31);
     } else if (svid > 0) { // Requests Ephemeris for a single SV
         stringstream output;
         output << "Polling for SV# " << (int) svid << " Ephemeris..";
-        log_info_(output.str());
+        log_debug_(output.str());
         return PollMessageIndSV(0x0B, 0x31, (uint8_t) svid);
     } else {
         log_error_("Error in PollEphem: Invalid input 'svid'");
@@ -504,12 +504,12 @@ bool Ublox::PollAlmanac(int8_t svid) {
         log_error_("Error in PollAlmanac: Invalid input 'svid'");
         return 0;
     } else if (svid == -1) { // Requests Almanac Data for all SVs
-        log_info_("Polling for all Almanac Data..");
+        log_debug_("Polling for all Almanac Data..");
         return PollMessage(0x0B, 0x30);
     } else if (svid > 0) { // Requests Almanac Data for a single SV
         stringstream output;
         output << "Polling for SV# " << (int) svid << " Almanac Data..";
-        log_info_(output.str());
+        log_debug_(output.str());
         return PollMessageIndSV(0x0B, 0x30, (uint8_t) svid);
     } else {
         log_error_("Error in PollAlmanac: Invalid input 'svid'");
@@ -519,43 +519,43 @@ bool Ublox::PollAlmanac(int8_t svid) {
 
 // (AID-HUI) Polls GPS Health, UTC and Ionospheric Parameters
 bool Ublox::PollHUI() {
-    log_info_("Polling for AID-HUI..");
+    log_debug_("Polling for AID-HUI..");
     return PollMessage(0x0B, 0x02);
 }
 
 // (AID-INI) Polls for Receiver Position, Time, Frequency, and Clock Drift
 bool Ublox::PollIniAid() {
-    log_info_("Polling for AID-INI..");
+    log_debug_("Polling for AID-INI..");
     return PollMessage(0x0B, 0x01);
 }
 
 // (AID-DATA) Polls for All AID Data (-INI, -HUI, -EPH, -ALM)
 bool Ublox::PollAllAidData() {
-    log_info_("Polling for AID-HUI, AID-INI, AID-EPH, & AID-ALM..");
+    log_debug_("Polling for AID-HUI, AID-INI, AID-EPH, & AID-ALM..");
     return PollMessage(0x0B, 0x10);
 }
 
 // (RXM-RAW) Polls for Raw DGPS data
 bool Ublox::PollRawDgpsData() {
-    log_info_("Polling for RXM-RAW..");
+    log_debug_("Polling for RXM-RAW..");
     return PollMessage(0x02, 0x10);
 }
 
 // (RXM-SVSI) Polls for Satellite Status Info
 bool Ublox::PollSVStatus() {
-    log_info_("Polling for RXM-SVSI..");
+    log_debug_("Polling for RXM-SVSI..");
     return PollMessage(0x02, 0x20);
 }
 
 // (NAV-SVINFO) Polls for Space Vehicle Information
 bool Ublox::PollSVInfo() {
-    log_info_("Polling for NAV-SVINFO..");
+    log_debug_("Polling for NAV-SVINFO..");
     return PollMessage(0x01, 0x30);
 }
 
 // (NAV-STATUS) Polls for Receiver Navigation Status
 bool Ublox::PollNavStatus() {
-    log_info_("Polling for Receiver NAV-STATUS..");
+    log_debug_("Polling for Receiver NAV-STATUS..");
     return PollMessage(0x01, 0x03);
 }
 
