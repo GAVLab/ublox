@@ -325,7 +325,7 @@ bool Ublox::Ping(int num_attempts) {
                 stringstream output;
                 output << "Only read " << bytes_read
                         << " bytes in response to ping.";
-                log_warning_(output.str());
+                log_debug_(output.str());
                 continue;
             }
 
@@ -344,7 +344,7 @@ bool Ublox::Ping(int num_attempts) {
                     //std::cout << "length2:" << hex << (unsigned int)result[ii+5] << std::endl;
                     length = (result[ii + 4]) + (result[ii + 5] << 8);
                     if (length < 40) {
-                        log_warning_("Incomplete version message received");
+                        log_debug_("Incomplete version message received");
                         //    //return false;
                         continue;
                     }
@@ -365,7 +365,7 @@ bool Ublox::Ping(int num_attempts) {
             stringstream output;
             output << "Read " << bytes_read
                     << " bytes, but version message not found.";
-            log_warning_(output.str());
+            log_debug_(output.str());
 
         }
     } catch (exception &e) {
@@ -379,8 +379,10 @@ bool Ublox::Ping(int num_attempts) {
 }
 
 void Ublox::Disconnect() {
-    if (reading_status_)
+    if (reading_status_) {
         StopReading();
+        // TODO: wait here for reading to stop
+    }
     if (serial_port_ != NULL) {
         if (serial_port_->isOpen())
             serial_port_->close();
