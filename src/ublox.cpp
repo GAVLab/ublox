@@ -781,8 +781,8 @@ bool Ublox::SendAidIni(AidIni ini)
     if (sizeof(ini) == FULL_LENGTH_AID_INI)
     {
         bool sent_ini = SendMessage(msg_ptr, FULL_LENGTH_AID_INI);
-        output << "Sending AID-INI to receiver..";
-        log_info_(output.str());
+        output << "Sending AID-INI to receiver.";
+        log_debug_(output.str());
         return true;
     }
     else
