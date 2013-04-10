@@ -771,7 +771,7 @@ bool Ublox::SendMessage(uint8_t* msg_ptr, size_t length)
 // Send AID-INI to Receiver
 bool Ublox::SendAidIni(AidIni ini)
 {  
-    stringstream output;
+    //stringstream output;
 
     unsigned char* msg_ptr = (unsigned char*)&ini;
     calculateCheckSum(msg_ptr + 2, PAYLOAD_LENGTH_AID_INI + 4, 
@@ -781,14 +781,14 @@ bool Ublox::SendAidIni(AidIni ini)
     if (sizeof(ini) == FULL_LENGTH_AID_INI)
     {
         bool sent_ini = SendMessage(msg_ptr, FULL_LENGTH_AID_INI);
-        output << "Sending AID-INI to receiver.";
-        log_debug_(output.str());
+        //output << "Sending AID-INI to receiver.";
+        //log_debug_(output.str());
         return true;
     }
     else
     {
-        output << "Provided AID-INI message not of correct length.";
-        log_error_(output.str());
+        //output << "Provided AID-INI message not of correct length.";
+        //log_error_(output.str());
         return false;
     }
 }
@@ -799,19 +799,19 @@ bool Ublox::SendAidEphem(Ephemerides ephems)
     bool sent_ephem [32];
 
     for (uint8_t prn_index = 1; prn_index <= 32; prn_index++) {
-        stringstream output;
+        //stringstream output;
         if (ephems.ephemsv[prn_index].header.payload_length == PAYLOAD_LENGTH_AID_EPH_WITH_DATA) {
-            output << "Sending AID-EPH for PRN # "
-                    << (int) ephems.ephemsv[prn_index].svprn << " ..";
+            //output << "Sending AID-EPH for PRN # "
+                    //<< (int) ephems.ephemsv[prn_index].svprn << " ..";
             uint8_t* msg_ptr = (uint8_t*) &ephems.ephemsv[prn_index];
             calculateCheckSum(msg_ptr + 2, PAYLOAD_LENGTH_AID_EPH_WITH_DATA + 4, 
                                 ephems.ephemsv[prn_index].checksum);
             sent_ephem[prn_index] = SendMessage(msg_ptr, FULL_LENGTH_AID_EPH_WITH_DATA);
 
         } else { // not a full ephemeris message
-            output << "No AID-EPH data for PRN # " << (int) prn_index << " ..";
+            //output << "No AID-EPH data for PRN # " << (int) prn_index << " ..";
         }
-        log_debug_(output.str());
+        //log_debug_(output.str());
     }
     return true;
 }
@@ -822,20 +822,20 @@ bool Ublox::SendAidAlm(Almanac almanac) {
     bool sent_alm [32];
 
     for (uint8_t prn_index = 1; prn_index <= 32; prn_index++) {
-        stringstream output;
+        //stringstream output;
 
         if (almanac.almsv[prn_index].header.payload_length == PAYLOAD_LENGTH_AID_ALM_WITH_DATA) {
-            output << "Sending AID-ALM for PRN # "
-                    << (int) almanac.almsv[prn_index].svprn << " ..";
+            //output << "Sending AID-ALM for PRN # "
+                    //<< (int) almanac.almsv[prn_index].svprn << " ..";
             uint8_t* msg_ptr = (uint8_t*) &almanac.almsv[prn_index];
             calculateCheckSum(msg_ptr + 2, PAYLOAD_LENGTH_AID_ALM_WITH_DATA + 4, 
                                 almanac.almsv[prn_index].checksum);
             sent_alm[prn_index] = SendMessage(msg_ptr, FULL_LENGTH_AID_ALM_WITH_DATA);
         }
         else {
-            output << "No AID-ALM data for PRN # " << (int) prn_index << " ..";
+            //output << "No AID-ALM data for PRN # " << (int) prn_index << " ..";
         }
-        log_debug_(output.str());
+        //log_debug_(output.str());
     }
     return true;
 }
@@ -843,7 +843,7 @@ bool Ublox::SendAidAlm(Almanac almanac) {
 // Send AID-HUI to Receiver
 bool Ublox::SendAidHui(AidHui hui)
 {
-    stringstream output;
+    //stringstream output;
 
     unsigned char* msg_ptr = (unsigned char*)&hui;
     calculateCheckSum(msg_ptr + 2, PAYLOAD_LENGTH_AID_HUI + 4, 
@@ -853,14 +853,14 @@ bool Ublox::SendAidHui(AidHui hui)
     {
         
         bool sent_hui = SendMessage(msg_ptr, FULL_LENGTH_AID_HUI);
-        output << "Sending AID-HUI to receiver..";
-        log_info_(output.str());
+        //output << "Sending AID-HUI to receiver..";
+        //log_info_(output.str());
         return true;
     }
     else
     {
-        output << "Provided AID-HUI message not of correct length.";
-        log_error_(output.str());
+        //output << "Provided AID-HUI message not of correct length.";
+        //log_error_(output.str());
         return false;
     }
 }
