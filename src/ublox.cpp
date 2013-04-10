@@ -1167,17 +1167,17 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
         // If Almanac data for SV is not present (payload_length is 8 bytes)
         if (payload_length == 8)
         {
-            stringstream output;
-            output << "SV# " << (int) *(log+6) << "- no almanac data";
-            log_debug_(output.str());
+            //stringstream output;
+            //output << "SV# " << (int) *(log+6) << "- no almanac data";
+            //log_debug_(output.str());
         }
 
         // If Almanac data for SV is present (payload_length is 40 bytes)
         else if (payload_length == 40)
         {
-            stringstream output;
-            output << "SV# " << (int) *(log+6) << "- has almanac data";
-            log_debug_(output.str());
+            //stringstream output;
+            //output << "SV# " << (int) *(log+6) << "- has almanac data";
+            //log_debug_(output.str());
         }
         else
         {
@@ -1196,7 +1196,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 
         memcpy(&cur_aid_hui, log, payload_length+HDR_CHKSM_LENGTH);
 
-        log_info_("Received AID-HUI Message.");
+        //log_debug_("Received AID-HUI Message.");
 
         //printHex((char*)log, sizeof(cur_aid_hui));
 
