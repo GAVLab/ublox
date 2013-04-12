@@ -762,7 +762,8 @@ bool Ublox::SendMessage(uint8_t* msg_ptr, size_t length)
     if (bytes_written == length) return true;
     else
     {
-        output1 << "Full message was not sent over serial port.";
+        log_error_("Full message was not sent over serial port.");
+        output1 << "Attempted to send " << length << "bytes. " << bytes_written << " bytes sent.";
         log_error_(output1.str());
         return false;
     }
