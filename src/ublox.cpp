@@ -462,9 +462,14 @@ bool Ublox::PollMessage(uint8_t class_id, uint8_t msg_id) {
 
 		calculateCheckSum(msg_ptr + 2, 4, msg_ptr + 6);
 
-		size_t bytes_written = serial_port_->write(message, 8);
+        if (serial_port_->isOpen()) {
+		  size_t bytes_written = serial_port_->write(message, 8);
+          return bytes_written == 8;
+        } else {
+            log_error_("Unable to send poll message. Serial port not open.");
+            return false;
+        }
 
-		return bytes_written == 8;
 	} catch (std::exception &e) {
 		std::stringstream output;
 		output << "Error sending ublox poll message: " << e.what();
@@ -490,9 +495,15 @@ bool Ublox::PollMessageIndSV(uint8_t class_id, uint8_t msg_id, uint8_t svid) {
 
 		uint8_t* msg_ptr = (uint8_t*) &message;
 		calculateCheckSum(msg_ptr + 2, 5, msg_ptr + 7);
-		size_t bytes_written = serial_port_->write(msg_ptr, 9);
 
-		return bytes_written == 9;
+        if (serial_port_->isOpen()) {
+		    size_t bytes_written = serial_port_->write(msg_ptr, 9);
+            return bytes_written == 9;
+        } else {
+            log_error_("Unable to send poll ind. sv. message. Serial port not open.");
+            return false;
+        }
+
     } catch (std::exception &e) {
 		std::stringstream output;
 		output << "Error polling individual svs: " << e.what();
@@ -621,8 +632,12 @@ bool Ublox::Reset(uint16_t nav_bbr_mask, uint8_t reset_mode) {
 
 		unsigned char* msg_ptr = (unsigned char*) &message;
 		calculateCheckSum(msg_ptr + 2, 8, message.checksum);
-
-		return serial_port_->write(msg_ptr, sizeof(message)) == sizeof(message);
+        if (serial_port_->isOpen()) {
+		  return serial_port_->write(msg_ptr, sizeof(message)) == sizeof(message);
+        } else {
+            log_error_("Unable to send reset command. Serial port not open.");
+            return false;
+        }
 	} catch (std::exception &e) {
 		std::stringstream output;
 		output << "Error resetting ublox: " << e.what();
@@ -812,8 +827,14 @@ bool Ublox::SendMessage(uint8_t* msg_ptr, size_t length)
 		//std::cout << length << std::endl;
 		//std::cout << "Message Pointer" << endl;
 		//printHex((char*) msg_ptr, length);
+        size_t bytes_written;
 
-		size_t bytes_written=serial_port_->write(msg_ptr, length);
+        if (serial_port_->isOpen()) {
+		  bytes_written=serial_port_->write(msg_ptr, length);
+        } else {
+            log_error_("Unable to send message. Serial port not open.");
+            return false;
+        }
 		// check that full message was sent to serial port
 		if (bytes_written == length) {
 			return true;
