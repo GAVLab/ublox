@@ -462,7 +462,7 @@ bool Ublox::PollMessage(uint8_t class_id, uint8_t msg_id) {
 
 		calculateCheckSum(msg_ptr + 2, 4, msg_ptr + 6);
 
-        if (serial_port_->isOpen()) {
+        if ((serial_port_!=NULL)&&(serial_port_->isOpen())) {
 		  size_t bytes_written = serial_port_->write(message, 8);
           return bytes_written == 8;
         } else {
@@ -496,7 +496,7 @@ bool Ublox::PollMessageIndSV(uint8_t class_id, uint8_t msg_id, uint8_t svid) {
 		uint8_t* msg_ptr = (uint8_t*) &message;
 		calculateCheckSum(msg_ptr + 2, 5, msg_ptr + 7);
 
-        if (serial_port_->isOpen()) {
+        if ((serial_port_!=NULL)&&(serial_port_->isOpen())) {
 		    size_t bytes_written = serial_port_->write(msg_ptr, 9);
             return bytes_written == 9;
         } else {
@@ -632,7 +632,7 @@ bool Ublox::Reset(uint16_t nav_bbr_mask, uint8_t reset_mode) {
 
 		unsigned char* msg_ptr = (unsigned char*) &message;
 		calculateCheckSum(msg_ptr + 2, 8, message.checksum);
-        if (serial_port_->isOpen()) {
+        if ((serial_port_!=NULL)&&(serial_port_->isOpen())) {
 		  return serial_port_->write(msg_ptr, sizeof(message)) == sizeof(message);
         } else {
             log_error_("Unable to send reset command. Serial port not open.");
@@ -829,7 +829,7 @@ bool Ublox::SendMessage(uint8_t* msg_ptr, size_t length)
 		//printHex((char*) msg_ptr, length);
         size_t bytes_written;
 
-        if (serial_port_->isOpen()) {
+        if ((serial_port_!=NULL)&&(serial_port_->isOpen())) {
 		  bytes_written=serial_port_->write(msg_ptr, length);
         } else {
             log_error_("Unable to send message. Serial port not open.");
