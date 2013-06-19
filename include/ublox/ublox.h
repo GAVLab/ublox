@@ -109,18 +109,6 @@ public:
      */
      bool Ping(int num_attempts=5);
 
-
-     /*!
-      * Pings the GPS to determine if it is properly connected
-      *
-      * This method sends a ping to the GPS and waits for a response.
-      *
-      * @param num_attempts The number of times to ping the device
-      * before giving up
-      * @param timeout The time in milliseconds to wait for each reponse
-      *
-      * @return True if the GPS was found, false if it was not.
-      */
      void set_time_handler(GetTimeCallback time_handler) {
          this->time_handler_ = time_handler;
     }
