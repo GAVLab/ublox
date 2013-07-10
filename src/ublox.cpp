@@ -312,7 +312,7 @@ bool Ublox::Ping(int num_attempts) {
             // request version information
 
             // ask for version
-            PollMessage(0x0A, 0x04);
+            PollMessage(MSG_CLASS_MON, MSG_ID_MON_VER);
 
             boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 
@@ -335,12 +335,12 @@ bool Ublox::Ping(int num_attempts) {
             // search through result for version message
             for (int ii = 0; ii < (bytes_read - 8); ii++) {
                 //std::cout << hex << (unsigned int)result[ii] << std::endl;
-                if (result[ii] == 0xB5) {
-                    if (result[ii + 1] != 0x62)
+                if (result[ii] == UBX_SYNC_BYTE_1) {
+                    if (result[ii + 1] != UBX_SYNC_BYTE_2)
                         continue;
-                    if (result[ii + 2] != 0x0A)
+                    if (result[ii + 2] != MSG_CLASS_MON)
                         continue;
-                    if (result[ii + 3] != 0x04)
+                    if (result[ii + 3] != MSG_ID_MON_VER)
                         continue;
                     //std::cout << "length1:" << hex << (unsigned int)result[ii+4] << std::endl;
                     //std::cout << "length2:" << hex << (unsigned int)result[ii+5] << std::endl;
@@ -449,8 +449,8 @@ bool Ublox::PollMessage(uint8_t class_id, uint8_t msg_id) {
 	try {
 		uint8_t message[8];
 
-		message[0]=0xB5;        // sync 1
-		message[1]=0x62;        // sync 2
+		message[0]=UBX_SYNC_BYTE_1;        // sync 1
+		message[1]=UBX_SYNC_BYTE_2;        // sync 2
 		message[2]=class_id;
 		message[3]=msg_id;
 		message[4]=0;           // length 1
@@ -483,8 +483,8 @@ bool Ublox::PollMessageIndSV(uint8_t class_id, uint8_t msg_id, uint8_t svid) {
     try {
 		uint8_t message[9];
 
-		message[0] = 0xB5;        // sync 1
-		message[1] = 0x62;        // sync 2
+		message[0] = UBX_SYNC_BYTE_1;        // sync 1
+		message[1] = UBX_SYNC_BYTE_2;        // sync 2
 		message[2] = class_id;
 		message[3] = msg_id;
 		message[4] = 1;           // length 1
@@ -515,7 +515,7 @@ bool Ublox::PollMessageIndSV(uint8_t class_id, uint8_t msg_id, uint8_t svid) {
 // (CFG-NAV5) Polls current navigation algorithms parameters
 bool Ublox::PollNavigationParamterConfiguration() {
     log_info_("Polling for CFG-NAV5..");
-    return PollMessage(0x06, 0x24);
+    return PollMessage(MSG_CLASS_CFG, MSG_ID_CFG_NAV5);
 }
 
 // (AID-EPH) Polls for Ephemeris data
@@ -526,12 +526,12 @@ bool Ublox::PollEphem(int8_t svid) {
         return 0;
     } else if (svid == -1) { // Requests Ephemerides for all SVs
         log_debug_("Polling for all Ephemerides..");
-        return PollMessage(0x0B, 0x31);
+        return PollMessage(MSG_CLASS_AID, MSG_ID_AID_EPH);
     } else if (svid > 0) { // Requests Ephemeris for a single SV
         stringstream output;
         output << "Polling for SV# " << (int) svid << " Ephemeris..";
         log_debug_(output.str());
-        return PollMessageIndSV(0x0B, 0x31, (uint8_t) svid);
+        return PollMessageIndSV(MSG_CLASS_AID, MSG_ID_AID_EPH, (uint8_t) svid);
     } else {
         log_error_("Error in PollEphem: Invalid input 'svid'");
         return 0;
@@ -546,12 +546,12 @@ bool Ublox::PollAlmanac(int8_t svid) {
         return 0;
     } else if (svid == -1) { // Requests Almanac Data for all SVs
         log_debug_("Polling for all Almanac Data..");
-        return PollMessage(0x0B, 0x30);
+        return PollMessage(MSG_CLASS_AID, MSG_ID_AID_ALM);
     } else if (svid > 0) { // Requests Almanac Data for a single SV
         stringstream output;
         output << "Polling for SV# " << (int) svid << " Almanac Data..";
         log_debug_(output.str());
-        return PollMessageIndSV(0x0B, 0x30, (uint8_t) svid);
+        return PollMessageIndSV(MSG_CLASS_AID, MSG_ID_AID_ALM, (uint8_t) svid);
     } else {
         log_error_("Error in PollAlmanac: Invalid input 'svid'");
         return 0;
@@ -561,43 +561,43 @@ bool Ublox::PollAlmanac(int8_t svid) {
 // (AID-HUI) Polls GPS Health, UTC and Ionospheric Parameters
 bool Ublox::PollHUI() {
     log_debug_("Polling for AID-HUI..");
-    return PollMessage(0x0B, 0x02);
+    return PollMessage(MSG_CLASS_AID, MSG_ID_AID_HUI);
 }
 
 // (AID-INI) Polls for Receiver Position, Time, Frequency, and Clock Drift
 bool Ublox::PollIniAid() {
     log_debug_("Polling for AID-INI..");
-    return PollMessage(0x0B, 0x01);
+    return PollMessage(MSG_CLASS_AID, MSG_ID_AID_INI);
 }
 
 // (AID-DATA) Polls for All AID Data (-INI, -HUI, -EPH, -ALM)
 bool Ublox::PollAllAidData() {
     log_debug_("Polling for AID-HUI, AID-INI, AID-EPH, & AID-ALM..");
-    return PollMessage(0x0B, 0x10);
+    return PollMessage(MSG_CLASS_AID, MSG_ID_AID_DATA);
 }
 
 // (RXM-RAW) Polls for Raw DGPS data
 bool Ublox::PollRawDgpsData() {
     log_debug_("Polling for RXM-RAW..");
-    return PollMessage(0x02, 0x10);
+    return PollMessage(MSG_CLASS_RXM, MSG_ID_RXM_RAW);
 }
 
 // (RXM-SVSI) Polls for Satellite Status Info
 bool Ublox::PollSVStatus() {
     log_debug_("Polling for RXM-SVSI..");
-    return PollMessage(0x02, 0x20);
+    return PollMessage(MSG_CLASS_RXM, MSG_ID_RXM_SVSI);
 }
 
 // (NAV-SVINFO) Polls for Space Vehicle Information
 bool Ublox::PollSVInfo() {
     log_debug_("Polling for NAV-SVINFO..");
-    return PollMessage(0x01, 0x30);
+    return PollMessage(MSG_CLASS_NAV, MSG_ID_NAV_SVINFO);
 }
 
 // (NAV-STATUS) Polls for Receiver Navigation Status
 bool Ublox::PollNavStatus() {
     log_debug_("Polling for Receiver NAV-STATUS..");
-    return PollMessage(0x01, 0x03);
+    return PollMessage(MSG_CLASS_NAV, MSG_ID_NAV_STATUS);
 }
 
 ////////////////////////////////////////////////////////
@@ -608,10 +608,10 @@ bool Ublox::Reset(uint16_t nav_bbr_mask, uint8_t reset_mode) {
 	try {
 		CfgRst message;
 
-		message.header.sync1 = 0xB5;
-		message.header.sync2 = 0x62;
-		message.header.message_class = 0x06;
-		message.header.message_id = 0x04;
+		message.header.sync1 = UBX_SYNC_BYTE_1;
+		message.header.sync2 = UBX_SYNC_BYTE_2;
+		message.header.message_class = MSG_CLASS_CFG;
+		message.header.message_id = MSG_ID_CFG_RST;
 		message.header.payload_length = 4;
 
 		message.nav_bbr_mask = nav_bbr_mask;    //X2-Bitfield?
@@ -669,10 +669,10 @@ bool Ublox::ConfigureNavigationParameters(uint8_t dynamic_model, uint8_t fix_mod
 	try {
 		CfgNav5 message;
 
-		message.header.sync1 = 0xB5;
-		message.header.sync2 = 0x62;
-		message.header.message_class = 0x06;
-		message.header.message_id = 0x24;
+		message.header.sync1 = UBX_SYNC_BYTE_1;
+		message.header.sync2 = UBX_SYNC_BYTE_2;
+		message.header.message_class = MSG_CLASS_CFG;
+		message.header.message_id = MSG_ID_CFG_NAV5;
 		message.header.payload_length = 36;
 
 		message.mask = 0b00000101;
@@ -709,10 +709,10 @@ bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id,
         uint8_t rate) {
 	try {
 		CfgMsgRate message;
-		message.header.sync1 = 0xB5;
-		message.header.sync2 = 0x62;
-		message.header.message_class = 0x06;
-		message.header.message_id = 0x01;
+		message.header.sync1 = UBX_SYNC_BYTE_1;
+		message.header.sync2 = UBX_SYNC_BYTE_2;
+		message.header.message_class = MSG_CLASS_CFG;
+		message.header.message_id = MSG_ID_CFG_MSG;
 		message.header.payload_length = 3;
 
 		message.message_class = class_id;
@@ -737,10 +737,10 @@ void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output,
 	try {
 		CfgPrt message;
 		//std::cout << sizeof(message) << std::endl;
-		message.header.sync1 = 0xB5;
-		message.header.sync2 = 0x62;
-		message.header.message_class = 0x06;
-		message.header.message_id = 0x00;
+		message.header.sync1 = UBX_SYNC_BYTE_1;
+		message.header.sync2 = UBX_SYNC_BYTE_2;
+		message.header.message_class = MSG_CLASS_CFG;
+		message.header.message_id = MSG_ID_CFG_PRT;
 		message.header.payload_length = 20;
 
 		message.port_id = 3;          //Port identifier for USB Port (3)
@@ -794,10 +794,10 @@ void Ublox::PollPortConfiguration(uint8_t port_identifier)
   //                 = 1 or 2 for UART
 	try {
 		uint8_t message[9];
-		message[0]=0xB5;
-		message[1]=0x62;
-		message[2]=0x06;
-		message[3]=0x00;
+		message[0]=UBX_SYNC_BYTE_1;
+		message[1]=UBX_SYNC_BYTE_2;
+		message[2]=MSG_CLASS_CFG;
+		message[3]=MSG_ID_CFG_PRT;
 		message[4]=1;
 		message[5]=0;
 		message[6]=port_identifier;         //Port identifier for USB Port (3)
@@ -1021,14 +1021,14 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length) {
 			//cout << "buffer_index_ = " << buffer_index_ << endl;
 
 			if (buffer_index_ == 0) {	// looking for beginning of message
-				if (msg[i] == 0xB5) {	// beginning of msg found - add to buffer
+				if (msg[i] == UBX_SYNC_BYTE_1) {	// beginning of msg found - add to buffer
 										//cout << "got first bit" << endl;
 					data_buffer_[buffer_index_++] = msg[i];
 					bytes_remaining_ = 0;
 				}	// end if (msg[i]
 			} // end if (buffer_index_==0)
 			else if (buffer_index_ == 1) {	// verify 2nd character of header
-				if (msg[i] == 0x62) {	// 2nd byte ok - add to buffer
+				if (msg[i] == UBX_SYNC_BYTE_2) {	// 2nd byte ok - add to buffer
 										//cout << " got second synch bit" << endl;
 					data_buffer_[buffer_index_++] = msg[i];
 				} else {
@@ -1036,11 +1036,11 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length) {
 					buffer_index_ = 0;
 					bytes_remaining_ = 0;
 					//readingACK=false;
-				} // end if (msg[i]==0x62)
+				} // end if (msg[i]==UBX_SYNC_BYTE_2)
 			}	// end else if (buffer_index_==1)
 			else if (buffer_index_ == 2) {	//look for ack
 
-				if (msg[i] == 0x05)   // ACK or NAK message class
+				if (msg[i] == MSG_CLASS_ACK)   // ACK or NAK message class
 						{
 					// Get message id from payload
 					char* class_id = reinterpret_cast<char*>(msg[i + 4]);
@@ -1048,7 +1048,7 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length) {
 
 					// Add function which takes class_id and msg_id and returns name of corresponding message
 
-					if (msg[i + 1] == 0x01) // ACK Message
+					if (msg[i + 1] == MSG_ID_ACK_ACK) // ACK Message
 							{
 						//std::cout << "Receiver Acknowledged Message " << std::endl;
 						//printf("0x%.2X ", (unsigned)class_id);
@@ -1058,7 +1058,7 @@ void Ublox::BufferIncomingData(uint8_t *msg, size_t length) {
 
 					}
 
-					else if (msg[i + 1] == 0x00)    // NAK Message
+					else if (msg[i + 1] == MSG_ID_ACK_NAK)    // NAK Message
 							{
 						//std::cout << "Receiver Did Not Acknowledged Message " << std::endl;
 						//printf("0x%.2X ", (unsigned)class_id);

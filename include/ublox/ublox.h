@@ -112,7 +112,7 @@ public:
      void set_time_handler(GetTimeCallback time_handler) {
          this->time_handler_ = time_handler;
     }
-     void SaveConfiguration();
+     void SaveConfiguration(); // TODO: Implement this
      bool Reset(uint16_t nav_bbr_mask, uint8_t reset_mode);
      bool ResetToColdStart(uint8_t reset_mode);
      bool ResetToWarmStart();
