@@ -51,7 +51,10 @@ typedef boost::function<double()> GetTimeCallback;
 typedef boost::function<void()> HandleAcknowledgementCallback;
 
 // Messaging callbacks
-typedef boost::function<void(const std::string&)> LogMsgCallback;
+typedef boost::function<void(const std::string&)> DebugMsgCallback;
+typedef boost::function<void(const std::string&)> InfoMsgCallback;
+typedef boost::function<void(const std::string&)> WarningMsgCallback;
+typedef boost::function<void(const std::string&)> ErrorMsgCallback;
 
 // GPS Data Callbacks
 typedef boost::function<void(CfgPrt&, double&)> PortSettingsCallback;
@@ -125,10 +128,10 @@ public:
     //////////////////////////////////////////////////////
     // Diagnostic Callbacks
     //////////////////////////////////////////////////////
-    LogMsgCallback log_debug_;
-    LogMsgCallback log_info_;
-    LogMsgCallback log_warning_;
-    LogMsgCallback log_error_;
+    DebugMsgCallback log_debug_;
+    InfoMsgCallback log_info_;
+    WarningMsgCallback log_warning_;
+    ErrorMsgCallback log_error_;
 
     //////////////////////////////////////////////////////
     // Data Callbacks
