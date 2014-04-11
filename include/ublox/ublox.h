@@ -124,6 +124,10 @@ public:
 
     void SetPortConfiguration(bool ubx_input, bool ubx_output, bool nmea_input, bool nmea_output);
     bool ConfigureMessageRate(uint8_t class_id, uint8_t msg_id, uint8_t rate);
+        // (rate) is relative to the event a message is registered on. For example,
+        // if the rate of a navigation message is set to 2, the message is sent
+        // every second navigation solution.
+
     bool ConfigureNavigationParameters(uint8_t dynamic_model = 3, uint8_t fix_mode = 3);
 
     //////////////////////////////////////////////////////
