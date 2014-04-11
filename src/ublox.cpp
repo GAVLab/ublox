@@ -60,11 +60,11 @@ inline void DefaultErrorMsgCallback(const std::string &msg) {
     std::cout << "Ublox Error: " << msg << std::endl;
 }
 
-inline void DefaultNavSolCallback(NavSol nav_sol, double time_stamp) {
+inline void DefaultNavSolCallback(ublox::NavSol nav_sol, double time_stamp) {
     std::cout << "NAV-SOL: " << endl;
 }
 
-inline void DefaultNavStatusCallback(NavStatus nav_status, double time_stamp) {
+inline void DefaultNavStatusCallback(ublox::NavStatus nav_status, double time_stamp) {
     std::cout << "GPS Fix Type: ";
     if (nav_status.fixtype == 0x00) {
         std::cout << "No Fix" << std::endl;
@@ -93,37 +93,37 @@ inline void DefaultNavStatusCallback(NavStatus nav_status, double time_stamp) {
     }
 }
 
-inline void DefaultNavVelNedCallback(NavVelNed nav_vel_ned, double time_stamp) {
+inline void DefaultNavVelNedCallback(ublox::NavVelNed nav_vel_ned, double time_stamp) {
     std::cout << "NAV-VELNED: " << endl;
 }
 
-inline void DefaultNavSVInfoCallback(NavSVInfo nav_sv_info, double time_stamp) {
+inline void DefaultNavSVInfoCallback(ublox::NavSVInfo nav_sv_info, double time_stamp) {
     std::cout << "NAV-SVINFO: " << endl;
 }
 
-inline void DefaultNavGPSTimeCallback(NavGPSTime nav_gps_time,
+inline void DefaultNavGPSTimeCallback(ublox::NavGPSTime nav_gps_time,
         double time_stamp) {
     std::cout << "NAV-GPSTIME: " << endl;
 }
 
-inline void DefaultNavUTCTimeCallback(NavUTCTime nav_utc_time,
+inline void DefaultNavUTCTimeCallback(ublox::NavUTCTime nav_utc_time,
         double time_stamp) {
     std::cout << "NAV-UTCTIME: " << endl;
 }
 
-inline void DefaultNavDOPCallback(NavDOP nav_dop, double time_stamp) {
+inline void DefaultNavDOPCallback(ublox::NavDOP nav_dop, double time_stamp) {
     std::cout << "NAV-DOP: " << endl;
 }
 
-inline void DefaultNavDGPSCallback(NavDGPS nav_dgps, double time_stamp) {
+inline void DefaultNavDGPSCallback(ublox::NavDGPS nav_dgps, double time_stamp) {
     std::cout << "NAV-DGPS: " << endl;
 }
 
-inline void DefaultNavClockCallback(NavClock nav_clock, double time_stamp) {
+inline void DefaultNavClockCallback(ublox::NavClock nav_clock, double time_stamp) {
     std::cout << "NAV-CLK: " << endl;
 }
 
-inline void DefaultNavPosLlhCallback(NavPosLLH nav_position, double time_stamp){
+inline void DefaultNavPosLlhCallback(ublox::NavPosLLH nav_position, double time_stamp){
     /*std:: cout << "NAV-POSLLH: " << endl <<
                   "  GPS milliseconds: " << nav_position.iTOW << std::endl <<
                   "  Latitude: " << nav_position.latitude_scaled << std::endl <<
@@ -131,36 +131,36 @@ inline void DefaultNavPosLlhCallback(NavPosLLH nav_position, double time_stamp){
                   "  Height: " << nav_position.height << std::endl << std::endl;*/
 }
 
-inline void DefaultAidEphCallback(EphemSV eph_sv, double time_stamp) {
+inline void DefaultAidEphCallback(ublox::EphemSV eph_sv, double time_stamp) {
     std::cout << "AID-EPH: " << std::endl;
 }
 
-inline void DefaultAidAlmCallback(AlmSV alm_sv, double time_stamp) {
+inline void DefaultAidAlmCallback(ublox::AlmSV alm_sv, double time_stamp) {
     std::cout << "AID-ALM: " << std::endl;
 
 }
 
-inline void DefaultAidHuiCallback(AidHui aid_hui, double time_stamp) {
+inline void DefaultAidHuiCallback(ublox::AidHui aid_hui, double time_stamp) {
     std::cout << "AID-HUI: " << std::endl;
 }
 
-inline void DefaultAidIniCallback(AidIni aid_ini, double time_stamp) {
+inline void DefaultAidIniCallback(ublox::AidIni aid_ini, double time_stamp) {
     std::cout << "AID-INI: " << std::endl;
 }
 
-inline void DefaultRxmRawCallback(RawMeas raw_meas, double time_stamp) {
+inline void DefaultRxmRawCallback(ublox::RawMeas raw_meas, double time_stamp) {
     std::cout << "RXM-RAW: " << std::endl;
 }
 
-inline void DefaultRxmSubframeCallback(SubframeData subframe, double time_stamp) {
+inline void DefaultRxmSubframeCallback(ublox::SubframeData subframe, double time_stamp) {
     std::cout << "RXM-SFRB: " << std::endl;
 }
 
-inline void DefaultRxmSvsiCallback(SVStatus sv_stat, double time_stamp) {
+inline void DefaultRxmSvsiCallback(ublox::SVStatus sv_stat, double time_stamp) {
     std::cout << "RXM-SVSI: " << std::endl;
 }
 
-inline void DefaultParsedEphemCallback(ParsedEphemData parsed_ephem_data,
+inline void DefaultParsedEphemCallback(ublox::ParsedEphemData parsed_ephem_data,
         double time_stamp) {
     /*
     std::cout << "Parsed ephemeris: " << std::endl;
@@ -611,7 +611,7 @@ bool Ublox::PollNavStatus() {
 // Receiver Reset
 bool Ublox::Reset(uint16_t nav_bbr_mask, uint8_t reset_mode) {
 	try {
-		CfgRst message;
+        ublox::CfgRst message;
 
 		message.header.sync1 = UBX_SYNC_BYTE_1;
 		message.header.sync2 = UBX_SYNC_BYTE_2;
@@ -672,7 +672,7 @@ bool Ublox::ResetToHotStart() {
 // (CFG-NAV5) Cofigure Navigation Algorithm Parameters
 bool Ublox::ConfigureNavigationParameters(uint8_t dynamic_model, uint8_t fix_mode){
 	try {
-		CfgNav5 message;
+        ublox::CfgNav5 message;
 
 		message.header.sync1 = UBX_SYNC_BYTE_1;
 		message.header.sync2 = UBX_SYNC_BYTE_2;
@@ -713,7 +713,7 @@ bool Ublox::ConfigureNavigationParameters(uint8_t dynamic_model, uint8_t fix_mod
 bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id,
         uint8_t rate) {
 	try {
-		CfgMsgRate message;
+        ublox::CfgMsgRate message;
 		message.header.sync1 = UBX_SYNC_BYTE_1;
 		message.header.sync2 = UBX_SYNC_BYTE_2;
 		message.header.message_class = MSG_CLASS_CFG;
@@ -740,7 +740,7 @@ bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id,
 void Ublox::SetPortConfiguration(bool ubx_input, bool ubx_output,
         bool nmea_input, bool nmea_output) {
 	try {
-		CfgPrt message;
+        ublox::CfgPrt message;
 		//std::cout << sizeof(message) << std::endl;
 		message.header.sync1 = UBX_SYNC_BYTE_1;
 		message.header.sync2 = UBX_SYNC_BYTE_2;
@@ -1137,7 +1137,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case CFG_PRT:
-			CfgPrt cur_port_settings;
+            ublox::CfgPrt cur_port_settings;
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 			memcpy(&cur_port_settings, log, payload_length+HDR_CHKSM_LENGTH);
 			//printHex((char*) &cur_port_settings, sizeof(cur_port_settings));
@@ -1146,7 +1146,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case CFG_NAV5:
-			CfgNav5 cur_nav5_settings;
+            ublox::CfgNav5 cur_nav5_settings;
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 			memcpy(&cur_nav5_settings, log, payload_length+HDR_CHKSM_LENGTH);
 			//printHex((char*) &cur_port_settings, sizeof(cur_port_settings));
@@ -1155,7 +1155,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case NAV_STATUS:
-			NavStatus cur_nav_status;
+            ublox::NavStatus cur_nav_status;
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 			memcpy(&cur_nav_status, log, payload_length+HDR_CHKSM_LENGTH);
 			if (nav_status_callback_)
@@ -1163,7 +1163,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case NAV_SOL:
-			NavSol cur_nav_sol;
+            ublox::NavSol cur_nav_sol;
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 			memcpy(&cur_nav_sol, log, payload_length+HDR_CHKSM_LENGTH);
 			if (nav_sol_callback_)
@@ -1171,7 +1171,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case NAV_VELNED:
-			NavVelNed cur_nav_vel_ned;
+            ublox::NavVelNed cur_nav_vel_ned;
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 			memcpy(&cur_nav_vel_ned, log, payload_length+HDR_CHKSM_LENGTH);
 			if (nav_vel_ned_callback_)
@@ -1179,7 +1179,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case NAV_POSLLH:
-			NavPosLLH cur_nav_position;
+            ublox::NavPosLLH cur_nav_position;
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 			memcpy(&cur_nav_position, log, payload_length+HDR_CHKSM_LENGTH);
 			if (nav_pos_llh_callback_)
@@ -1187,7 +1187,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case NAV_SVINFO:
-			NavSVInfo cur_nav_svinfo;
+            ublox::NavSVInfo cur_nav_svinfo;
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 			num_of_channels = (uint8_t) *(log+10);
 
@@ -1213,7 +1213,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case NAV_GPSTIME:
-			NavGPSTime cur_nav_gps_time;
+            ublox::NavGPSTime cur_nav_gps_time;
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 			memcpy(&cur_nav_gps_time, log, payload_length+HDR_CHKSM_LENGTH);
 			if (nav_gps_time_callback_)
@@ -1221,7 +1221,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case NAV_UTCTIME:
-			NavUTCTime cur_nav_utc_time;
+            ublox::NavUTCTime cur_nav_utc_time;
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 			memcpy(&cur_nav_utc_time, log, payload_length+HDR_CHKSM_LENGTH);
 			if (nav_utc_time_callback_)
@@ -1229,7 +1229,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case NAV_DOP:
-			NavDOP cur_nav_dop;
+            ublox::NavDOP cur_nav_dop;
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 			memcpy(&cur_nav_dop, log, payload_length+HDR_CHKSM_LENGTH);
 			if (nav_dop_callback_)
@@ -1237,7 +1237,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case NAV_DGPS:
-			NavDGPS cur_nav_dgps;
+            ublox::NavDGPS cur_nav_dgps;
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 			memcpy(&cur_nav_dgps, log, payload_length+HDR_CHKSM_LENGTH);
 			if (nav_dgps_callback_)
@@ -1245,7 +1245,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case NAV_CLK:
-			NavClock cur_nav_clock;
+            ublox::NavClock cur_nav_clock;
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 			memcpy(&cur_nav_clock, log, payload_length+HDR_CHKSM_LENGTH);
 			if (nav_clock_callback_)
@@ -1253,7 +1253,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case AID_EPH:
-			EphemSV cur_ephem_sv;
+            ublox::EphemSV cur_ephem_sv;
 
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 
@@ -1284,13 +1284,13 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 				aid_eph_callback_(cur_ephem_sv, read_timestamp_);
 
 			if (parsed_ephem_callback_) {
-				ParsedEphemData parsed_ephem = Parse_aid_eph(cur_ephem_sv);
+                ublox::ParsedEphemData parsed_ephem = Parse_aid_eph(cur_ephem_sv);
 				parsed_ephem_callback_(parsed_ephem, read_timestamp_);
 			}
 			break;
 
 		case AID_ALM:
-			AlmSV cur_alm_sv;
+            ublox::AlmSV cur_alm_sv;
 
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 
@@ -1322,7 +1322,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case AID_HUI:
-			AidHui cur_aid_hui;
+            ublox::AidHui cur_aid_hui;
 
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 
@@ -1338,7 +1338,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
 		case AID_INI:
-			AidIni cur_aid_ini;
+            ublox::AidIni cur_aid_ini;
 
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 
@@ -1353,7 +1353,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 
 		case RXM_RAW:
 		// NOTE: Needs to be checked/fixed
-			RawMeas cur_raw_meas;
+            ublox::RawMeas cur_raw_meas;
 
             payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4)); // payload_length = 8+24*numSV
 			num_of_svs = (uint8_t) *(log+12);
@@ -1372,7 +1372,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			break;
 
         case RXM_SFRB:
-            SubframeData cur_subframe;
+            ublox::SubframeData cur_subframe;
 
             payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
             memcpy(&cur_subframe, log, payload_length+HDR_CHKSM_LENGTH);
@@ -1383,7 +1383,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 
         case RXM_SVSI:
 			// NOTE: needs to be checked!!
-			SVStatus cur_sv_status;
+            ublox::SVStatus cur_sv_status;
 
 			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
 			num_of_svs = (uint8_t) *(log+13);
@@ -1448,7 +1448,7 @@ void Ublox::calculateCheckSum(uint8_t* in, size_t length, uint8_t* out) {
 }
 
 ParsedEphemData Ublox::Parse_aid_eph(EphemSV ubx_eph) {
-	ParsedEphemData eph_data;
+    ublox::ParsedEphemData eph_data;
 	try {
 		union {
 			unsigned short s;
