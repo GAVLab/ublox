@@ -152,6 +152,10 @@ inline void DefaultRxmRawCallback(RawMeas raw_meas, double time_stamp) {
     std::cout << "RXM-RAW: " << std::endl;
 }
 
+inline void DefaultRxmSubframeCallback(SubframeData subframe, double time_stamp) {
+    std::cout << "RXM-SFRB: " << std::endl;
+}
+
 inline void DefaultRxmSvsiCallback(SVStatus sv_stat, double time_stamp) {
     std::cout << "RXM-SVSI: " << std::endl;
 }
@@ -200,6 +204,7 @@ Ublox::Ublox() {
     aid_hui_callback_ = DefaultAidHuiCallback;
     aid_ini_callback_ = DefaultAidIniCallback;
     rxm_raw_callback_ = DefaultRxmRawCallback;
+    rxm_subframe_callback_ = DefaultRxmSubframeCallback;
     rxm_svsi_callback_ = DefaultRxmSvsiCallback;
     nav_sol_callback_ = DefaultNavSolCallback;
     nav_status_callback_ = DefaultNavStatusCallback;
@@ -1350,7 +1355,7 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 		// NOTE: Needs to be checked/fixed
 			RawMeas cur_raw_meas;
 
-			payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4)); // payload_length = 8+24*numSV
+            payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4)); // payload_length = 8+24*numSV
 			num_of_svs = (uint8_t) *(log+12);
 
 			// Copy portion of RXM-SVSI before repeated block (8 + header length)
@@ -1362,11 +1367,21 @@ void Ublox::ParseLog(uint8_t *log, size_t logID) {
 			// Copy Checksum
 			memcpy(&cur_raw_meas.checksum, log+14+(24*num_of_svs), 2);
 
-			if (rxm_raw_callback_)
-				rxm_raw_callback_(cur_raw_meas, read_timestamp_);
+            if (rxm_raw_callback_)
+                rxm_raw_callback_(cur_raw_meas, read_timestamp_);
 			break;
 
-		case RXM_SVSI:
+        case RXM_SFRB:
+            SubframeData cur_subframe;
+
+            payload_length = (((uint16_t) *(log+5)) << 8) + ((uint16_t) *(log+4));
+            memcpy(&cur_subframe, log, payload_length+HDR_CHKSM_LENGTH);
+
+            if (rxm_subframe_callback_)
+                rxm_subframe_callback_(cur_subframe, read_timestamp_);
+            break;
+
+        case RXM_SVSI:
 			// NOTE: needs to be checked!!
 			SVStatus cur_sv_status;
 

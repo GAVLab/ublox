@@ -74,6 +74,7 @@ typedef boost::function<void(AlmSV&, double&)> AidAlmCallback;
 typedef boost::function<void(AidHui&, double&)> AidHuiCallback;
 typedef boost::function<void(AidIni&, double&)> AidIniCallback;
 typedef boost::function<void(RawMeas&, double&)> RxmRawCallback;
+typedef boost::function<void(SubframeData&, double&)> RxmSubframeCallback;
 typedef boost::function<void(SVStatus&, double&)> RxmSvsiCallback;
 typedef boost::function<void(ParsedEphemData&, double&)> ParsedEphemCallback;
 
@@ -171,6 +172,7 @@ public:
     bool SendAidAlm(Almanac almanac);
 
     void set_rxm_svsi_callback(RxmSvsiCallback callback){rxm_svsi_callback_=callback;};
+    void set_rxm_subframe_callback(RxmSubframeCallback callback){rxm_subframe_callback_=callback;};
     void set_rxm_raw_callback(RxmRawCallback callback){rxm_raw_callback_=callback;};
     void set_aid_alm_callback(AidAlmCallback callback){aid_alm_callback_=callback;};
     void set_aid_eph_callback(AidEphCallback callback){aid_eph_callback_=callback;};
@@ -262,6 +264,7 @@ private:
     AidHuiCallback aid_hui_callback_;
     AidIniCallback aid_ini_callback_;
     RxmRawCallback rxm_raw_callback_;
+    RxmSubframeCallback rxm_subframe_callback_;
     RxmSvsiCallback rxm_svsi_callback_;
     ParsedEphemCallback parsed_ephem_callback_;
 	

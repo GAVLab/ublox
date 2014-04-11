@@ -683,6 +683,31 @@ PACK(
         uint8_t checksum[2];
 });
 
+
+/*!
+ * RXM-SFRB Message Structure
+ * This message contains the contents of a single subframe
+ * w/ parity bits removed
+ * ID: 0x02 0x11 Payload Length = (42) bytes
+ */
+
+PACK(
+    struct SubframeData{
+        UbloxHeader header;
+        uint8_t chan;       // Channel Number
+        uint8_t svid;       // Satellite ID Number
+        int32_t words[10];  // Words of data
+            /*
+            Each word contains 24 bits of data (Bits 23 to 0).  The remaining 8
+            bits are undefined.  The direction within the Word is that the higher
+            order bits are received from the SV first.
+            Example:
+                The Preamble can be found in dwrd[0], at bit position 23 down to 16.
+            */
+        uint8_t checksum[2];
+});
+
+
 /*!
  * RXM-SVSI Message Structure
  * This message contains SV orbit knowledge for SVs
@@ -730,6 +755,7 @@ enum Message_ID
     AID_INI = 2817,                 // (ID 0x0B 0x01) Position, Time, Frequency, Clock Drift
     MON_VER = 2564,                 // (ID 0x0A 0x04) Reciever/Software/ROM Version
     RXM_RAW = 528,                  // (ID 0x02 0x10) Raw DGPS Data
+    RXM_SFRB = 529,                 // (ID 0x02 0x11) GPS Subframe Data
     RXM_SVSI = 544,                 // (ID 0x02 0x20) SV Status Info
 };
 
