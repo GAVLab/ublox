@@ -14,21 +14,8 @@ std::string data_filename_; //!< file name for logging gps data
 bool StartDataLogging(std::string filename) {
     try {
 
-        // check to see if data directory exists, if not create it
-        boost::filesystem::path dir("data");
-
-        if (!boost::filesystem::is_directory(dir))
-            {
-            if (!boost::filesystem::create_directory(dir)) {
-                log_error_("Error creating data directory. Logging disabled.");
-                settings_.log_data_period=0;
-                return false;
-            }
-        }
-        data_filename_ = "data/"+filename;
-
-        std::cout << "Started data log file: " << boost::filesystem::current_path().string() << "/" << data_filename_;
-
+        data_filename_ = filename;
+        
         // open file and add header
         data_file_.open(data_filename_.c_str());
 
@@ -45,7 +32,7 @@ bool StartDataLogging(std::string filename) {
     return true;
 }
 
-void RxmRawCallback(ublox::RawMeas raw_meas, double time_stamp) {
+void PseudorangeData(ublox::RawMeas raw_meas, double time_stamp) {
     try {
 
         data_file_ << fixed << setw(20) << setprecision(3) << (double)raw_meas.iTow;
@@ -58,7 +45,7 @@ void RxmRawCallback(ublox::RawMeas raw_meas, double time_stamp) {
         data_file_ << std::endl;
 
     } catch (std::exception &e) {
-        std::cout << "RxmRawCallback() error"
+        std::cout << "RxmRawCallback() error";
     }    
 }
 
@@ -89,10 +76,10 @@ int main(int argc, char **argv)
             return -1;
         }
     //! Start Data Logging
-    bool logging_on = StartDataLogging("range_data.log")
+    bool logging_on = StartDataLogging("range_data.log");
 
     // Set Callback for pseudorange data
-    my_gps.set_rxm_raw_callback(RxmRawCallback);
+    my_gps.set_rxm_raw_callback(PseudorangeData);
 
     //! Configure ublox
     // request pseudorange data
