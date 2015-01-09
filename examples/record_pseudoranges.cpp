@@ -21,7 +21,7 @@ bool StartDataLogging(std::string filename) {
 
         // write header
         //             12345678901234567890123456789012345678901234567890123456789012345678901234567890
-        data_file_ << "%%       1) GPS Time 2) Prn  3) Pseudorange  4) Prn  5) Pseudorange ..." << std::endl;
+        data_file_ << "%%       1) GPS Time (ms) 2) SVID  3) Pseudorange (m)  4) SVID  5) Pseudorange ..." << std::endl;
 
     } catch (std::exception &e) {
         std::cout << "Error opening log file: " << e.what();
@@ -29,17 +29,17 @@ bool StartDataLogging(std::string filename) {
             data_file_.close();
         return false;
     }
+    std::cout << "Started Data Log" << std::endl;
     return true;
 }
 
 void PseudorangeData(ublox::RawMeas raw_meas, double time_stamp) {
     try {
 
-        data_file_ << fixed << setw(20) << setprecision(3) << (double)raw_meas.iTow;
-
+        data_file_ << fixed << setw(10) << (signed long)raw_meas.iTow;
         for(int ii=0;ii<raw_meas.numSV; ii++) {
-            data_file_  << setw(20) << raw_meas.rawmeasreap[ii].svid  
-                        << setw(20) << raw_meas.rawmeasreap[ii].psuedorange; // m
+            data_file_  << "\t" << (unsigned int)raw_meas.rawmeasreap[ii].svid
+                        << "\t" << setprecision(3) << raw_meas.rawmeasreap[ii].psuedorange; // m
         }
 
         data_file_ << std::endl;
