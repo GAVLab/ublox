@@ -1,3 +1,6 @@
+This repository contains a static library for interfacing uBlox GPS receivers.  This interface is based on the uBlox 6 protocol specifications.
+
+INSTALL INSTRUCTIONS
 
 On Linux Ubuntu
 
