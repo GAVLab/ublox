@@ -15,8 +15,11 @@ Dependencies:
 	Once the package list is up to date, cmake can be installed
 
 		sudo apt-get install cmake
-	
+		
+-	Boost
 
+		sudo apt-get install libboost-all-dev
+	
 - 	Serial Library
 
 	The serial library was written by former GAVLab member William Woodall.  It's repository can be found at:
