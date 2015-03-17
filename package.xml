@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package>
+  <name>ublox</name>
+  <version>0.0.1</version>
+  <description>ublox</description>
+  <author email="wjwwood@gmail.com">William Woodall</author>
+  <maintainer email="robertgcofield@gmail.com">Robert Cofield</maintainer>
+  <license>BSD</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>serial</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>gps_msgs</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>serial</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>gps_msgs</run_depend>
+
+</package>
+
+

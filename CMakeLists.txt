@@ -22,11 +22,13 @@ IF(NOT DEFINED BUILD_SHARED_LIBS)
 ENDIF(NOT DEFINED BUILD_SHARED_LIBS)
 
 # Detect ROS
-set(ROS_ROOT $ENV{ROS_ROOT})
-set(ROS_ROOT_DEFINED FALSE)
 if(DEFINED ROS_ROOT)
   message("ROS detected.")
+  message("Catkin install not set up for uBlox!!!")
   set(ROS_ROOT_DEFINED TRUE)
+else(DEFINED ROS_ROOT)
+  set(ROS_ROOT $ENV{ROS_ROOT})
+  set(ROS_ROOT_DEFINED FALSE)
 endif(DEFINED ROS_ROOT)
 
 set(BUILD_WITH_ROS ${ROS_ROOT_DEFINED} CACHE BOOL "Build with ROS support.")
@@ -36,25 +38,31 @@ if(BUILD_WITH_ROS AND NOT ROS_ROOT_DEFINED)
 endif(BUILD_WITH_ROS AND NOT ROS_ROOT_DEFINED)
 
 # Set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+# set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 # Set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+# set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 if(BUILD_WITH_ROS)
-  include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
-  # Set the build type.  Options are:
-  #  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-  #  Debug          : w/ debug symbols, w/o optimization
-  #  Release        : w/o debug symbols, w/ optimization
-  #  RelWithDebInfo : w/ debug symbols, w/ optimization
-  #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-  set(ROS_BUILD_TYPE RelWithDebInfo CACHE STRING "Built type for ROS")
-  rosbuild_init()
-
-  #uncomment if you have defined messages
-  #rosbuild_genmsg()
-  #uncomment if you have defined services
-  #rosbuild_gensrv()
+  # catkin setup
+  find_package(catkin REQUIRED
+    COMPONENTS
+      roscpp
+      gps_msgs
+      serial
+      sensor_msgs
+  )
+  catkin_package(
+    INCLUDE_DIRS include
+    LIBRARIES ublox
+    CATKIN_DEPENDS
+      roscpp
+      serial
+      gps_msgs
+      sensor_msgs
+    DEPENDS
+      system_lib
+  )
+  list(APPEND UBLOX_LINK_LIBS ${catkin_LIBRARIES})
 else(BUILD_WITH_ROS)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Built type for cmake")
   # Find serial, if it hasn't already been found
@@ -97,20 +105,12 @@ list(APPEND UBLOX_LINK_LIBS ${Boost_SYSTEM_LIBRARY}
                            ${Boost_THREAD_LIBRARY})
 
 ## Build the ublox Library
-
-# Compile the Library
-if(BUILD_WITH_ROS)
-    rosbuild_add_library(ublox ${UBLOX_SRCS} ${UBLOX_HEADERS})
-else(BUILD_WITH_ROS)
-    add_library(ublox ${UBLOX_SRCS} ${UBLOX_HEADERS})
-endif(BUILD_WITH_ROS)
-target_link_libraries(ublox ${UBLOX_LINK_LIBS})
+add_library(ublox ${UBLOX_SRCS} ${UBLOX_HEADERS})
 
 ## Build the ROS wrapper
-
 if(BUILD_WITH_ROS)
-  rosbuild_add_executable(ublox_node src/ublox_node.cc)
-  target_link_libraries(ublox_node ublox)
+  add_executable(ublox_node src/ublox_node.cc)
+  target_link_libraries(ublox_node ublox ${catkin_LIBRARIES})
 endif(BUILD_WITH_ROS)
 
 ## Build Examples
@@ -178,3 +178,4 @@ IF(NOT UBLOX_DONT_CONFIGURE_INSTALL AND NOT BUILD_WITH_ROS)
     )
   ENDIF(UNIX)
 ENDIF(NOT UBLOX_DONT_CONFIGURE_INSTALL AND NOT BUILD_WITH_ROS)
+
