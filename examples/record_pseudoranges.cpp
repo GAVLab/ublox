@@ -116,6 +116,7 @@ void ParsedEphems(ublox::ParsedEphemData parsed_ephem_data, double time_stamp) {
                     << "\t" << parsed_ephem_data.crc
                     << "\t" << parsed_ephem_data.crs
                     << "\t" << parsed_ephem_data.cis
+                    << "\t" << parsed_ephem_data.cic
                     << "\t" << parsed_ephem_data.toe;
         data_file_ << std::endl;
     } catch (std::exception &e) {
