@@ -6,11 +6,11 @@ On Linux Ubuntu
 
 Dependencies:
 
--	CMake
-
-	First update the package list.
+First update the package list.
 
 		sudo apt-get update
+
+-	CMake
 
 	Once the package list is up to date, cmake can be installed
 
