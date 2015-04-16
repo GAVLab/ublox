@@ -709,6 +709,61 @@ bool Ublox::ConfigureNavigationParameters(uint8_t dynamic_model, uint8_t fix_mod
 	}
 }
 
+bool Ublox::SbasOff() { //< Tell ublox not to use SBAS SVs
+    try {
+        ublox::CfgSbas message;
+        message.header.sync1 = UBX_SYNC_BYTE_1;
+        message.header.sync2 = UBX_SYNC_BYTE_2;
+        message.header.message_class = MSG_CLASS_CFG;
+        message.header.message_id = MSG_ID_CFG_SBAS;
+        message.header.payload_length = 8;
+
+        message.mode = 0b0;
+        message.usage = 0b0;
+        message.maxSBAS = 0b0;
+        message.scanmode2 = 0b0;
+        message.scanmode1 = 0b0;
+
+        unsigned char* msg_ptr = (unsigned char*) &message;
+        calculateCheckSum(msg_ptr + 2, 7, message.checksum);
+
+        return serial_port_->write(msg_ptr, sizeof(message)) == sizeof(message);
+    } catch (std::exception &e) {
+        std::stringstream output;
+        output << "Error in Ublox::SbasOff() " << e.what();
+        log_error_(output.str());
+        return false;
+    }
+}
+
+bool Ublox::SbasOn() { //< Tell ublox not to use SBAS SVs
+    try {
+        ublox::CfgSbas message;
+        message.header.sync1 = UBX_SYNC_BYTE_1;
+        message.header.sync2 = UBX_SYNC_BYTE_2;
+        message.header.message_class = MSG_CLASS_CFG;
+        message.header.message_id = MSG_ID_CFG_SBAS;
+        message.header.payload_length = 8;
+
+        message.mode = 0b01;
+        message.usage = 0b0111;
+        message.maxSBAS = 3;
+        message.scanmode2 = 0b0;
+        message.scanmode1 = 0b0;
+
+        unsigned char* msg_ptr = (unsigned char*) &message;
+        calculateCheckSum(msg_ptr + 2, 7, message.checksum);
+
+        return serial_port_->write(msg_ptr, sizeof(message)) == sizeof(message);
+    } catch (std::exception &e) {
+        std::stringstream output;
+        output << "Error in Ublox::SbasOff() " << e.what();
+        log_error_(output.str());
+        return false;
+    }
+}
+
+
 // (CFG-MSG) Set message output rate for specified message
 bool Ublox::ConfigureMessageRate(uint8_t class_id, uint8_t msg_id,
         uint8_t rate) {

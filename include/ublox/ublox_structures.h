@@ -231,6 +231,23 @@ PACK(
         uint8_t checksum[2];
 });
 
+/*!
+* CFG-SBAS Message Structure
+* This message configures the SBAS receiver 
+* subsystem (i.e. WAAS, EGNOS, MSAS).
+* TYPE: POLL(empty payload) and COMMAND
+* ID: 0x06  0x16 Payload Length=8 bytes
+*/
+PACK(
+    struct CfgSbas {
+        UbloxHeader header;     //!< Ublox header
+        uint8_t mode;
+        uint8_t usage;
+        uint8_t maxSBAS;        //< (0-3)
+        uint8_t scanmode2;      //< =0 for autoscan
+        uint32_t scanmode1;     //< =0 for autoscan
+        uint8_t checksum[2];
+});
 
 /////////////////////////////////////////////////////////////
 // Navigation Messages

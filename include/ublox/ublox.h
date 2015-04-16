@@ -129,6 +129,8 @@ public:
         // every second navigation solution.
 
     bool ConfigureNavigationParameters(uint8_t dynamic_model = 3, uint8_t fix_mode = 3);
+    bool SbasOff(); //< Tell ublox not to use SBAS SVs
+    bool SbasOn(); //< Tell ublox to use SBAS for corrections, integritiy monitoring, and ranging
 
     //////////////////////////////////////////////////////
     // Diagnostic Callbacks
