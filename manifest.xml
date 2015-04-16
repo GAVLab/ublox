@@ -1,0 +1,16 @@
+<package>
+  <description brief="ublox">
+
+     ublox
+
+  </description>
+  <author>William Woodall</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ublox</url>
+  <depend package="roscpp"/>
+  <depend package="serial"/>
+  <depend package="sensor_msgs"/>
+  <!-- <depend package="gnss_msgs"/> -->
+
+</package>
