@@ -180,6 +180,7 @@ int main(int argc, char **argv)
     bool logging_on = StartDataLogging("range_data.log");
     
     my_gps.ConfigureNavigationParameters(4,2);
+    my_gps.SbasOff();
 
     // Set Callback for pseudorange data
     my_gps.set_rxm_raw_callback(PseudorangeData);
