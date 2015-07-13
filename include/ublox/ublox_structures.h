@@ -86,7 +86,7 @@ namespace ublox {
     #define MSG_ID_NAV_AOPSTATUS 0x60
     #define MSG_ID_NAV_CLOCK 0x22
     #define MSG_ID_NAV_DGPS 0x31
-    #define MSG_ID_NAV_DOP 0x31
+    #define MSG_ID_NAV_DOP 0x04
     #define MSG_ID_NAV_EKFSTATUS 0x40
     #define MSG_ID_NAV_POSECEF 0x01
     #define MSG_ID_NAV_POSLLH 0x02
