@@ -1,27 +1,24 @@
 This repository contains a static library for interfacing uBlox GPS receivers.  This interface is based on the uBlox 6 protocol specifications.
 
-INSTALL INSTRUCTIONS
+# INSTALL INSTRUCTIONS #
 
-On Linux Ubuntu
+## Linux Ubuntu ##
 
-Dependencies:
+### Dependencies ###
 
-First update the package list.
+Update the package list.
 
 		sudo apt-get update
 
 -	CMake
 
-	Once the package list is up to date, cmake can be installed
-
 		sudo apt-get install cmake
-		
+	
 -	Boost
 
 		sudo apt-get install libboost-all-dev
 	
 - 	Serial Library
-
 	The serial library was written by former GAVLab member William Woodall.  It's repository can be found at:
 
 		https://github.com/wjwwood/serial.git
@@ -41,16 +38,13 @@ First update the package list.
 		make
 		sudo make install
 
-
-
-
-Ublox Interface:
+### Ublox Interface ###
 
 	To clone the ublox code:
 
 		git clone https://github.com/GAVLab/ublox.git
 
-	Compile the library.
+	Generate MakeFile with cmake and compile the library .
 
 		cd ublox
 		mkdir build
@@ -58,11 +52,11 @@ Ublox Interface:
 		cmake ../
 		make
 
-	To build the incuded executables, invoke cmake with the following option.
+	To also build the included executables, invoke cmake with the following option.
 
 		cmake -DUBLOX_BUILD_EXAMPLES=ON ../
 
-	To run one of the executables
+	To run one of the generated executables
 
 		cd ~/ublox/bin/
 		sudo ./executable [port name] [baudrate]
