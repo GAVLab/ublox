@@ -19,7 +19,8 @@ Update the package list.
 		sudo apt-get install libboost-all-dev
 	
 - 	Serial Library
-The serial library was written by former GAVLab member William Woodall.  It's repository can be found at:
+
+	The serial library was written by former GAVLab member William Woodall.  It's repository can be found at:
 
 		https://github.com/wjwwood/serial.git
 
