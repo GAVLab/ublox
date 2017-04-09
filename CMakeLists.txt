@@ -113,8 +113,22 @@ IF(UBLOX_BUILD_EXAMPLES)
     add_executable(ublox_example examples/ublox_example.cpp)
     # Link the Test program to the ublox library
     target_link_libraries(ublox_example ublox ${UBLOX_LINK_LIBS})
+
     add_executable(assist_example examples/assist_example.cpp)
     target_link_libraries(assist_example ublox ${UBLOX_LINK_LIBS})
+
+    add_executable(Full_AGPS_assist examples/Full_AGPS_assist.cpp)
+    target_link_libraries(Full_AGPS_assist ublox ${UBLOX_LINK_LIBS})
+    
+    add_executable(almanac_example examples/almanac_example.cpp)
+    target_link_libraries(almanac_example ublox ${UBLOX_LINK_LIBS})
+
+    add_executable(HUI_example examples/HUI_example.cpp)
+    target_link_libraries(HUI_example ublox ${UBLOX_LINK_LIBS})
+
+    add_executable(Save_AGPS_data examples/Save_AGPS_data.cpp)
+    target_link_libraries(Save_AGPS_data ublox ${UBLOX_LINK_LIBS})
+
 ENDIF(UBLOX_BUILD_EXAMPLES)
 
 ## Build tests
